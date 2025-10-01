@@ -1,0 +1,52 @@
+/**
+ * 全局样式变量
+ */
+
+// 主题色
+$primary-color: #3B82F6;
+$success-color: #10B981;
+$warning-color: #F59E0B;
+$danger-color: #EF4444;
+$info-color: #6B7280;
+
+// 文字色
+$text-primary: #1F2937;
+$text-secondary: #6B7280;
+$text-placeholder: #9CA3AF;
+$text-white: #FFFFFF;
+
+// 背景色
+$bg-page: #F5F5F5;
+$bg-white: #FFFFFF;
+$bg-gray: #F9FAFB;
+
+// 边框色
+$border-color: #E5E7EB;
+$border-light: #F3F4F6;
+
+// 间距
+$spacing-xs: 10rpx;
+$spacing-sm: 20rpx;
+$spacing-md: 30rpx;
+$spacing-lg: 40rpx;
+$spacing-xl: 60rpx;
+
+// 字体大小
+$font-xs: 24rpx;
+$font-sm: 28rpx;
+$font-md: 32rpx;
+$font-lg: 36rpx;
+$font-xl: 48rpx;
+$font-xxl: 64rpx;
+
+// 圆角
+$radius-sm: 8rpx;
+$radius-md: 12rpx;
+$radius-lg: 16rpx;
+$radius-xl: 24rpx;
+$radius-full: 999rpx;
+
+// 阴影
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);

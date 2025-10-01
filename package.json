@@ -1,0 +1,22 @@
+{
+  "name": "cyclosafe",
+  "version": "0.1.0",
+  "description": "骑行安全码表 - 基于uniapp的微信小程序",
+  "main": "main.js",
+  "scripts": {
+    "dev": "echo 'Please use HBuilderX to run this project'",
+    "build": "echo 'Please use HBuilderX to build this project'"
+  },
+  "keywords": [
+    "uniapp",
+    "miniprogram",
+    "cycling",
+    "gps",
+    "sensor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dayjs": "^1.11.18"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "CycloSafe",
+  "appid": "__UNI__CYCLOSAFE",
+  "description": "骑行安全码表 - 集成专业码表与智能安全检测",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "h5": {
+    "title": "CycloSafe",
+    "router": {
+      "mode": "hash"
+    }
+  },
+  "mp-weixin": {
+    "appid": "wx6a2f44346c272a9a",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "enhance": true,
+      "postcss": true,
+      "minified": true,
+      "newFeature": true
+    },
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于记录骑行轨迹和提供实时位置服务"
+      }
+    },
+    "requiredPrivateInfos": [
+      "getLocation",
+      "onLocationChange",
+      "startLocationUpdate",
+      "chooseLocation"
+    ],
+    "lazyCodeLoading": "requiredComponents"
+  },
+  "uniStatistics": {
+    "enable": false
+  }
+}
