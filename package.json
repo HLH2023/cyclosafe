@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "dayjs": "^1.11.18"
+    "dayjs": "^1.11.18",
+    "pinia": "^3.0.3"
   }
 }
