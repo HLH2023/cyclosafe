@@ -72,6 +72,7 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
+import sensorService from '@/services/sensorService.js';
 
 // 当前时间
 const currentTime = ref('');
@@ -248,9 +249,141 @@ const startRiding = () => {
   // 开始计时
   startTimer();
 
+  // 启动传感器服务（摔倒检测）
+  startSensorService();
+
   uni.showToast({
     title: '开始骑行',
     icon: 'success'
+  });
+};
+
+// 启动传感器服务
+const startSensorService = () => {
+  // 获取设置（从本地存储读取）
+  const fallDetectionEnabled = uni.getStorageSync('fallDetectionEnabled') !== 'false'; // 默认开启
+  const sensitivity = uni.getStorageSync('fallDetectionSensitivity') || 'medium';
+
+  console.log('启动传感器服务 - 摔倒检测:', fallDetectionEnabled, '灵敏度:', sensitivity);
+
+  // 设置摔倒检测回调
+  sensorService.onFallDetected(handleFallDetected);
+
+  // 启动服务
+  sensorService.start({
+    fallDetectionEnabled,
+    sensitivity
+  });
+};
+
+// 摔倒检测回调
+const handleFallDetected = (data) => {
+  console.warn('检测到摔倒！', data);
+
+  // 震动警告
+  uni.vibrateLong();
+
+  // 显示警告弹窗
+  showFallAlert();
+};
+
+// 摔倒警告弹窗
+const showFallAlert = () => {
+  let countdown = 30; // 30秒倒计时
+  let countdownTimer = null;
+
+  // 创建倒计时模态框
+  const showModal = () => {
+    uni.showModal({
+      title: '⚠️ 摔倒检测',
+      content: `检测到摔倒，是否需要帮助？\n${countdown}秒后自动发送位置信息`,
+      confirmText: '我没事',
+      cancelText: '需要帮助',
+      success: (res) => {
+        // 清除倒计时
+        if (countdownTimer) {
+          clearInterval(countdownTimer);
+        }
+
+        if (res.confirm) {
+          // 用户确认没事
+          uni.showToast({
+            title: '已取消求助',
+            icon: 'success'
+          });
+        } else if (res.cancel) {
+          // 用户需要帮助
+          sendHelpRequest();
+        }
+      }
+    });
+  };
+
+  // 显示初始弹窗
+  showModal();
+
+  // 启动倒计时
+  countdownTimer = setInterval(() => {
+    countdown--;
+
+    if (countdown <= 0) {
+      // 倒计时结束，自动发送求助
+      clearInterval(countdownTimer);
+      sendHelpRequest();
+    }
+  }, 1000);
+};
+
+// 发送求助信息
+const sendHelpRequest = () => {
+  // 获取当前位置
+  uni.getLocation({
+    type: 'gcj02',
+    success: (location) => {
+      const message = `紧急求助！
+时间：${new Date().toLocaleString()}
+位置：纬度 ${location.latitude.toFixed(6)}, 经度 ${location.longitude.toFixed(6)}
+骑行信息：
+- 距离：${distance.value.toFixed(2)} KM
+- 速度：${currentSpeed.value.toFixed(1)} KM/H
+- 时长：${formattedDuration.value}
+
+请尽快联系我！`;
+
+      // 复制到剪贴板
+      uni.setClipboardData({
+        data: message,
+        success: () => {
+          uni.showModal({
+            title: '求助信息已复制',
+            content: '位置信息已复制到剪贴板，请发送给紧急联系人',
+            confirmText: '打开微信',
+            success: (res) => {
+              if (res.confirm) {
+                // 尝试打开微信（小程序无法直接打开其他应用）
+                uni.showToast({
+                  title: '请手动打开微信发送',
+                  icon: 'none',
+                  duration: 3000
+                });
+              }
+            }
+          });
+        }
+      });
+
+      // 震动提示
+      uni.vibrateLong();
+
+      console.log('求助信息已发送:', message);
+    },
+    fail: (err) => {
+      console.error('获取位置失败:', err);
+      uni.showToast({
+        title: '获取位置失败',
+        icon: 'none'
+      });
+    }
   });
 };
 
@@ -268,6 +401,9 @@ const pauseRiding = () => {
     timer.value = null;
   }
 
+  // 停止传感器服务（节省电量）
+  sensorService.stop();
+
   uni.showToast({
     title: '已暂停',
     icon: 'none'
@@ -284,6 +420,9 @@ const resumeRiding = () => {
 
   // 恢复计时
   startTimer();
+
+  // 重新启动传感器服务
+  startSensorService();
 
   uni.showToast({
     title: '继续骑行',
@@ -338,6 +477,9 @@ const cleanup = () => {
     clearInterval(timer.value);
     timer.value = null;
   }
+
+  // 停止传感器服务
+  sensorService.stop();
 };
 
 // 完成骑行

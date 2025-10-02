@@ -63,10 +63,16 @@
             />
           </view>
           <view class="setting-item border-bottom">
-            <view class="label-row">
-              <text class="label">摔倒检测灵敏度</text>
-              <text class="value-highlight">高</text>
-            </view>
+            <text class="label">摔倒检测</text>
+            <switch :checked="fallDetectionEnabled" @change="onFallDetectionChange" color="#3B82F6" />
+          </view>
+          <view class="setting-item border-bottom">
+            <text class="label">摔倒检测灵敏度</text>
+            <picker :value="fallSensitivityIndex" :range="fallSensitivityOptions" @change="onFallSensitivityChange" :disabled="!fallDetectionEnabled">
+              <view class="picker-value" :class="{ disabled: !fallDetectionEnabled }">
+                {{ fallSensitivityOptions[fallSensitivityIndex] }}
+              </view>
+            </picker>
           </view>
           <view class="setting-item">
             <text class="label">紧急联系人</text>
@@ -171,6 +177,9 @@ const showTrack = ref(true);
 // 安全设置
 const speedThreshold = ref(40);
 const vibrationEnabled = ref(true);
+const fallDetectionEnabled = ref(true);
+const fallSensitivityOptions = ['低灵敏度', '中灵敏度', '高灵敏度'];
+const fallSensitivityIndex = ref(1); // 默认中灵敏度
 
 // 其他设置
 const autoPause = ref(true);
@@ -189,6 +198,12 @@ const loadSettings = () => {
   // 安全设置
   speedThreshold.value = uni.getStorageSync('speed_threshold') || 40;
   vibrationEnabled.value = uni.getStorageSync('vibration_enabled') !== false;
+  fallDetectionEnabled.value = uni.getStorageSync('fallDetectionEnabled') !== 'false'; // 默认开启
+
+  // 加载摔倒检测灵敏度
+  const sensitivity = uni.getStorageSync('fallDetectionSensitivity') || 'medium';
+  const sensitivityMap = { low: 0, medium: 1, high: 2 };
+  fallSensitivityIndex.value = sensitivityMap[sensitivity] || 1;
 
   // 其他设置
   autoPause.value = uni.getStorageSync('auto_pause') !== false;
@@ -240,6 +255,33 @@ const onSpeedThresholdChange = (e) => {
 // 速度阈值拖动中
 const onSpeedThresholdChanging = (e) => {
   speedThreshold.value = e.detail.value;
+};
+
+// 摔倒检测开关变化
+const onFallDetectionChange = (e) => {
+  fallDetectionEnabled.value = e.detail.value;
+  uni.setStorageSync('fallDetectionEnabled', fallDetectionEnabled.value ? 'true' : 'false');
+
+  uni.showToast({
+    title: fallDetectionEnabled.value ? '摔倒检测已开启' : '摔倒检测已关闭',
+    icon: 'success'
+  });
+};
+
+// 摔倒检测灵敏度变化
+const onFallSensitivityChange = (e) => {
+  fallSensitivityIndex.value = e.detail.value;
+
+  // 转换为存储值
+  const indexToSensitivity = ['low', 'medium', 'high'];
+  const sensitivity = indexToSensitivity[fallSensitivityIndex.value];
+
+  uni.setStorageSync('fallDetectionSensitivity', sensitivity);
+
+  uni.showToast({
+    title: '灵敏度已更新',
+    icon: 'success'
+  });
 };
 
 // 震动开关变化
@@ -435,6 +477,11 @@ onShow(() => {
     padding: 8rpx 16rpx;
     border-radius: 8rpx;
     background: #F3F4F6;
+
+    &.disabled {
+      opacity: 0.5;
+      background: #E5E7EB;
+    }
   }
 
   .label-row {
