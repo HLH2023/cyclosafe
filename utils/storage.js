@@ -1,26 +1,34 @@
 /**
  * 本地存储工具类
+ * 使用 SQLite 作为底层存储
  */
 
 import { STORAGE_KEYS } from './constants';
+import { getRidingRecordRepository, getSettingsRepository } from '@/db/repositories/index.js';
+
+// 延迟获取仓储实例（在首次使用时获取，确保数据库已初始化）
+let ridingRecordRepo = null;
+let settingsRepo = null;
+
+function ensureRepositories() {
+  if (!ridingRecordRepo) {
+    ridingRecordRepo = getRidingRecordRepository();
+  }
+  if (!settingsRepo) {
+    settingsRepo = getSettingsRepository();
+  }
+}
 
 /**
  * 保存骑行记录
  * @param {Object} record 骑行记录对象
  */
-export function saveRidingRecord(record) {
+export async function saveRidingRecord(record) {
   try {
-    const key = `${STORAGE_KEYS.RIDING_RECORD_PREFIX}${record.id}`;
-    uni.setStorageSync(key, JSON.stringify(record));
-
-    // 更新记录列表
-    const list = getRecordList();
-    if (!list.includes(record.id)) {
-      list.unshift(record.id);
-      uni.setStorageSync(STORAGE_KEYS.RIDING_LIST, JSON.stringify(list));
-    }
-
-    return true;
+    ensureRepositories();
+    // 使用 RidingRecordRepository 保存
+    const result = await ridingRecordRepo.saveRecord(record);
+    return result;
   } catch (err) {
     console.error('保存骑行记录失败:', err);
     return false;
@@ -34,9 +42,8 @@ export function saveRidingRecord(record) {
  */
 export function getRidingRecord(id) {
   try {
-    const key = `${STORAGE_KEYS.RIDING_RECORD_PREFIX}${id}`;
-    const data = uni.getStorageSync(key);
-    return data ? JSON.parse(data) : null;
+    ensureRepositories();
+    return ridingRecordRepo.getRecord(id);
   } catch (err) {
     console.error('获取骑行记录失败:', err);
     return null;
@@ -49,8 +56,8 @@ export function getRidingRecord(id) {
  */
 export function getRecordList() {
   try {
-    const data = uni.getStorageSync(STORAGE_KEYS.RIDING_LIST);
-    return data ? JSON.parse(data) : [];
+    ensureRepositories();
+    return ridingRecordRepo.getRecordList();
   } catch (err) {
     console.error('获取记录列表失败:', err);
     return [];
@@ -62,26 +69,24 @@ export function getRecordList() {
  * @returns {Array} 骑行记录数组
  */
 export function getAllRecords() {
-  const ids = getRecordList();
-  return ids.map(id => getRidingRecord(id)).filter(record => record !== null);
+  try {
+    ensureRepositories();
+    return ridingRecordRepo.getAllRecords();
+  } catch (err) {
+    console.error('获取所有记录失败:', err);
+    return [];
+  }
 }
 
 /**
  * 删除骑行记录
  * @param {string} id 记录ID
- * @returns {boolean} 是否删除成功
+ * @returns {Promise<boolean>} 是否删除成功
  */
-export function deleteRidingRecord(id) {
+export async function deleteRidingRecord(id) {
   try {
-    const key = `${STORAGE_KEYS.RIDING_RECORD_PREFIX}${id}`;
-    uni.removeStorageSync(key);
-
-    // 更新记录列表
-    const list = getRecordList();
-    const newList = list.filter(item => item !== id);
-    uni.setStorageSync(STORAGE_KEYS.RIDING_LIST, JSON.stringify(newList));
-
-    return true;
+    ensureRepositories();
+    return await ridingRecordRepo.deleteRecord(id);
   } catch (err) {
     console.error('删除骑行记录失败:', err);
     return false;
@@ -90,22 +95,12 @@ export function deleteRidingRecord(id) {
 
 /**
  * 清空所有骑行记录
- * @returns {boolean} 是否清空成功
+ * @returns {Promise<boolean>} 是否清空成功
  */
-export function clearAllRecords() {
+export async function clearAllRecords() {
   try {
-    const list = getRecordList();
-
-    // 删除所有记录
-    list.forEach(id => {
-      const key = `${STORAGE_KEYS.RIDING_RECORD_PREFIX}${id}`;
-      uni.removeStorageSync(key);
-    });
-
-    // 清空列表
-    uni.setStorageSync(STORAGE_KEYS.RIDING_LIST, '[]');
-
-    return true;
+    ensureRepositories();
+    return await ridingRecordRepo.clearAllRecords();
   } catch (err) {
     console.error('清空骑行记录失败:', err);
     return false;
@@ -119,8 +114,8 @@ export function clearAllRecords() {
  */
 export function saveSetting(key, value) {
   try {
-    uni.setStorageSync(key, value);
-    return true;
+    ensureRepositories();
+    return settingsRepo.saveSetting(key, value);
   } catch (err) {
     console.error('保存设置失败:', err);
     return false;
@@ -135,8 +130,8 @@ export function saveSetting(key, value) {
  */
 export function getSetting(key, defaultValue = null) {
   try {
-    const value = uni.getStorageSync(key);
-    return value !== '' && value !== undefined ? value : defaultValue;
+    ensureRepositories();
+    return settingsRepo.getSetting(key, defaultValue);
   } catch (err) {
     console.error('获取设置失败:', err);
     return defaultValue;
@@ -148,27 +143,19 @@ export function getSetting(key, defaultValue = null) {
  * @returns {Object} 统计数据
  */
 export function getStatistics() {
-  const records = getAllRecords();
-
-  const stats = {
-    totalRides: records.length,
-    totalDistance: 0,
-    totalDuration: 0,
-    maxSpeed: 0,
-    avgSpeed: 0
-  };
-
-  records.forEach(record => {
-    stats.totalDistance += record.distance || 0;
-    stats.totalDuration += record.duration || 0;
-    stats.maxSpeed = Math.max(stats.maxSpeed, record.maxSpeed || 0);
-  });
-
-  if (stats.totalDuration > 0) {
-    stats.avgSpeed = (stats.totalDistance / stats.totalDuration) * 3600;
+  try {
+    ensureRepositories();
+    return ridingRecordRepo.getStatistics();
+  } catch (err) {
+    console.error('获取统计数据失败:', err);
+    return {
+      totalRides: 0,
+      totalDistance: 0,
+      totalDuration: 0,
+      maxSpeed: 0,
+      avgSpeed: 0
+    };
   }
-
-  return stats;
 }
 
 export default {
