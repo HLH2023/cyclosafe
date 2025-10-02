@@ -45,6 +45,13 @@
         "navigationStyle": "custom",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "pages/simulate/simulate",
+      "style": {
+        "navigationStyle": "default",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "globalStyle": {

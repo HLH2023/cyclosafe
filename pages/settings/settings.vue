@@ -32,8 +32,27 @@
           </view>
           <view class="setting-item">
             <text class="label">海拔单位</text>
-            <picker :value="0" :range="['米 (m)', '英尺 (ft)']">
-              <view class="picker-value">米 (m)</view>
+            <picker :value="altitudeUnitIndex" :range="altitudeUnits" @change="onAltitudeUnitChange">
+              <view class="picker-value">
+                {{ altitudeUnits[altitudeUnitIndex] }}
+              </view>
+            </picker>
+          </view>
+        </view>
+      </view>
+
+      <!-- 显示设置 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">显示设置</text>
+        </view>
+        <view class="card">
+          <view class="setting-item">
+            <text class="label">主题模式</text>
+            <picker :value="themeIndex" :range="themeOptions" @change="onThemeChange">
+              <view class="picker-value">
+                {{ themeOptions[themeIndex] }}
+              </view>
             </picker>
           </view>
         </view>
@@ -100,8 +119,10 @@
           </view>
           <view class="setting-item border-bottom">
             <text class="label">轨迹颜色方案</text>
-            <picker :value="0" :range="['经典蓝', '活力橙', '醒目绿']">
-              <view class="picker-value">经典蓝</view>
+            <picker :value="trackColorIndex" :range="trackColorOptions" @change="onTrackColorChange">
+              <view class="picker-value">
+                {{ trackColorOptions[trackColorIndex] }}
+              </view>
             </picker>
           </view>
           <view class="setting-item">
@@ -162,16 +183,26 @@
 <script setup>
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
+import { useThemeStore } from '@/store/theme';
+
+// 主题设置
+const themeStore = useThemeStore();
+const themeOptions = ['跟随系统', '明亮模式', '黑夜模式'];
+const themeIndex = ref(0); // 默认跟随系统
 
 // 单位设置
 const distanceUnits = ['公里 (km)', '英里 (mi)'];
 const distanceUnitIndex = ref(0);
 const speedUnits = ['公里/小时 (km/h)', '英里/小时 (mph)'];
 const speedUnitIndex = ref(0);
+const altitudeUnits = ['米 (m)', '英尺 (ft)'];
+const altitudeUnitIndex = ref(0);
 
 // 地图设置
 const mapTypes = ['标准', '卫星', '夜间'];
 const mapTypeIndex = ref(0);
+const trackColorOptions = ['经典蓝', '活力橙', '醒目绿'];
+const trackColorIndex = ref(0);
 const showTrack = ref(true);
 
 // 安全设置
@@ -187,12 +218,19 @@ const keepScreenOn = ref(false);
 
 // 加载设置
 const loadSettings = () => {
+  // 主题设置
+  const savedTheme = uni.getStorageSync('theme_mode') || 'auto';
+  const themeMap = { auto: 0, light: 1, dark: 2 };
+  themeIndex.value = themeMap[savedTheme] || 0;
+
   // 单位设置
   distanceUnitIndex.value = uni.getStorageSync('distance_unit') || 0;
   speedUnitIndex.value = uni.getStorageSync('speed_unit') || 0;
+  altitudeUnitIndex.value = uni.getStorageSync('altitude_unit') || 0;
 
   // 地图设置
   mapTypeIndex.value = uni.getStorageSync('map_type') || 0;
+  trackColorIndex.value = uni.getStorageSync('track_color') || 0;
   showTrack.value = uni.getStorageSync('show_track') !== false;
 
   // 安全设置
@@ -208,6 +246,23 @@ const loadSettings = () => {
   // 其他设置
   autoPause.value = uni.getStorageSync('auto_pause') !== false;
   keepScreenOn.value = uni.getStorageSync('keep_screen_on') === true;
+};
+
+// 主题变化
+const onThemeChange = (e) => {
+  themeIndex.value = e.detail.value;
+
+  // 映射到主题模式
+  const indexToMode = ['auto', 'light', 'dark'];
+  const mode = indexToMode[themeIndex.value];
+
+  // 使用themeStore更新主题
+  themeStore.setMode(mode);
+
+  uni.showToast({
+    title: '主题已切换',
+    icon: 'success'
+  });
 };
 
 // 距离单位变化
@@ -230,10 +285,30 @@ const onSpeedUnitChange = (e) => {
   });
 };
 
+// 海拔单位变化
+const onAltitudeUnitChange = (e) => {
+  altitudeUnitIndex.value = e.detail.value;
+  uni.setStorageSync('altitude_unit', altitudeUnitIndex.value);
+  uni.showToast({
+    title: '设置已保存',
+    icon: 'success'
+  });
+};
+
 // 地图类型变化
 const onMapTypeChange = (e) => {
   mapTypeIndex.value = e.detail.value;
   uni.setStorageSync('map_type', mapTypeIndex.value);
+  uni.showToast({
+    title: '设置已保存',
+    icon: 'success'
+  });
+};
+
+// 轨迹颜色变化
+const onTrackColorChange = (e) => {
+  trackColorIndex.value = e.detail.value;
+  uni.setStorageSync('track_color', trackColorIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'

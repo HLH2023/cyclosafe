@@ -4,6 +4,22 @@
     <view class="header">
       <text class="title">骑行中</text>
       <view class="header-right">
+        <!-- 数据采集开关 -->
+        <view
+          class="data-collection-toggle"
+          :class="{ active: isDataCollectionEnabled }"
+          @click="toggleDataCollection"
+        >
+          <m-icon
+            :name="isDataCollectionEnabled ? 'science' : 'science_off'"
+            :size="20"
+            :color="isDataCollectionEnabled ? '#007AFF' : '#8E8E93'"
+          ></m-icon>
+          <text
+            v-if="isRiding && isDataCollectionEnabled"
+            class="data-count"
+          >{{ collectedDataCount }}</text>
+        </view>
         <m-icon name="battery_horiz_075" :size="24" color="#1C1C1E"></m-icon>
         <text class="time">{{ currentTime }}</text>
       </view>
@@ -73,6 +89,9 @@
 import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import sensorService from '@/services/sensorService.js';
+import DataCollector from '@/utils/dataCollector.js';
+import { getMLDetector } from '@/utils/mlModel.js';
+import config from '@/utils/config.js';
 
 // 当前时间
 const currentTime = ref('');
@@ -104,6 +123,17 @@ const polyline = ref([]);
 const trackPoints = ref([]);
 const startTime = ref(0);
 const timer = ref(null);
+
+// 数据采集器
+const dataCollector = ref(null);
+const isDataCollectionEnabled = ref(false); // 是否启用数据采集
+const collectedDataCount = ref(0); // 已采集数据点数
+
+// ML摔倒检测器
+const mlDetector = ref(null);
+const isMLDetectionEnabled = ref(false); // 是否启用ML检测
+const mlModelLoaded = ref(false); // ML模型是否加载
+const lastMLPrediction = ref(null); // 最后一次ML预测结果
 
 // 计算属性
 const formattedDuration = computed(() => {
@@ -236,6 +266,152 @@ const startTimer = () => {
   }, 1000);
 };
 
+// 初始化数据采集器
+const initDataCollector = () => {
+  if (!dataCollector.value) {
+    dataCollector.value = new DataCollector({
+      sampleRate: 50,
+      bufferSize: 150000, // 增大缓冲区，支持长时间骑行（50分钟）
+      onDataUpdate: (info) => {
+        collectedDataCount.value = info.count;
+
+        // ML实时检测（每采集50个点检测一次）
+        if (isMLDetectionEnabled.value && mlModelLoaded.value && info.count % 50 === 0) {
+          performMLDetection();
+        }
+      }
+    });
+  }
+};
+
+// 初始化ML检测器
+const initMLDetector = async () => {
+  if (!mlDetector.value) {
+    mlDetector.value = getMLDetector();
+
+    // 尝试加载模型
+    try {
+      // 从本地或服务器加载模型
+      const modelPath = config.MODEL_AUTO_UPDATE.localModelPath;
+      const modelLoaded = await mlDetector.value.loadModel(modelPath);
+
+      if (modelLoaded) {
+        mlModelLoaded.value = true;
+        isMLDetectionEnabled.value = true;
+
+        const modelInfo = mlDetector.value.getModelInfo();
+        console.log('ML模型加载成功:', modelInfo);
+
+        // 初始化自动更新（如果配置启用）
+        mlDetector.value.initAutoUpdate(config);
+
+        uni.showToast({
+          title: 'ML模型已就绪',
+          icon: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('ML模型加载失败:', error);
+      mlModelLoaded.value = false;
+      isMLDetectionEnabled.value = false;
+    }
+  }
+};
+
+// 执行ML检测
+const performMLDetection = () => {
+  if (!mlDetector.value || !mlModelLoaded.value) return;
+
+  const bufferData = dataCollector.value.getBufferData();
+
+  if (bufferData.length < 100) return; // 数据不足
+
+  // 使用ML模型进行预测
+  const prediction = mlDetector.value.predictFall(bufferData);
+
+  if (prediction) {
+    lastMLPrediction.value = prediction;
+
+    // 如果检测到摔倒（置信度>0.7）
+    if (prediction.class === 1 && prediction.confidence > 0.7) {
+      console.warn('ML检测到摔倒！', prediction);
+      handleMLFallDetected(prediction);
+    }
+  }
+};
+
+// ML摔倒检测回调
+const handleMLFallDetected = (prediction) => {
+  // 震动警告
+  uni.vibrateLong();
+
+  // 显示警告弹窗
+  showFallAlert('ML');
+
+  // 记录日志
+  console.log('ML摔倒检测:', {
+    confidence: prediction.confidence,
+    probabilities: prediction.probabilities,
+    location: currentLocation.value,
+    speed: currentSpeed.value
+  });
+};
+
+// 开始数据采集
+const startDataCollection = () => {
+  if (!isDataCollectionEnabled.value) return;
+
+  initDataCollector();
+  dataCollector.value.clearBuffer(); // 清空之前的数据
+  dataCollector.value.startCollection();
+
+  console.log('开始采集训练数据');
+};
+
+// 停止数据采集并上传
+const stopDataCollectionAndUpload = async () => {
+  if (!isDataCollectionEnabled.value || !dataCollector.value) return;
+
+  // 停止采集
+  dataCollector.value.stopCollection();
+
+  const bufferData = dataCollector.value.getBufferData();
+
+  // 如果采集到了足够的数据（至少100个点），则上传
+  if (bufferData.length >= 100) {
+    try {
+      uni.showLoading({
+        title: '上传数据中...'
+      });
+
+      await dataCollector.value.uploadData('normal', 'riding', {
+        collection_method: 'riding_page',
+        riding_duration: duration.value,
+        riding_distance: distance.value,
+        avg_speed: avgSpeed.value,
+        max_speed: maxSpeed.value
+      });
+
+      uni.hideLoading();
+      uni.showToast({
+        title: `已上传${bufferData.length}个数据点`,
+        icon: 'success'
+      });
+
+      console.log('骑行数据上传成功:', bufferData.length, '个数据点');
+    } catch (error) {
+      uni.hideLoading();
+      console.error('数据上传失败:', error);
+      uni.showToast({
+        title: '数据上传失败',
+        icon: 'none'
+      });
+    }
+  } else {
+    console.log('数据点不足，跳过上传');
+  }
+};
+
 // 开始骑行
 const startRiding = () => {
   console.log('开始骑行');
@@ -251,6 +427,9 @@ const startRiding = () => {
 
   // 启动传感器服务（摔倒检测）
   startSensorService();
+
+  // 启动数据采集（如果启用）
+  startDataCollection();
 
   uni.showToast({
     title: '开始骑行',
@@ -284,18 +463,18 @@ const handleFallDetected = (data) => {
   uni.vibrateLong();
 
   // 显示警告弹窗
-  showFallAlert();
+  showFallAlert('传感器');
 };
 
 // 摔倒警告弹窗
-const showFallAlert = () => {
+const showFallAlert = (detectionType = '传感器') => {
   let countdown = 30; // 30秒倒计时
   let countdownTimer = null;
 
   // 创建倒计时模态框
   const showModal = () => {
     uni.showModal({
-      title: '⚠️ 摔倒检测',
+      title: `⚠️ 摔倒检测 (${detectionType})`,
       content: `检测到摔倒，是否需要帮助？\n${countdown}秒后自动发送位置信息`,
       confirmText: '我没事',
       cancelText: '需要帮助',
@@ -404,6 +583,11 @@ const pauseRiding = () => {
   // 停止传感器服务（节省电量）
   sensorService.stop();
 
+  // 暂停数据采集（停止但不清除数据）
+  if (dataCollector.value && isDataCollectionEnabled.value) {
+    dataCollector.value.stopCollection();
+  }
+
   uni.showToast({
     title: '已暂停',
     icon: 'none'
@@ -423,6 +607,11 @@ const resumeRiding = () => {
 
   // 重新启动传感器服务
   startSensorService();
+
+  // 恢复数据采集
+  if (dataCollector.value && isDataCollectionEnabled.value) {
+    dataCollector.value.startCollection();
+  }
 
   uni.showToast({
     title: '继续骑行',
@@ -480,14 +669,22 @@ const cleanup = () => {
 
   // 停止传感器服务
   sensorService.stop();
+
+  // 停止数据采集器
+  if (dataCollector.value && isDataCollectionEnabled.value) {
+    dataCollector.value.stopCollection();
+  }
 };
 
 // 完成骑行
-const finishRiding = () => {
+const finishRiding = async () => {
   console.log('结束骑行');
 
   // 停止所有监听
   cleanup();
+
+  // 上传训练数据（如果启用）
+  await stopDataCollectionAndUpload();
 
   // 保存数据
   saveRidingRecord();
@@ -495,6 +692,7 @@ const finishRiding = () => {
   // 重置状态
   isRiding.value = false;
   isPaused.value = false;
+  collectedDataCount.value = 0;
 
   // 跳转到分析页面
   uni.navigateTo({
@@ -515,9 +713,35 @@ const stopRiding = () => {
   });
 };
 
+// 切换数据采集开关
+const toggleDataCollection = () => {
+  isDataCollectionEnabled.value = !isDataCollectionEnabled.value;
+
+  // 保存设置
+  uni.setStorageSync('riding_data_collection_enabled', isDataCollectionEnabled.value);
+
+  uni.showToast({
+    title: isDataCollectionEnabled.value ? '已开启数据采集' : '已关闭数据采集',
+    icon: 'none'
+  });
+
+  console.log('数据采集开关:', isDataCollectionEnabled.value);
+};
+
 // 生命周期
 onLoad(() => {
   console.log('骑行页面加载');
+
+  // 读取数据采集设置（默认开启）
+  const savedSetting = uni.getStorageSync('riding_data_collection_enabled');
+  isDataCollectionEnabled.value = savedSetting !== false;
+
+  console.log('数据采集设置:', isDataCollectionEnabled.value);
+
+  // 初始化ML检测器
+  initMLDetector().catch(err => {
+    console.error('ML检测器初始化失败:', err);
+  });
 });
 
 onUnmounted(() => {
@@ -555,6 +779,30 @@ onUnmounted(() => {
     .time {
       font-size: 32rpx;
       font-weight: 600;
+    }
+
+    .data-collection-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      background: rgba(142, 142, 147, 0.1);
+      transition: all 0.3s ease;
+
+      &.active {
+        background: rgba(0, 122, 255, 0.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      .data-count {
+        font-size: 20rpx;
+        font-weight: 600;
+        color: #007AFF;
+      }
     }
   }
 }
