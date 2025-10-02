@@ -59,6 +59,7 @@
 <script setup>
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
+import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 状态
 const totalRides = ref(0);
@@ -139,23 +140,19 @@ const formatDuration = (seconds) => {
 };
 
 // 加载统计数据
-const loadStats = () => {
+const loadStats = async () => {
   try {
-    const recordList = uni.getStorageSync('riding_list') || '[]';
-    const records = JSON.parse(recordList);
+    const ridingRecordRepo = getRidingRecordRepository();
+    const records = ridingRecordRepo.getAllRecords();
 
     totalRides.value = records.length;
 
     let distance = 0;
     let duration = 0;
 
-    records.forEach(id => {
-      const record = uni.getStorageSync(`riding_${id}`);
-      if (record) {
-        const data = JSON.parse(record);
-        distance += data.distance || 0;
-        duration += data.duration || 0;
-      }
+    records.forEach(record => {
+      distance += record.distance || 0;
+      duration += record.duration || 0;
     });
 
     totalDistance.value = distance.toFixed(1);

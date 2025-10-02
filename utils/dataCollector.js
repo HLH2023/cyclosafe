@@ -5,6 +5,7 @@
  */
 
 import config, { debugLog, errorLog } from './config.js';
+import { getSettingsRepository } from '@/db/repositories/index.js';
 
 const API_BASE_URL = config.API_BASE_URL;
 const API_KEY = config.API_KEY;
@@ -40,11 +41,12 @@ class DataCollector {
    */
   _getOrCreateUserId() {
     try {
-      let userId = uni.getStorageSync('anonymous_user_id');
+      const settingsRepo = getSettingsRepository();
+      let userId = settingsRepo.getSetting('anonymous_user_id');
       if (!userId) {
         // 生成UUID
         userId = this._generateUUID();
-        uni.setStorageSync('anonymous_user_id', userId);
+        settingsRepo.saveSetting('anonymous_user_id', userId);
       }
       return userId;
     } catch (e) {

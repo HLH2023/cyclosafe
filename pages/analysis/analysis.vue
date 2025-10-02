@@ -63,18 +63,35 @@
         />
       </view>
 
-      <!-- 图表卡片 -->
+      <!-- 速度-时间曲线图 -->
       <view class="chart-card">
         <text class="chart-title">速度-时间曲线</text>
-        <view class="chart-placeholder">
-          <text>图表占位</text>
+        <view class="chart-wrapper">
+          <line-chart
+            v-if="speedChartData.categories.length > 0"
+            canvas-id="speedChart"
+            :chart-data="speedChartData"
+            :opts="speedChartOpts"
+          />
+          <view v-else class="chart-placeholder">
+            <text>暂无数据</text>
+          </view>
         </view>
       </view>
 
+      <!-- 海拔-距离曲线图 -->
       <view class="chart-card">
         <text class="chart-title">海拔-距离曲线</text>
-        <view class="chart-placeholder">
-          <text>图表占位</text>
+        <view class="chart-wrapper">
+          <line-chart
+            v-if="altitudeChartData.categories.length > 0"
+            canvas-id="altitudeChart"
+            :chart-data="altitudeChartData"
+            :opts="altitudeChartOpts"
+          />
+          <view v-else class="chart-placeholder">
+            <text>暂无数据</text>
+          </view>
         </view>
       </view>
     </view>
@@ -84,6 +101,7 @@
 <script setup>
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
+import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 返回
 const goBack = () => {
@@ -100,31 +118,87 @@ const mapCenter = ref({
 const polyline = ref([]);
 const markers = ref([]);
 
+// 图表数据
+const speedChartData = ref({
+  categories: [],
+  series: []
+});
+const speedChartOpts = ref({
+  xAxis: {
+    title: '时间'
+  },
+  yAxis: {
+    title: '速度 (km/h)',
+    format: (val) => val.toFixed(1)
+  }
+});
+
+const altitudeChartData = ref({
+  categories: [],
+  series: []
+});
+const altitudeChartOpts = ref({
+  xAxis: {
+    title: '距离 (km)'
+  },
+  yAxis: {
+    title: '海拔 (m)',
+    format: (val) => val.toFixed(0)
+  }
+});
+
 // 加载最新记录
 const loadLatestRecord = () => {
   try {
-    const list = uni.getStorageSync('riding_list') || '[]';
-    const ids = JSON.parse(list);
+    // 使用Repository从SQLite读取最新记录
+    const repository = getRidingRecordRepository();
+    const records = repository.getAllRecords({ limit: 1 });
 
-    if (ids.length > 0) {
-      recordId.value = ids[0];
-      loadRecord(ids[0]);
+    if (records.length > 0) {
+      recordId.value = records[0].id;
+      loadRecord(records[0].id);
+      console.log('✅ 从SQLite加载最新记录:', records[0].id);
+    } else {
+      console.log('暂无骑行记录');
+      uni.showToast({
+        title: '暂无骑行记录',
+        icon: 'none'
+      });
     }
   } catch (err) {
-    console.error('加载记录失败:', err);
+    console.error('❌ 加载记录失败:', err);
+    uni.showToast({
+      title: '加载记录失败',
+      icon: 'none'
+    });
   }
 };
 
 // 加载记录
 const loadRecord = (id) => {
   try {
-    const data = uni.getStorageSync(`riding_${id}`);
-    if (data) {
-      recordData.value = JSON.parse(data);
+    // 使用Repository从SQLite读取记录详情
+    const repository = getRidingRecordRepository();
+    const record = repository.getRecord(id);
+
+    if (record) {
+      recordData.value = record;
       initMap();
+      initCharts();
+      console.log('✅ 从SQLite加载记录详情:', id);
+    } else {
+      console.log('记录不存在:', id);
+      uni.showToast({
+        title: '记录不存在',
+        icon: 'none'
+      });
     }
   } catch (err) {
-    console.error('加载记录失败:', err);
+    console.error('❌ 加载记录失败:', err);
+    uni.showToast({
+      title: '加载记录失败',
+      icon: 'none'
+    });
   }
 };
 
@@ -193,6 +267,88 @@ const initMap = () => {
       }
     ];
   }
+};
+
+// 初始化图表数据
+const initCharts = () => {
+  if (!recordData.value || !recordData.value.trackPoints || recordData.value.trackPoints.length === 0) {
+    return;
+  }
+
+  const points = recordData.value.trackPoints;
+
+  // 处理速度-时间曲线数据
+  const speedCategories = [];
+  const speedData = [];
+  const startTime = points[0].timestamp;
+
+  // 降采样：最多显示50个点
+  const speedStep = Math.max(1, Math.floor(points.length / 50));
+
+  for (let i = 0; i < points.length; i += speedStep) {
+    const point = points[i];
+    const elapsedSeconds = Math.floor((point.timestamp - startTime) / 1000);
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+
+    speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
+    speedData.push(point.speed * 3.6); // m/s 转 km/h
+  }
+
+  speedChartData.value = {
+    categories: speedCategories,
+    series: [{
+      name: '速度',
+      data: speedData
+    }]
+  };
+
+  // 处理海拔-距离曲线数据
+  const altitudeCategories = [];
+  const altitudeData = [];
+  let accumulatedDistance = 0;
+
+  // 降采样：最多显示50个点
+  const altitudeStep = Math.max(1, Math.floor(points.length / 50));
+
+  for (let i = 0; i < points.length; i += altitudeStep) {
+    const point = points[i];
+
+    // 计算累计距离
+    if (i > 0) {
+      const prevPoint = points[i - altitudeStep] || points[i - 1];
+      const distance = calculateDistance(
+        prevPoint.latitude,
+        prevPoint.longitude,
+        point.latitude,
+        point.longitude
+      );
+      accumulatedDistance += distance;
+    }
+
+    altitudeCategories.push((accumulatedDistance / 1000).toFixed(1)); // 转换为km
+    altitudeData.push(point.altitude || 0);
+  }
+
+  altitudeChartData.value = {
+    categories: altitudeCategories,
+    series: [{
+      name: '海拔',
+      data: altitudeData
+    }]
+  };
+};
+
+// 计算两点间距离（Haversine公式）
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371000; // 地球半径（米）
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 };
 
 // 格式化日期时间
@@ -342,6 +498,10 @@ onLoad((options) => {
     font-weight: 600;
     color: #1F2937;
     margin-bottom: 24rpx;
+  }
+
+  .chart-wrapper {
+    height: 384rpx;
   }
 
   .chart-placeholder {

@@ -80,6 +80,7 @@
 <script setup>
 import { ref } from 'vue';
 import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app';
+import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 状态
 const recordList = ref([]);
@@ -88,15 +89,16 @@ const searchText = ref('');
 // 加载记录
 const loadRecords = () => {
   try {
-    const list = uni.getStorageSync('riding_list') || '[]';
-    const ids = JSON.parse(list);
-
-    recordList.value = ids.map(id => {
-      const data = uni.getStorageSync(`riding_${id}`);
-      return data ? JSON.parse(data) : null;
-    }).filter(item => item !== null);
+    // 使用Repository从SQLite读取记录
+    const repository = getRidingRecordRepository();
+    recordList.value = repository.getAllRecords();
+    console.log('✅ 从SQLite加载了', recordList.value.length, '条记录');
   } catch (err) {
-    console.error('加载记录失败:', err);
+    console.error('❌ 加载记录失败:', err);
+    uni.showToast({
+      title: '加载记录失败',
+      icon: 'none'
+    });
   }
 };
 
@@ -136,26 +138,27 @@ const deleteRecord = (id) => {
 };
 
 // 执行删除
-const performDelete = (id) => {
+const performDelete = async (id) => {
   try {
-    // 删除记录
-    uni.removeStorageSync(`riding_${id}`);
+    // 使用Repository从SQLite删除记录
+    const repository = getRidingRecordRepository();
+    const success = await repository.deleteRecord(id);
 
-    // 更新列表
-    const list = uni.getStorageSync('riding_list') || '[]';
-    const ids = JSON.parse(list);
-    const newIds = ids.filter(rid => rid !== id);
-    uni.setStorageSync('riding_list', JSON.stringify(newIds));
+    if (success) {
+      console.log('✅ 记录已从SQLite删除:', id);
 
-    // 重新加载
-    loadRecords();
+      // 重新加载
+      loadRecords();
 
-    uni.showToast({
-      title: '删除成功',
-      icon: 'success'
-    });
+      uni.showToast({
+        title: '删除成功',
+        icon: 'success'
+      });
+    } else {
+      throw new Error('删除失败');
+    }
   } catch (err) {
-    console.error('删除失败:', err);
+    console.error('❌ 删除失败:', err);
     uni.showToast({
       title: '删除失败',
       icon: 'none'

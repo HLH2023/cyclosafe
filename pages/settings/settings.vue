@@ -184,6 +184,8 @@
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { getSettingsRepository, getRidingRecordRepository } from '@/db/repositories/index.js';
+import { clearAllData } from '@/db/database.js';
 
 // 主题设置
 const themeStore = useThemeStore();
@@ -218,34 +220,42 @@ const keepScreenOn = ref(false);
 
 // 加载设置
 const loadSettings = () => {
-  // 主题设置
-  const savedTheme = uni.getStorageSync('theme_mode') || 'auto';
-  const themeMap = { auto: 0, light: 1, dark: 2 };
-  themeIndex.value = themeMap[savedTheme] || 0;
+  try {
+    const settingsRepo = getSettingsRepository();
 
-  // 单位设置
-  distanceUnitIndex.value = uni.getStorageSync('distance_unit') || 0;
-  speedUnitIndex.value = uni.getStorageSync('speed_unit') || 0;
-  altitudeUnitIndex.value = uni.getStorageSync('altitude_unit') || 0;
+    // 主题设置
+    const savedTheme = settingsRepo.getSetting('theme_mode', 'auto');
+    const themeMap = { auto: 0, light: 1, dark: 2 };
+    themeIndex.value = themeMap[savedTheme] || 0;
 
-  // 地图设置
-  mapTypeIndex.value = uni.getStorageSync('map_type') || 0;
-  trackColorIndex.value = uni.getStorageSync('track_color') || 0;
-  showTrack.value = uni.getStorageSync('show_track') !== false;
+    // 单位设置
+    distanceUnitIndex.value = settingsRepo.getSetting('distance_unit', 0);
+    speedUnitIndex.value = settingsRepo.getSetting('speed_unit', 0);
+    altitudeUnitIndex.value = settingsRepo.getSetting('altitude_unit', 0);
 
-  // 安全设置
-  speedThreshold.value = uni.getStorageSync('speed_threshold') || 40;
-  vibrationEnabled.value = uni.getStorageSync('vibration_enabled') !== false;
-  fallDetectionEnabled.value = uni.getStorageSync('fallDetectionEnabled') !== 'false'; // 默认开启
+    // 地图设置
+    mapTypeIndex.value = settingsRepo.getSetting('map_type', 0);
+    trackColorIndex.value = settingsRepo.getSetting('track_color', 0);
+    showTrack.value = settingsRepo.getSetting('show_track', true);
 
-  // 加载摔倒检测灵敏度
-  const sensitivity = uni.getStorageSync('fallDetectionSensitivity') || 'medium';
-  const sensitivityMap = { low: 0, medium: 1, high: 2 };
-  fallSensitivityIndex.value = sensitivityMap[sensitivity] || 1;
+    // 安全设置
+    speedThreshold.value = settingsRepo.getSetting('speed_threshold', 40);
+    vibrationEnabled.value = settingsRepo.getSetting('vibration_enabled', true);
+    fallDetectionEnabled.value = settingsRepo.getSetting('fallDetectionEnabled', true);
 
-  // 其他设置
-  autoPause.value = uni.getStorageSync('auto_pause') !== false;
-  keepScreenOn.value = uni.getStorageSync('keep_screen_on') === true;
+    // 加载摔倒检测灵敏度
+    const sensitivity = settingsRepo.getSetting('fallDetectionSensitivity', 'medium');
+    const sensitivityMap = { low: 0, medium: 1, high: 2 };
+    fallSensitivityIndex.value = sensitivityMap[sensitivity] || 1;
+
+    // 其他设置
+    autoPause.value = settingsRepo.getSetting('auto_pause', true);
+    keepScreenOn.value = settingsRepo.getSetting('keep_screen_on', false);
+
+    console.log('✅ 从SQLite加载了所有设置');
+  } catch (error) {
+    console.error('❌ 加载设置失败:', error);
+  }
 };
 
 // 主题变化
@@ -268,7 +278,8 @@ const onThemeChange = (e) => {
 // 距离单位变化
 const onDistanceUnitChange = (e) => {
   distanceUnitIndex.value = e.detail.value;
-  uni.setStorageSync('distance_unit', distanceUnitIndex.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('distance_unit', distanceUnitIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -278,7 +289,8 @@ const onDistanceUnitChange = (e) => {
 // 速度单位变化
 const onSpeedUnitChange = (e) => {
   speedUnitIndex.value = e.detail.value;
-  uni.setStorageSync('speed_unit', speedUnitIndex.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('speed_unit', speedUnitIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -288,7 +300,8 @@ const onSpeedUnitChange = (e) => {
 // 海拔单位变化
 const onAltitudeUnitChange = (e) => {
   altitudeUnitIndex.value = e.detail.value;
-  uni.setStorageSync('altitude_unit', altitudeUnitIndex.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('altitude_unit', altitudeUnitIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -298,7 +311,8 @@ const onAltitudeUnitChange = (e) => {
 // 地图类型变化
 const onMapTypeChange = (e) => {
   mapTypeIndex.value = e.detail.value;
-  uni.setStorageSync('map_type', mapTypeIndex.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('map_type', mapTypeIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -308,7 +322,8 @@ const onMapTypeChange = (e) => {
 // 轨迹颜色变化
 const onTrackColorChange = (e) => {
   trackColorIndex.value = e.detail.value;
-  uni.setStorageSync('track_color', trackColorIndex.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('track_color', trackColorIndex.value);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -318,13 +333,15 @@ const onTrackColorChange = (e) => {
 // 显示轨迹变化
 const onShowTrackChange = (e) => {
   showTrack.value = e.detail.value;
-  uni.setStorageSync('show_track', showTrack.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('show_track', showTrack.value);
 };
 
 // 速度阈值变化
 const onSpeedThresholdChange = (e) => {
   speedThreshold.value = e.detail.value;
-  uni.setStorageSync('speed_threshold', speedThreshold.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('speed_threshold', speedThreshold.value);
 };
 
 // 速度阈值拖动中
@@ -335,7 +352,8 @@ const onSpeedThresholdChanging = (e) => {
 // 摔倒检测开关变化
 const onFallDetectionChange = (e) => {
   fallDetectionEnabled.value = e.detail.value;
-  uni.setStorageSync('fallDetectionEnabled', fallDetectionEnabled.value ? 'true' : 'false');
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('fallDetectionEnabled', fallDetectionEnabled.value);
 
   uni.showToast({
     title: fallDetectionEnabled.value ? '摔倒检测已开启' : '摔倒检测已关闭',
@@ -351,7 +369,8 @@ const onFallSensitivityChange = (e) => {
   const indexToSensitivity = ['low', 'medium', 'high'];
   const sensitivity = indexToSensitivity[fallSensitivityIndex.value];
 
-  uni.setStorageSync('fallDetectionSensitivity', sensitivity);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('fallDetectionSensitivity', sensitivity);
 
   uni.showToast({
     title: '灵敏度已更新',
@@ -362,19 +381,22 @@ const onFallSensitivityChange = (e) => {
 // 震动开关变化
 const onVibrationChange = (e) => {
   vibrationEnabled.value = e.detail.value;
-  uni.setStorageSync('vibration_enabled', vibrationEnabled.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('vibration_enabled', vibrationEnabled.value);
 };
 
 // 自动暂停变化
 const onAutoPauseChange = (e) => {
   autoPause.value = e.detail.value;
-  uni.setStorageSync('auto_pause', autoPause.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('auto_pause', autoPause.value);
 };
 
 // 屏幕常亮变化
 const onKeepScreenOnChange = (e) => {
   keepScreenOn.value = e.detail.value;
-  uni.setStorageSync('keep_screen_on', keepScreenOn.value);
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('keep_screen_on', keepScreenOn.value);
 
   if (keepScreenOn.value) {
     uni.setKeepScreenOn({
@@ -428,23 +450,20 @@ const clearAllData = () => {
 };
 
 // 执行清空
-const performClearAll = () => {
+const performClearAll = async () => {
   try {
-    const list = uni.getStorageSync('riding_list') || '[]';
-    const ids = JSON.parse(list);
+    // 使用数据库清空函数
+    const ridingRecordRepo = getRidingRecordRepository();
+    const success = await clearAllData(ridingRecordRepo.db);
 
-    // 删除所有记录
-    ids.forEach(id => {
-      uni.removeStorageSync(`riding_${id}`);
-    });
-
-    // 清空列表
-    uni.setStorageSync('riding_list', '[]');
-
-    uni.showToast({
-      title: '已清空所有记录',
-      icon: 'success'
-    });
+    if (success) {
+      uni.showToast({
+        title: '已清空所有记录',
+        icon: 'success'
+      });
+    } else {
+      throw new Error('清空失败');
+    }
   } catch (err) {
     console.error('清空失败:', err);
     uni.showToast({

@@ -7,7 +7,8 @@
       "^stat-card$": "@/components/stat-card/stat-card.vue",
       "^glass-card$": "@/components/glass-card/glass-card.vue",
       "^ride-card$": "@/components/ride-card/ride-card.vue",
-      "^tab-bar$": "@/components/tab-bar/tab-bar.vue"
+      "^tab-bar$": "@/components/tab-bar/tab-bar.vue",
+      "^line-chart$": "@/components/line-chart/line-chart.vue"
     }
   },
   "pages": [

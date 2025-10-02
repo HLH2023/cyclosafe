@@ -92,6 +92,8 @@ import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
 import { getMLDetector } from '@/utils/mlModel.js';
 import config from '@/utils/config.js';
+import { getRidingRecordRepository, getSettingsRepository } from '@/db/repositories/index.js';
+import { generateUUID } from '@/utils/uuid.js';
 
 // 当前时间
 const currentTime = ref('');
@@ -439,9 +441,10 @@ const startRiding = () => {
 
 // 启动传感器服务
 const startSensorService = () => {
-  // 获取设置（从本地存储读取）
-  const fallDetectionEnabled = uni.getStorageSync('fallDetectionEnabled') !== 'false'; // 默认开启
-  const sensitivity = uni.getStorageSync('fallDetectionSensitivity') || 'medium';
+  // 获取设置（从SQLite读取）
+  const settingsRepo = getSettingsRepository();
+  const fallDetectionEnabled = settingsRepo.getSetting('fallDetectionEnabled', true); // 默认开启
+  const sensitivity = settingsRepo.getSetting('fallDetectionSensitivity', 'medium');
 
   console.log('启动传感器服务 - 摔倒检测:', fallDetectionEnabled, '灵敏度:', sensitivity);
 
@@ -619,17 +622,8 @@ const resumeRiding = () => {
   });
 };
 
-// 生成UUID
-const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
 // 保存骑行记录
-const saveRidingRecord = () => {
+const saveRidingRecord = async () => {
   const recordId = generateUUID();
   const record = {
     id: recordId,
@@ -643,16 +637,27 @@ const saveRidingRecord = () => {
     trackPoints: trackPoints.value
   };
 
-  // 保存记录
-  uni.setStorageSync(`riding_${recordId}`, JSON.stringify(record));
+  try {
+    // 使用Repository保存记录到SQLite
+    const repository = getRidingRecordRepository();
+    const success = await repository.saveRecord(record);
 
-  // 更新记录列表
-  const list = uni.getStorageSync('riding_list') || '[]';
-  const recordList = JSON.parse(list);
-  recordList.unshift(recordId);
-  uni.setStorageSync('riding_list', JSON.stringify(recordList));
-
-  console.log('骑行记录已保存:', recordId);
+    if (success) {
+      console.log('✅ 骑行记录已保存到SQLite:', recordId);
+    } else {
+      console.error('❌ 骑行记录保存失败');
+      uni.showToast({
+        title: '记录保存失败',
+        icon: 'none'
+      });
+    }
+  } catch (error) {
+    console.error('❌ 保存骑行记录出错:', error);
+    uni.showToast({
+      title: '记录保存出错',
+      icon: 'none'
+    });
+  }
 };
 
 // 清理资源
@@ -686,15 +691,15 @@ const finishRiding = async () => {
   // 上传训练数据（如果启用）
   await stopDataCollectionAndUpload();
 
-  // 保存数据
-  saveRidingRecord();
+  // 保存数据到SQLite
+  await saveRidingRecord();
 
   // 重置状态
   isRiding.value = false;
   isPaused.value = false;
   collectedDataCount.value = 0;
 
-  // 跳转到分析页面
+  // 跳转到分析页面（传递最新记录ID）
   uni.navigateTo({
     url: '/pages/analysis/analysis?latest=true'
   });
@@ -717,8 +722,9 @@ const stopRiding = () => {
 const toggleDataCollection = () => {
   isDataCollectionEnabled.value = !isDataCollectionEnabled.value;
 
-  // 保存设置
-  uni.setStorageSync('riding_data_collection_enabled', isDataCollectionEnabled.value);
+  // 保存设置到SQLite
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('riding_data_collection_enabled', isDataCollectionEnabled.value);
 
   uni.showToast({
     title: isDataCollectionEnabled.value ? '已开启数据采集' : '已关闭数据采集',
@@ -733,8 +739,8 @@ onLoad(() => {
   console.log('骑行页面加载');
 
   // 读取数据采集设置（默认开启）
-  const savedSetting = uni.getStorageSync('riding_data_collection_enabled');
-  isDataCollectionEnabled.value = savedSetting !== false;
+  const settingsRepo = getSettingsRepository();
+  isDataCollectionEnabled.value = settingsRepo.getSetting('riding_data_collection_enabled', true);
 
   console.log('数据采集设置:', isDataCollectionEnabled.value);
 

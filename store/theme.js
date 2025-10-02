@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { getSettingsRepository } from '@/db/repositories/index.js';
 
 export const useThemeStore = defineStore('theme', {
   state: () => ({
@@ -32,10 +33,16 @@ export const useThemeStore = defineStore('theme', {
     initTheme() {
       console.log('初始化主题系统...');
 
-      // 从本地存储读取用户设置
-      const savedMode = uni.getStorageSync('theme_mode');
-      if (savedMode && ['auto', 'light', 'dark'].includes(savedMode)) {
-        this.mode = savedMode;
+      // 从SQLite读取用户设置
+      try {
+        const settingsRepo = getSettingsRepository();
+        const savedMode = settingsRepo.getSetting('theme_mode', 'auto');
+        if (savedMode && ['auto', 'light', 'dark'].includes(savedMode)) {
+          this.mode = savedMode;
+        }
+        console.log('✅ 从SQLite读取主题设置:', savedMode);
+      } catch (error) {
+        console.error('❌ 读取主题设置失败:', error);
       }
 
       // 获取系统主题
@@ -82,8 +89,14 @@ export const useThemeStore = defineStore('theme', {
       console.log('切换主题模式:', mode);
       this.mode = mode;
 
-      // 保存到本地存储
-      uni.setStorageSync('theme_mode', mode);
+      // 保存到SQLite
+      try {
+        const settingsRepo = getSettingsRepository();
+        settingsRepo.saveSetting('theme_mode', mode);
+        console.log('✅ 主题设置已保存到SQLite:', mode);
+      } catch (error) {
+        console.error('❌ 保存主题设置失败:', error);
+      }
 
       // 应用主题
       this.applyTheme();

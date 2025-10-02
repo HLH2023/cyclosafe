@@ -1,9 +1,13 @@
 <script>
 import { useThemeStore } from '@/store/theme';
+import { setupDatabase } from '@/db/database.js';
 
 export default {
-  onLaunch: function() {
+  onLaunch: async function() {
     console.log('App Launch');
+
+    // 初始化SQLite数据库
+    await this.initDatabase();
 
     // 初始化主题系统
     this.initTheme();
@@ -18,6 +22,21 @@ export default {
     console.log('App Hide');
   },
   methods: {
+    // 初始化数据库
+    async initDatabase() {
+      try {
+        console.log('开始初始化SQLite数据库...');
+        await setupDatabase();
+        console.log('✅ SQLite数据库初始化成功');
+      } catch (error) {
+        console.error('❌ SQLite数据库初始化失败:', error);
+        uni.showToast({
+          title: '数据库初始化失败',
+          icon: 'none'
+        });
+      }
+    },
+
     // 初始化主题
     initTheme() {
       const themeStore = useThemeStore();

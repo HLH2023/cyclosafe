@@ -9,6 +9,7 @@
  */
 
 import { debugLog, errorLog } from './config.js';
+import { getSettingsRepository } from '@/db/repositories/index.js';
 
 /**
  * 特征提取器 - DEPLOY-04
@@ -540,9 +541,10 @@ export class MLFallDetector {
       if (loaded) {
         debugLog('ML模型', `模型更新成功: v${updateInfo.serverVersion}`);
 
-        // 保存版本信息到本地存储
-        uni.setStorageSync('ml_model_version', updateInfo.serverVersion);
-        uni.setStorageSync('ml_model_checksum', updateInfo.updateInfo.checksum);
+        // 保存版本信息到SQLite
+        const settingsRepo = getSettingsRepository();
+        settingsRepo.saveSetting('ml_model_version', updateInfo.serverVersion);
+        settingsRepo.saveSetting('ml_model_checksum', updateInfo.updateInfo.checksum);
 
         // 显示更新成功提示
         uni.showToast({
