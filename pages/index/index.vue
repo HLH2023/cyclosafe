@@ -50,154 +50,151 @@
   </view>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 
-export default {
-  data() {
-    return {
-      totalRides: 0,
-      totalDistance: '0.0',
-      totalTime: '0:00:00',
-      themeClass: 'theme-light'
-    };
-  },
-  onLoad() {
-    this.initTheme();
-    this.loadStats();
-  },
-  onShow() {
-    this.loadStats();
-    this.updateTheme();
-  },
-  onUnload() {
-    // 移除主题变化监听
-    uni.$off('themeChange', this.handleThemeChange);
-  },
-  methods: {
-    // 初始化主题
-    initTheme() {
-      const themeStore = useThemeStore();
-      this.themeClass = themeStore.isDark ? 'theme-dark' : 'theme-light';
+// 状态
+const totalRides = ref(0);
+const totalDistance = ref('0.0');
+const totalTime = ref('0:00:00');
 
-      // 监听主题变化
-      uni.$on('themeChange', this.handleThemeChange);
-    },
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
-    // 处理主题变化
-    handleThemeChange(data) {
-      this.themeClass = data.isDark ? 'theme-dark' : 'theme-light';
-    },
+// 处理主题变化
+const handleThemeChange = (data) => {
+  // themeClass 是计算属性，会自动更新
+};
 
-    // 更新主题
-    updateTheme() {
-      const themeStore = useThemeStore();
-      this.themeClass = themeStore.isDark ? 'theme-dark' : 'theme-light';
-    },
+// 初始化主题
+const initTheme = () => {
+  // 监听主题变化
+  uni.$on('themeChange', handleThemeChange);
+};
 
-    // 开始骑行
-    async startRiding() {
-      // 检查位置权限
-      try {
-        const hasPermission = await this.checkLocationPermission();
-        if (!hasPermission) {
-          uni.showModal({
-            title: '需要位置权限',
-            content: '骑行功能需要获取您的位置信息，请在设置中允许位置权限',
-            confirmText: '去设置',
-            success: (res) => {
-              if (res.confirm) {
-                uni.openSetting();
-              }
-            }
+// 更新主题（从 store 获取最新状态）
+const updateTheme = () => {
+  // themeClass 是基于 themeStore.isDark 的计算属性，会自动更新
+};
+
+// 检查位置权限
+const checkLocationPermission = () => {
+  return new Promise((resolve) => {
+    uni.getSetting({
+      success: (res) => {
+        if (res.authSetting['scope.userLocation']) {
+          resolve(true);
+        } else {
+          // 请求权限
+          uni.authorize({
+            scope: 'scope.userLocation',
+            success: () => resolve(true),
+            fail: () => resolve(false)
           });
-          return;
         }
+      },
+      fail: () => resolve(false)
+    });
+  });
+};
 
-        // 跳转到骑行页面
-        uni.navigateTo({
-          url: '/pages/riding/riding'
-        });
-      } catch (err) {
-        console.error('开始骑行失败:', err);
-        uni.showToast({
-          title: '启动失败',
-          icon: 'none'
-        });
-      }
-    },
-
-    // 检查位置权限
-    checkLocationPermission() {
-      return new Promise((resolve) => {
-        uni.getSetting({
-          success: (res) => {
-            if (res.authSetting['scope.userLocation']) {
-              resolve(true);
-            } else {
-              // 请求权限
-              uni.authorize({
-                scope: 'scope.userLocation',
-                success: () => resolve(true),
-                fail: () => resolve(false)
-              });
-            }
-          },
-          fail: () => resolve(false)
-        });
-      });
-    },
-
-    // 跳转到历史记录
-    goToHistory() {
-      uni.switchTab({
-        url: '/pages/history/history'
-      });
-    },
-
-    // 跳转到设置
-    goToSettings() {
-      uni.switchTab({
-        url: '/pages/settings/settings'
-      });
-    },
-
-    // 加载统计数据
-    loadStats() {
-      try {
-        const recordList = uni.getStorageSync('riding_list') || '[]';
-        const records = JSON.parse(recordList);
-
-        this.totalRides = records.length;
-
-        let distance = 0;
-        let duration = 0;
-
-        records.forEach(id => {
-          const record = uni.getStorageSync(`riding_${id}`);
-          if (record) {
-            const data = JSON.parse(record);
-            distance += data.distance || 0;
-            duration += data.duration || 0;
+// 开始骑行
+const startRiding = async () => {
+  try {
+    const hasPermission = await checkLocationPermission();
+    if (!hasPermission) {
+      uni.showModal({
+        title: '需要位置权限',
+        content: '骑行功能需要获取您的位置信息，请在设置中允许位置权限',
+        confirmText: '去设置',
+        success: (res) => {
+          if (res.confirm) {
+            uni.openSetting();
           }
-        });
-
-        this.totalDistance = distance.toFixed(1);
-        this.totalTime = this.formatDuration(duration);
-      } catch (err) {
-        console.error('加载统计数据失败:', err);
-      }
-    },
-
-    // 格式化时长
-    formatDuration(seconds) {
-      const hours = Math.floor(seconds / 3600);
-      const mins = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+      });
+      return;
     }
+
+    uni.navigateTo({
+      url: '/pages/riding/riding'
+    });
+  } catch (err) {
+    console.error('开始骑行失败:', err);
+    uni.showToast({
+      title: '启动失败',
+      icon: 'none'
+    });
   }
 };
+
+// 跳转到历史记录
+const goToHistory = () => {
+  uni.switchTab({
+    url: '/pages/history/history'
+  });
+};
+
+// 跳转到设置
+const goToSettings = () => {
+  uni.switchTab({
+    url: '/pages/settings/settings'
+  });
+};
+
+// 格式化时长
+const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+// 加载统计数据
+const loadStats = () => {
+  try {
+    const recordList = uni.getStorageSync('riding_list') || '[]';
+    const records = JSON.parse(recordList);
+
+    totalRides.value = records.length;
+
+    let distance = 0;
+    let duration = 0;
+
+    records.forEach(id => {
+      const record = uni.getStorageSync(`riding_${id}`);
+      if (record) {
+        const data = JSON.parse(record);
+        distance += data.distance || 0;
+        duration += data.duration || 0;
+      }
+    });
+
+    totalDistance.value = distance.toFixed(1);
+    totalTime.value = formatDuration(duration);
+  } catch (err) {
+    console.error('加载统计数据失败:', err);
+  }
+};
+
+// 生命周期
+onLoad(() => {
+  initTheme();
+  loadStats();
+});
+
+onShow(() => {
+  loadStats();
+  updateTheme();
+});
+
+onUnmounted(() => {
+  // 移除主题变化监听
+  uni.$off('themeChange', handleThemeChange);
+});
 </script>
 
 <style lang="scss" scoped>

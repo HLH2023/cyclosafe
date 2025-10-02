@@ -2,7 +2,11 @@
   "easycom": {
     "autoscan": true,
     "custom": {
-      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+      "^m-(.*)": "@/components/m-$1/m-$1.vue",
+      "^stat-card$": "@/components/stat-card/stat-card.vue",
+      "^glass-card$": "@/components/glass-card/glass-card.vue",
+      "^ride-card$": "@/components/ride-card/ride-card.vue"
     }
   },
   "pages": [
@@ -59,22 +63,26 @@
     "backgroundColor": "#F5F5F5"
   },
   "tabBar": {
-    "color": "#7A7E83",
+    "color": "#6B7280",
     "selectedColor": "#3B82F6",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "backgroundColor": "#FFFFFF",
+    "height": "50px",
+    "fontSize": "10px",
+    "iconWidth": "24px",
+    "spacing": "3px",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "🏠 首页"
+        "text": "首页"
       },
       {
         "pagePath": "pages/history/history",
-        "text": "📊 记录"
+        "text": "记录"
       },
       {
         "pagePath": "pages/settings/settings",
-        "text": "⚙️ 设置"
+        "text": "设置"
       }
     ]
   }
