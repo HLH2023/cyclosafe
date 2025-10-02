@@ -1,77 +1,70 @@
 <template>
-  <view class="riding-page" :class="themeClass">
-    <!-- 速度显示区域 -->
-    <view class="speed-section">
-      <view class="current-speed">
-        <text class="speed-value">{{ currentSpeed.toFixed(1) }}</text>
-        <text class="speed-unit">km/h</text>
+  <view class="riding-page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <text class="title">骑行中</text>
+      <view class="header-right">
+        <m-icon name="battery_horiz_075" :size="24" color="#1C1C1E"></m-icon>
+        <text class="time">{{ currentTime }}</text>
       </view>
     </view>
 
-    <!-- 数据显示区域 -->
-    <view class="data-section">
-      <view class="data-row">
-        <view class="data-item">
-          <text class="data-label">距离</text>
-          <text class="data-value">{{ distance.toFixed(2) }} km</text>
-        </view>
-        <view class="data-item">
-          <text class="data-label">时长</text>
-          <text class="data-value">{{ formattedDuration }}</text>
-        </view>
+    <!-- 主内容区 -->
+    <view class="main-content">
+      <!-- 地图区域 -->
+      <view class="map-section">
+        <map
+          id="riding-map"
+          :longitude="currentLocation.longitude"
+          :latitude="currentLocation.latitude"
+          :scale="15"
+          :markers="markers"
+          :polyline="polyline"
+          :show-location="true"
+          style="width: 100%; height: 100%; border-radius: 24rpx;"
+        />
       </view>
-      <view class="data-row">
-        <view class="data-item">
-          <text class="data-label">平均速度</text>
-          <text class="data-value">{{ avgSpeed.toFixed(1) }} km/h</text>
-        </view>
-        <view class="data-item">
-          <text class="data-label">最高速度</text>
-          <text class="data-value">{{ maxSpeed.toFixed(1) }} km/h</text>
-        </view>
-      </view>
-      <view class="data-row">
-        <view class="data-item">
-          <text class="data-label">海拔</text>
-          <text class="data-value">{{ altitude.toFixed(0) }} m</text>
-        </view>
-        <view class="data-item">
-          <text class="data-label">爬升</text>
-          <text class="data-value">{{ totalAscent.toFixed(0) }} m</text>
-        </view>
-      </view>
-    </view>
 
-    <!-- 地图区域 -->
-    <view class="map-section">
-      <map
-        id="riding-map"
-        :longitude="currentLocation.longitude"
-        :latitude="currentLocation.latitude"
-        :scale="15"
-        :markers="markers"
-        :polyline="polyline"
-        :show-location="true"
-        style="width: 100%; height: 100%;"
-      />
-    </view>
+      <!-- 数据卡片 -->
+      <view class="data-card glass-morphism">
+        <!-- 速度显示 -->
+        <view class="speed-display">
+          <text class="speed-value">{{ currentSpeed.toFixed(1) }}</text>
+          <text class="speed-unit">KM/H</text>
+        </view>
 
-    <!-- 控制按钮 -->
-    <view class="control-section">
-      <button v-if="!isRiding" class="control-btn start-btn" @click="startRiding">
-        开始
-      </button>
-      <template v-else>
-        <button v-if="!isPaused" class="control-btn pause-btn" @click="pauseRiding">
-          暂停
-        </button>
-        <button v-else class="control-btn resume-btn" @click="resumeRiding">
-          继续
-        </button>
-        <button class="control-btn stop-btn" @click="stopRiding">
-          结束
-        </button>
-      </template>
+        <!-- 其他数据 -->
+        <view class="stats-row">
+          <view class="stat-item">
+            <text class="stat-value">{{ formattedPace }}</text>
+            <text class="stat-label">配速</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{ distance.toFixed(1) }}</text>
+            <text class="stat-label">距离 (KM)</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 控制按钮 -->
+      <view class="control-section">
+        <template v-if="!isRiding">
+          <button class="control-btn start-btn circle-btn" @click="startRiding">
+            <m-icon name="play_arrow" :size="60" color="#FFFFFF"></m-icon>
+          </button>
+        </template>
+        <template v-else>
+          <button v-if="!isPaused" class="control-btn pause-btn circle-btn" @click="pauseRiding">
+            <m-icon name="pause" :size="60" color="#FFFFFF"></m-icon>
+          </button>
+          <button v-else class="control-btn resume-btn circle-btn" @click="resumeRiding">
+            <m-icon name="play_arrow" :size="60" color="#FFFFFF"></m-icon>
+          </button>
+          <button class="control-btn stop-btn circle-btn-small" @click="stopRiding">
+            <m-icon name="stop" :size="50" color="#FFFFFF"></m-icon>
+          </button>
+        </template>
+      </view>
     </view>
   </view>
 </template>
@@ -79,11 +72,15 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { useThemeStore } from '@/store/theme';
 
-// 主题
-const themeStore = useThemeStore();
-const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
+// 当前时间
+const currentTime = ref('');
+const updateTime = () => {
+  const now = new Date();
+  currentTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+updateTime();
+setInterval(updateTime, 60000);
 
 // 状态
 const isRiding = ref(false);
@@ -113,6 +110,15 @@ const formattedDuration = computed(() => {
   const mins = Math.floor((duration.value % 3600) / 60);
   const secs = duration.value % 60;
   return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+});
+
+// 配速 (分钟/公里)
+const formattedPace = computed(() => {
+  if (currentSpeed.value === 0) return '0:00';
+  const paceMinutes = 60 / currentSpeed.value;
+  const mins = Math.floor(paceMinutes);
+  const secs = Math.floor((paceMinutes - mins) * 60);
+  return `${mins}:${String(secs).padStart(2, '0')}`;
 });
 
 // 计算两点距离（Haversine公式）
@@ -378,147 +384,166 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
-
 .riding-page {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--background-color);
-
-  &.theme-dark {
-    background: var(--background-color);
-  }
-}
-
-.speed-section {
-  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
-  padding: 60rpx 40rpx;
-  text-align: center;
-
-  .current-speed {
-    color: white;
-
-    .speed-value {
-      font-size: 160rpx;
-      font-weight: 700;
-      line-height: 1;
-      letter-spacing: -4rpx;
-    }
-
-    .speed-unit {
-      font-size: 40rpx;
-      opacity: 0.85;
-      margin-left: 16rpx;
-      font-weight: 500;
-    }
-  }
-}
-
-.theme-dark .speed-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%);
-}
-
-.data-section {
-  background: var(--card-background);
+  background: #F2F2F7;
   padding: 32rpx;
+  overflow: hidden;
+}
 
-  .data-row {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  color: #1C1C1E;
+
+  .title {
+    font-size: 40rpx;
+    font-weight: 700;
+  }
+
+  .header-right {
     display: flex;
-    gap: 20rpx;
-    margin-bottom: 24rpx;
+    align-items: center;
+    gap: 16rpx;
 
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .data-item {
-      flex: 1;
-      padding: 28rpx 20rpx;
-      background: rgba(59, 130, 246, 0.08);
-      border-radius: var(--radius-md);
-      text-align: center;
-      border: 1rpx solid rgba(59, 130, 246, 0.12);
-
-      .data-label {
-        display: block;
-        font-size: 24rpx;
-        color: var(--text-secondary);
-        margin-bottom: 12rpx;
-        font-weight: 500;
-      }
-
-      .data-value {
-        display: block;
-        font-size: 36rpx;
-        font-weight: 700;
-        color: var(--text-primary);
-      }
+    .time {
+      font-size: 32rpx;
+      font-weight: 600;
     }
   }
 }
 
-.theme-dark .data-section {
-  .data-row .data-item {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.2);
-  }
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .map-section {
   flex: 1;
-  position: relative;
+  margin-bottom: 32rpx;
+  border-radius: 24rpx;
+  border: 4rpx solid #E5E5EA;
   overflow: hidden;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+}
+
+.data-card {
+  margin-bottom: 48rpx;
+  padding: 32rpx;
+  border-radius: 48rpx;
+  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.08);
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 2rpx solid rgba(0, 0, 0, 0.05);
+}
+
+.speed-display {
+  text-align: center;
+  padding: 32rpx 0;
+  border-bottom: 2rpx solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 32rpx;
+
+  .speed-value {
+    font-size: 160rpx;
+    font-weight: 700;
+    line-height: 1;
+    color: #1C1C1E;
+    text-shadow: 0 0 10rpx rgba(0, 122, 255, 0.3);
+  }
+
+  .speed-unit {
+    display: block;
+    font-size: 36rpx;
+    font-weight: 700;
+    color: #3A3A3C;
+    letter-spacing: 8rpx;
+    margin-top: 16rpx;
+  }
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 32rpx;
+
+  .stat-item {
+    flex: 1;
+    text-align: center;
+
+    .stat-value {
+      display: block;
+      font-size: 96rpx;
+      font-weight: 700;
+      color: #1C1C1E;
+      line-height: 1;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 24rpx;
+      font-weight: 600;
+      color: #3A3A3C;
+      text-transform: uppercase;
+      letter-spacing: 2rpx;
+      margin-top: 16rpx;
+    }
+  }
 }
 
 .control-section {
-  background: var(--card-background);
-  padding: 32rpx;
   display: flex;
-  gap: 24rpx;
-  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.08);
+  justify-content: center;
+  align-items: center;
+  gap: 64rpx;
+  padding-bottom: 32rpx;
 
   .control-btn {
-    flex: 1;
-    height: 100rpx;
-    border-radius: 50rpx;
-    font-size: 34rpx;
-    font-weight: 600;
     border: none;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &::after {
       border: none;
     }
 
-    &.start-btn {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      box-shadow: 0 8rpx 20rpx rgba(16, 185, 129, 0.3);
+    &.circle-btn {
+      width: 192rpx;
+      height: 192rpx;
+      border-radius: 50%;
+      box-shadow: 0 16rpx 50rpx -10rpx rgba(0, 122, 255, 0.6),
+                  0 8rpx 30rpx -12rpx rgba(0, 122, 255, 0.4);
     }
 
-    &.pause-btn {
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-      color: white;
-      box-shadow: 0 8rpx 20rpx rgba(245, 158, 11, 0.3);
+    &.circle-btn-small {
+      width: 160rpx;
+      height: 160rpx;
+      border-radius: 50%;
+      box-shadow: 0 16rpx 50rpx -10rpx rgba(0, 88, 185, 0.6),
+                  0 8rpx 30rpx -12rpx rgba(0, 88, 185, 0.4);
     }
 
-    &.resume-btn {
-      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-      color: white;
-      box-shadow: 0 8rpx 20rpx rgba(59, 130, 246, 0.3);
+    &.start-btn, &.resume-btn, &.pause-btn {
+      background: #007AFF;
     }
 
     &.stop-btn {
-      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-      color: white;
-      box-shadow: 0 8rpx 20rpx rgba(239, 68, 68, 0.3);
+      background: #0058B9;
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
   }
-}
-
-.theme-dark .control-section {
-  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.4);
 }
 </style>

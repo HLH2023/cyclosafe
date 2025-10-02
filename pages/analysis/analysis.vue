@@ -1,58 +1,57 @@
 <template>
-  <view class="analysis-page" :class="themeClass">
+  <view class="analysis-page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <button class="back-btn" @click="goBack">
+        <m-icon name="arrow_back_ios_new" :size="24" color="#1F2937"></m-icon>
+      </button>
+      <text class="title">骑行报告</text>
+      <view class="placeholder"></view>
+    </view>
+
+    <!-- 主内容区 -->
     <view v-if="!recordData" class="loading">
       <text>加载中...</text>
     </view>
 
-    <view v-else class="content">
+    <view v-else class="main-content">
       <!-- 基础数据卡片 -->
-      <view class="data-card glass-card">
-        <view class="card-header">
-          <view>
-            <text class="title">骑行报告</text>
-            <text class="date">{{ formatDate(recordData.startTime) }}</text>
-          </view>
-        </view>
-
+      <view class="data-card">
+        <text class="card-title">{{ formatDateTime(recordData.startTime) }}</text>
         <view class="stats-grid">
           <view class="stat-item">
-            <uni-icons type="location-filled" size="24" color="#3B82F6"></uni-icons>
-            <text class="stat-label">距离</text>
-            <text class="stat-value">{{ recordData.distance.toFixed(2) }}</text>
-            <text class="stat-unit">km</text>
+            <text class="stat-value">{{ recordData.distance.toFixed(1) }} km</text>
+            <text class="stat-label">总距离</text>
           </view>
           <view class="stat-item">
-            <uni-icons type="clock" size="24" color="#10B981"></uni-icons>
-            <text class="stat-label">时长</text>
             <text class="stat-value">{{ formatDuration(recordData.duration) }}</text>
+            <text class="stat-label">骑行时长</text>
           </view>
           <view class="stat-item">
-            <uni-icons type="forward" size="24" color="#3B82F6"></uni-icons>
+            <text class="stat-value">{{ recordData.avgSpeed.toFixed(1) }} km/h</text>
             <text class="stat-label">平均速度</text>
-            <text class="stat-value">{{ recordData.avgSpeed.toFixed(1) }}</text>
-            <text class="stat-unit">km/h</text>
           </view>
           <view class="stat-item">
-            <uni-icons type="forward" size="24" color="#EF4444"></uni-icons>
-            <text class="stat-label">最高速度</text>
-            <text class="stat-value">{{ recordData.maxSpeed.toFixed(1) }}</text>
-            <text class="stat-unit">km/h</text>
+            <text class="stat-value">{{ recordData.maxSpeed.toFixed(1) }} km/h</text>
+            <text class="stat-label">最快速度</text>
           </view>
           <view class="stat-item">
-            <uni-icons type="upload" size="24" color="#F59E0B"></uni-icons>
-            <text class="stat-label">爬升</text>
-            <text class="stat-value">{{ recordData.totalAscent.toFixed(0) }}</text>
-            <text class="stat-unit">m</text>
+            <text class="stat-value">{{ recordData.totalAscent.toFixed(0) }} m</text>
+            <text class="stat-label">累计爬升</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">0 m</text>
+            <text class="stat-label">累计下降</text>
+          </view>
+          <view class="stat-item wide">
+            <text class="stat-value highlight">650 kcal</text>
+            <text class="stat-label">预估卡路里</text>
           </view>
         </view>
       </view>
 
       <!-- 地图轨迹 -->
-      <view class="map-card glass-card">
-        <view class="card-title">
-          <uni-icons type="map-filled" size="20" :color="iconColor"></uni-icons>
-          <text>骑行轨迹</text>
-        </view>
+      <view class="map-card">
         <map
           v-if="mapCenter.latitude"
           :longitude="mapCenter.longitude"
@@ -60,34 +59,36 @@
           :scale="14"
           :polyline="polyline"
           :markers="markers"
-          style="width: 100%; height: 450rpx; border-radius: 12rpx;"
+          style="width: 100%; height: 100%; border-radius: 16rpx;"
         />
       </view>
 
-      <!-- 操作按钮 -->
-      <view class="actions">
-        <button class="action-btn export-btn" @click="exportGPX">
-          <uni-icons type="download" size="20" color="#ffffff"></uni-icons>
-          <text>导出GPX</text>
-        </button>
-        <button class="action-btn danger-btn" @click="deleteRecord">
-          <uni-icons type="trash" size="20" color="#ffffff"></uni-icons>
-          <text>删除记录</text>
-        </button>
+      <!-- 图表卡片 -->
+      <view class="chart-card">
+        <text class="chart-title">速度-时间曲线</text>
+        <view class="chart-placeholder">
+          <text>图表占位</text>
+        </view>
+      </view>
+
+      <view class="chart-card">
+        <text class="chart-title">海拔-距离曲线</text>
+        <view class="chart-placeholder">
+          <text>图表占位</text>
+        </view>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { useThemeStore } from '@/store/theme';
 
-// 主题
-const themeStore = useThemeStore();
-const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
-const iconColor = computed(() => themeStore.isDark ? '#9CA3AF' : '#6B7280');
+// 返回
+const goBack = () => {
+  uni.navigateBack();
+};
 
 // 状态
 const recordId = ref('');
@@ -194,101 +195,10 @@ const initMap = () => {
   }
 };
 
-// 生成GPX
-const generateGPX = (record) => {
-  const { trackPoints, startTime } = record;
-
-  let gpx = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="CycloSafe">
-  <metadata>
-    <name>骑行记录 ${formatDate(startTime)}</name>
-    <time>${new Date(startTime).toISOString()}</time>
-  </metadata>
-  <trk>
-    <name>CycloSafe Riding</name>
-    <trkseg>`;
-
-  trackPoints.forEach(point => {
-    gpx += `
-      <trkpt lat="${point.latitude}" lon="${point.longitude}">
-        <ele>${point.altitude}</ele>
-        <time>${new Date(point.timestamp).toISOString()}</time>
-      </trkpt>`;
-  });
-
-  gpx += `
-    </trkseg>
-  </trk>
-</gpx>`;
-
-  return gpx;
-};
-
-// 导出GPX
-const exportGPX = () => {
-  if (!recordData.value) return;
-
-  const gpx = generateGPX(recordData.value);
-  uni.setClipboardData({
-    data: gpx,
-    success: () => {
-      uni.showToast({
-        title: 'GPX已复制到剪贴板',
-        icon: 'success',
-        duration: 2000
-      });
-    }
-  });
-};
-
-// 执行删除
-const performDelete = () => {
-  try {
-    // 删除记录
-    uni.removeStorageSync(`riding_${recordId.value}`);
-
-    // 更新列表
-    const list = uni.getStorageSync('riding_list') || '[]';
-    const ids = JSON.parse(list);
-    const newIds = ids.filter(id => id !== recordId.value);
-    uni.setStorageSync('riding_list', JSON.stringify(newIds));
-
-    uni.showToast({
-      title: '删除成功',
-      icon: 'success'
-    });
-
-    // 返回上一页
-    setTimeout(() => {
-      uni.navigateBack();
-    }, 1500);
-  } catch (err) {
-    console.error('删除失败:', err);
-    uni.showToast({
-      title: '删除失败',
-      icon: 'none'
-    });
-  }
-};
-
-// 删除记录
-const deleteRecord = () => {
-  uni.showModal({
-    title: '确认删除',
-    content: '确定要删除这条骑行记录吗？',
-    confirmColor: '#EF4444',
-    success: (res) => {
-      if (res.confirm) {
-        performDelete();
-      }
-    }
-  });
-};
-
-// 格式化日期
-const formatDate = (timestamp) => {
+// 格式化日期时间
+const formatDateTime = (timestamp) => {
   const date = new Date(timestamp);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
 // 格式化时长
@@ -313,16 +223,42 @@ onLoad((options) => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
-
 .analysis-page {
   min-height: 100vh;
-  padding: 40rpx 30rpx 120rpx;
-  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+  background: #F3F4F6;
+}
 
-  &.theme-dark {
-    background: linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%);
+.header {
+  background: #FFFFFF;
+  padding: 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .back-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+
+    &::after {
+      border: none;
+    }
+  }
+
+  .title {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #1F2937;
+  }
+
+  .placeholder {
+    width: 48rpx;
   }
 }
 
@@ -330,171 +266,93 @@ onLoad((options) => {
   padding: 200rpx 0;
   text-align: center;
   font-size: 36rpx;
-  color: #ffffff;
+  color: #1F2937;
   font-weight: 600;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-lg);
+.main-content {
+  padding: 32rpx;
 }
 
-.theme-dark .glass-card {
-  background: rgba(31, 41, 55, 0.4);
-  border: 1rpx solid rgba(75, 85, 99, 0.3);
-}
+.data-card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
 
-.content {
-  .data-card {
-    padding: 40rpx;
+  .card-title {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #1F2937;
     margin-bottom: 32rpx;
+  }
 
-    .card-header {
-      margin-bottom: 32rpx;
-      padding-bottom: 24rpx;
-      border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24rpx 32rpx;
 
-      .title {
-        display: block;
-        font-size: 40rpx;
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+
+      &.wide {
+        grid-column: 1 / -1;
+      }
+
+      .stat-value {
+        font-size: 36rpx;
         font-weight: 700;
-        color: #ffffff;
+        color: #1F2937;
         margin-bottom: 8rpx;
+
+        &.highlight {
+          color: #10B981;
+        }
       }
 
-      .date {
-        display: block;
+      .stat-label {
         font-size: 24rpx;
-        color: rgba(255, 255, 255, 0.7);
-        font-weight: 500;
-      }
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24rpx;
-
-      .stat-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8rpx;
-        padding: 28rpx 20rpx;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: var(--radius-md);
-        border: 1rpx solid rgba(255, 255, 255, 0.2);
-
-        .stat-label {
-          font-size: 24rpx;
-          color: rgba(255, 255, 255, 0.8);
-          font-weight: 500;
-        }
-
-        .stat-value {
-          font-size: 40rpx;
-          font-weight: 700;
-          color: #ffffff;
-        }
-
-        .stat-unit {
-          font-size: 22rpx;
-          color: rgba(255, 255, 255, 0.7);
-        }
-      }
-    }
-  }
-
-  .map-card {
-    padding: 32rpx;
-    margin-bottom: 32rpx;
-
-    .card-title {
-      display: flex;
-      align-items: center;
-      gap: 12rpx;
-      font-size: 32rpx;
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 24rpx;
-    }
-  }
-
-  .actions {
-    display: flex;
-    gap: 24rpx;
-
-    .action-btn {
-      flex: 1;
-      height: 100rpx;
-      border-radius: 50rpx;
-      font-size: 32rpx;
-      font-weight: 600;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12rpx;
-      transition: all 0.3s ease;
-
-      &::after {
-        border: none;
-      }
-
-      &.export-btn {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        color: white;
-        box-shadow: 0 8rpx 20rpx rgba(16, 185, 129, 0.3);
-      }
-
-      &.danger-btn {
-        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-        color: white;
-        box-shadow: 0 8rpx 20rpx rgba(239, 68, 68, 0.3);
+        color: #6B7280;
       }
     }
   }
 }
 
-.theme-dark {
-  .content {
-    .data-card {
-      .card-header {
-        border-bottom-color: rgba(75, 85, 99, 0.4);
+.map-card {
+  height: 512rpx;
+  margin-bottom: 32rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
 
-        .title {
-          color: #F9FAFB;
-        }
+.chart-card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
 
-        .date {
-          color: rgba(249, 250, 251, 0.6);
-        }
-      }
+  .chart-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 24rpx;
+  }
 
-      .stats-grid .stat-item {
-        background: rgba(31, 41, 55, 0.5);
-        border-color: rgba(75, 85, 99, 0.3);
-
-        .stat-label {
-          color: rgba(249, 250, 251, 0.7);
-        }
-
-        .stat-value {
-          color: #F9FAFB;
-        }
-
-        .stat-unit {
-          color: rgba(249, 250, 251, 0.6);
-        }
-      }
-    }
-
-    .map-card .card-title {
-      color: #F9FAFB;
-    }
+  .chart-placeholder {
+    height: 384rpx;
+    background: #F3F4F6;
+    border-radius: 12rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 28rpx;
   }
 }
 </style>

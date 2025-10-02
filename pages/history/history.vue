@@ -1,59 +1,89 @@
 <template>
-  <view class="history-page" :class="themeClass">
-    <view v-if="recordList.length === 0" class="empty-state">
-      <uni-icons type="folder" size="80" color="#9CA3AF"></uni-icons>
-      <text class="empty-text">暂无骑行记录</text>
-      <text class="empty-hint">点击首页"开始骑行"创建记录</text>
+  <view class="history-page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <text class="title">历史记录</text>
     </view>
 
-    <view v-else class="record-list">
-      <view
-        v-for="record in recordList"
-        :key="record.id"
-        class="record-item glass-card"
-        hover-class="record-item-hover"
-        @click="viewDetail(record.id)"
-      >
-        <view class="record-header">
-          <view class="date-info">
-            <text class="record-date">{{ formatDate(record.startTime) }}</text>
-            <text class="record-time">{{ formatTime(record.startTime) }}</text>
+    <!-- 搜索和筛选 -->
+    <view class="search-section">
+      <view class="search-box">
+        <m-icon name="search" :size="20" color="#6B7280"></m-icon>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="搜索日期范围，如 '2023-10-20 ~ 2023-10-22'"
+          v-model="searchText"
+        />
+      </view>
+      <view class="filter-btn">
+        <text class="filter-text">时间</text>
+        <m-icon name="arrow_downward" :size="18" color="#1F2937"></m-icon>
+      </view>
+    </view>
+
+    <!-- 主内容区 -->
+    <view class="main-content">
+      <!-- 空状态 -->
+      <view v-if="recordList.length === 0" class="empty-state">
+        <m-icon name="pedal_bike" :size="120" color="#9CA3AF"></m-icon>
+        <text class="empty-text">暂无骑行记录</text>
+        <text class="empty-hint">开始您的第一次骑行吧！</text>
+      </view>
+
+      <!-- 记录列表 -->
+      <view v-else class="record-list">
+        <view
+          v-for="record in recordList"
+          :key="record.id"
+          class="record-item"
+          hover-class="record-item-hover"
+          @click="viewDetail(record.id)"
+        >
+          <view class="record-content">
+            <view class="map-preview">
+              <!-- 地图缩略图占位 -->
+              <view class="map-placeholder">
+                <m-icon name="map" :size="40" color="#9CA3AF"></m-icon>
+              </view>
+            </view>
+            <view class="record-info">
+              <text class="record-date">{{ formatDateTime(record.startTime) }}</text>
+              <view class="record-stats">
+                <view class="stat-item">
+                  <m-icon name="route" :size="16" color="#3B82F6"></m-icon>
+                  <text class="stat-text">{{ record.distance.toFixed(1) }} km</text>
+                </view>
+                <view class="stat-item">
+                  <m-icon name="timer" :size="16" color="#3B82F6"></m-icon>
+                  <text class="stat-text">{{ formatDuration(record.duration) }}</text>
+                </view>
+                <view class="stat-item">
+                  <m-icon name="speed" :size="16" color="#3B82F6"></m-icon>
+                  <text class="stat-text">{{ record.avgSpeed.toFixed(1) }} km/h</text>
+                </view>
+              </view>
+            </view>
           </view>
-          <uni-icons type="forward" size="20" :color="iconColor"></uni-icons>
-        </view>
-        <view class="record-stats">
-          <view class="stat">
-            <uni-icons type="location-filled" size="16" color="#3B82F6"></uni-icons>
-            <text class="stat-value">{{ record.distance.toFixed(2) }}</text>
-            <text class="stat-unit">km</text>
-          </view>
-          <view class="stat">
-            <uni-icons type="clock" size="16" color="#10B981"></uni-icons>
-            <text class="stat-value">{{ formatDuration(record.duration) }}</text>
-          </view>
-          <view class="stat">
-            <uni-icons type="forward" size="16" color="#F59E0B"></uni-icons>
-            <text class="stat-value">{{ record.avgSpeed.toFixed(1) }}</text>
-            <text class="stat-unit">km/h</text>
-          </view>
+          <button class="delete-btn" @click.stop="deleteRecord(record.id)">
+            <m-icon name="delete" :size="20" color="#EF4444"></m-icon>
+          </button>
         </view>
       </view>
     </view>
+
+    <!-- 底部导航栏 -->
+    <tab-bar :current="1"></tab-bar>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app';
-import { useThemeStore } from '@/store/theme';
-
-// 主题
-const themeStore = useThemeStore();
-const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
-const iconColor = computed(() => themeStore.isDark ? '#9CA3AF' : '#6B7280');
 
 // 状态
 const recordList = ref([]);
+const searchText = ref('');
 
 // 加载记录
 const loadRecords = () => {
@@ -77,23 +107,60 @@ const viewDetail = (id) => {
   });
 };
 
-// 格式化日期
-const formatDate = (timestamp) => {
+// 格式化日期时间
+const formatDateTime = (timestamp) => {
   const date = new Date(timestamp);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
-
-// 格式化时间
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
 // 格式化时长
 const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}:${String(mins).padStart(2, '0')}`;
+  const secs = seconds % 60;
+  return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+// 删除记录
+const deleteRecord = (id) => {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这条记录吗？',
+    confirmColor: '#EF4444',
+    success: (res) => {
+      if (res.confirm) {
+        performDelete(id);
+      }
+    }
+  });
+};
+
+// 执行删除
+const performDelete = (id) => {
+  try {
+    // 删除记录
+    uni.removeStorageSync(`riding_${id}`);
+
+    // 更新列表
+    const list = uni.getStorageSync('riding_list') || '[]';
+    const ids = JSON.parse(list);
+    const newIds = ids.filter(rid => rid !== id);
+    uni.setStorageSync('riding_list', JSON.stringify(newIds));
+
+    // 重新加载
+    loadRecords();
+
+    uni.showToast({
+      title: '删除成功',
+      icon: 'success'
+    });
+  } catch (err) {
+    console.error('删除失败:', err);
+    uni.showToast({
+      title: '删除失败',
+      icon: 'none'
+    });
+  }
 };
 
 // 生命周期
@@ -112,17 +179,70 @@ onPullDownRefresh(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
-
 .history-page {
   min-height: 100vh;
-  padding: 40rpx 30rpx 120rpx;
-  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+  background: #F3F4F6;
+  padding-bottom: 160rpx;
+}
 
-  &.theme-dark {
-    background: linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%);
+.header {
+  background: #FFFFFF;
+  padding: 32rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .title {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #1F2937;
   }
+}
+
+.search-section {
+  background: #FFFFFF;
+  padding: 24rpx 32rpx;
+  display: flex;
+  gap: 16rpx;
+  border-bottom: 1rpx solid #E5E7EB;
+
+  .search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    background: #F3F4F6;
+    border-radius: 16rpx;
+    padding: 16rpx 24rpx;
+    border: 1rpx solid #E5E7EB;
+
+    .search-input {
+      flex: 1;
+      font-size: 28rpx;
+      color: #1F2937;
+    }
+  }
+
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    background: #F3F4F6;
+    padding: 16rpx 24rpx;
+    border-radius: 16rpx;
+    border: 1rpx solid #E5E7EB;
+
+    .filter-text {
+      font-size: 28rpx;
+      color: #1F2937;
+    }
+  }
+}
+
+.main-content {
+  padding: 32rpx;
 }
 
 .empty-state {
@@ -135,119 +255,107 @@ onPullDownRefresh(() => {
 
   .empty-text {
     font-size: 36rpx;
-    color: #ffffff;
+    color: #1F2937;
     margin: 32rpx 0 16rpx;
     font-weight: 600;
   }
 
   .empty-hint {
     font-size: 28rpx;
-    color: rgba(255, 255, 255, 0.7);
+    color: #6B7280;
   }
 }
 
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-lg);
-}
-
-.theme-dark .glass-card {
-  background: rgba(31, 41, 55, 0.4);
-  border: 1rpx solid rgba(75, 85, 99, 0.3);
+  gap: 32rpx;
 }
 
 .record-item {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
   padding: 32rpx;
+  position: relative;
   transition: all 0.3s ease;
 
-  .record-header {
+  .record-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24rpx;
-    padding-bottom: 20rpx;
-    border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
+    gap: 32rpx;
+  }
 
-    .date-info {
+  .map-preview {
+    width: 192rpx;
+    height: 192rpx;
+    flex-shrink: 0;
+    border-radius: 12rpx;
+    overflow: hidden;
+
+    .map-placeholder {
+      width: 100%;
+      height: 100%;
+      background: #F3F4F6;
       display: flex;
-      flex-direction: column;
-      gap: 8rpx;
-    }
-
-    .record-date {
-      font-size: 32rpx;
-      font-weight: 700;
-      color: #ffffff;
-    }
-
-    .record-time {
-      font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.7);
-      font-weight: 500;
+      align-items: center;
+      justify-content: center;
     }
   }
 
-  .record-stats {
+  .record-info {
+    flex: 1;
     display: flex;
-    justify-content: space-around;
-    gap: 16rpx;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
-    .stat {
+  .record-date {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 24rpx;
+  }
+
+  .record-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16rpx 32rpx;
+
+    .stat-item {
       display: flex;
       align-items: center;
-      gap: 8rpx;
+      gap: 12rpx;
 
-      .stat-value {
-        font-size: 32rpx;
-        font-weight: 700;
-        color: #ffffff;
-      }
-
-      .stat-unit {
-        font-size: 22rpx;
-        color: rgba(255, 255, 255, 0.7);
+      .stat-text {
+        font-size: 24rpx;
+        color: #6B7280;
       }
     }
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: 16rpx;
+    right: 16rpx;
+    background: transparent;
+    border: none;
+    padding: 12rpx;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    &::after {
+      border: none;
+    }
+  }
+
+  &:hover .delete-btn,
+  &:active .delete-btn {
+    opacity: 1;
   }
 }
 
 .record-item-hover {
-  transform: translateY(-4rpx);
-  opacity: 0.95;
-}
-
-.theme-dark {
-  .record-item {
-    .record-header {
-      border-bottom-color: rgba(75, 85, 99, 0.4);
-
-      .record-date {
-        color: #F9FAFB;
-      }
-
-      .record-time {
-        color: rgba(249, 250, 251, 0.6);
-      }
-    }
-
-    .record-stats .stat {
-      .stat-value {
-        color: #F9FAFB;
-      }
-
-      .stat-unit {
-        color: rgba(249, 250, 251, 0.6);
-      }
-    }
-  }
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 </style>
