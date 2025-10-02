@@ -151,26 +151,32 @@ export default {
             id: 1,
             latitude: points[0].latitude,
             longitude: points[0].longitude,
-            iconPath: '/static/icons/start-marker.png',
-            width: 32,
-            height: 32,
-            label: {
-              content: '起点',
-              color: '#10B981',
-              fontSize: 12
+            width: 30,
+            height: 30,
+            callout: {
+              content: '🚩 起点',
+              color: '#FFFFFF',
+              fontSize: 14,
+              borderRadius: 8,
+              bgColor: '#10B981',
+              padding: 8,
+              display: 'ALWAYS'
             }
           },
           {
             id: 2,
             latitude: points[points.length - 1].latitude,
             longitude: points[points.length - 1].longitude,
-            iconPath: '/static/icons/end-marker.png',
-            width: 32,
-            height: 32,
-            label: {
-              content: '终点',
-              color: '#EF4444',
-              fontSize: 12
+            width: 30,
+            height: 30,
+            callout: {
+              content: '🏁 终点',
+              color: '#FFFFFF',
+              fontSize: 14,
+              borderRadius: 8,
+              bgColor: '#EF4444',
+              padding: 8,
+              display: 'ALWAYS'
             }
           }
         ];

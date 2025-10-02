@@ -60,21 +60,15 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "static/icons/home.png",
-        "selectedIconPath": "static/icons/home-active.png"
+        "text": "🏠 首页"
       },
       {
         "pagePath": "pages/history/history",
-        "text": "记录",
-        "iconPath": "static/icons/history.png",
-        "selectedIconPath": "static/icons/history-active.png"
+        "text": "📊 记录"
       },
       {
         "pagePath": "pages/settings/settings",
-        "text": "设置",
-        "iconPath": "static/icons/settings.png",
-        "selectedIconPath": "static/icons/settings-active.png"
+        "text": "⚙️ 设置"
       }
     ]
   }
