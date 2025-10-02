@@ -9,7 +9,7 @@
     <!-- 开始骑行按钮 -->
     <view class="quick-start">
       <button class="start-btn" @click="startRiding" hover-class="start-btn-hover">
-        <m-icon name="directions_bike" :size="48" color="#3B82F6" />
+        <uni-icons type="location-filled" :size="48" color="#3B82F6"></uni-icons>
         <text class="btn-text">开始骑行</text>
       </button>
     </view>
@@ -17,13 +17,13 @@
     <!-- 功能卡片 -->
     <view class="feature-cards">
       <view class="feature-card glass-card" @click="goToHistory" hover-class="card-hover">
-        <m-icon name="history" :size="60" color="#ffffff" />
+        <uni-icons type="bars" :size="60" color="#ffffff"></uni-icons>
         <view class="card-title">历史记录</view>
         <view class="card-desc">查看骑行数据</view>
       </view>
 
       <view class="feature-card glass-card" @click="goToSettings" hover-class="card-hover">
-        <m-icon name="settings" :size="60" color="#ffffff" />
+        <uni-icons type="gear-filled" :size="60" color="#ffffff"></uni-icons>
         <view class="card-title">设置</view>
         <view class="card-desc">个性化配置</view>
       </view>

@@ -1,26 +1,89 @@
 <template>
-  <text
-    class="material-icons"
-    :class="sizeClass"
-    :style="iconStyle"
-  >
-    {{ name }}
-  </text>
+  <uni-icons
+    :type="iconType"
+    :size="iconSize"
+    :color="color"
+  ></uni-icons>
 </template>
 
 <script>
+/**
+ * m-icon 组件 - 基于 uni-icons 的图标封装
+ * 提供与 Material Icons 类似的接口，内部使用 uni-icons
+ */
+
+// Material Icons 到 uni-icons 的映射表
+const ICON_MAP = {
+  // 导航类
+  'home': 'home-filled',
+  'arrow_back': 'back',
+  'arrow_forward': 'forward',
+  'menu': 'bars',
+  'close': 'closeempty',
+  'search': 'search',
+
+  // 功能类
+  'directions_bike': 'location-filled',  // 骑行用定位图标
+  'settings': 'gear-filled',
+  'history': 'bars',
+  'location': 'location',
+  'map': 'map-filled',
+
+  // 操作类
+  'delete': 'trash',
+  'edit': 'compose',
+  'add': 'plus',
+  'remove': 'minus',
+  'check': 'checkmarkempty',
+
+  // 媒体类
+  'play_arrow': 'play-filled',
+  'pause': 'pause-filled',
+  'stop': 'stop-filled',
+  'refresh': 'refresh',
+
+  // 通信类
+  'phone': 'phone',
+  'email': 'email',
+  'share': 'redo',
+
+  // 状态类
+  'info': 'info',
+  'warning': 'info',
+  'error': 'closeempty',
+  'check_circle': 'checkbox-filled',
+
+  // 时间类
+  'schedule': 'clock',
+  'timer': 'clock',
+  'alarm': 'notification',
+
+  // 文件类
+  'folder': 'folder',
+  'download': 'download',
+  'upload': 'upload',
+
+  // 其他
+  'star': 'star-filled',
+  'favorite': 'heart-filled',
+  'person': 'contact-filled',
+  'notifications': 'notification',
+  'battery_full': 'notification',
+  'speed': 'forward'
+};
+
 export default {
   name: 'MIcon',
   props: {
-    // 图标名称（必填）
+    // 图标名称（Material Icons 风格）
     name: {
       type: String,
       required: true
     },
-    // 尺寸：sm(小) | md(中) | lg(大) | xl(超大) | 数字(px)
+    // 尺寸
     size: {
       type: [String, Number],
-      default: 'md'
+      default: 24
     },
     // 颜色
     color: {
@@ -29,32 +92,41 @@ export default {
     }
   },
   computed: {
-    sizeClass() {
-      const presetSizes = ['sm', 'md', 'lg', 'xl', '18', '24', '36', '48'];
-      if (presetSizes.includes(String(this.size))) {
-        return `md-${this.size}`;
+    // 映射到 uni-icons 的图标类型
+    iconType() {
+      // 如果有映射，使用映射的图标
+      if (ICON_MAP[this.name]) {
+        return ICON_MAP[this.name];
       }
-      return '';
+
+      // 如果没有映射，尝试直接使用（可能是 uni-icons 原生图标）
+      return this.name;
     },
-    iconStyle() {
-      let style = '';
 
-      // 自定义颜色
-      if (this.color) {
-        style += `color: ${this.color};`;
+    // 处理尺寸
+    iconSize() {
+      if (typeof this.size === 'number') {
+        return this.size;
       }
 
-      // 自定义尺寸（数字）
-      if (typeof this.size === 'number' || !['sm', 'md', 'lg', 'xl', '18', '24', '36', '48'].includes(String(this.size))) {
-        style += `font-size: ${this.size}px;`;
-      }
+      // 预设尺寸映射
+      const sizeMap = {
+        'sm': 20,
+        'md': 24,
+        'lg': 32,
+        'xl': 40,
+        '18': 18,
+        '24': 24,
+        '36': 36,
+        '48': 48
+      };
 
-      return style;
+      return sizeMap[this.size] || 24;
     }
   }
 };
 </script>
 
 <style scoped>
-/* 组件内样式已在全局 material-icons.css 中定义 */
+/* 样式由 uni-icons 处理 */
 </style>
