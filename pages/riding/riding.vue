@@ -421,10 +421,12 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .map-section {
   flex: 1;
+  min-height: 0;
   margin-bottom: 32rpx;
   border-radius: 24rpx;
   border: 4rpx solid #E5E5EA;
@@ -433,6 +435,7 @@ onUnmounted(() => {
 }
 
 .data-card {
+  flex-shrink: 0;
   margin-bottom: 48rpx;
   padding: 32rpx;
   border-radius: 48rpx;
@@ -500,6 +503,7 @@ onUnmounted(() => {
 }
 
 .control-section {
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;

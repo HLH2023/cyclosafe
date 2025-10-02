@@ -1,84 +1,69 @@
 <template>
-  <view class="index-page" :class="themeClass">
-    <!-- 顶部标题 -->
-    <view class="header-card">
-      <view class="app-title">CycloSafe</view>
-      <view class="app-subtitle">骑行安全，尽在掌握</view>
-    </view>
-
-    <!-- 开始骑行按钮 -->
-    <view class="quick-start">
-      <button class="start-btn" @click="startRiding" hover-class="start-btn-hover">
-        <uni-icons type="location-filled" :size="48" color="#3B82F6"></uni-icons>
-        <text class="btn-text">开始骑行</text>
-      </button>
-    </view>
-
-    <!-- 功能卡片 -->
-    <view class="feature-cards">
-      <view class="feature-card glass-card" @click="goToHistory" hover-class="card-hover">
-        <uni-icons type="bars" :size="60" color="#ffffff"></uni-icons>
-        <view class="card-title">历史记录</view>
-        <view class="card-desc">查看骑行数据</view>
+  <view class="index-page">
+    <!-- 主内容区 -->
+    <view class="main-content">
+      <!-- 顶部标题 -->
+      <view class="header">
+        <text class="app-title">CycloSafe</text>
+        <text class="app-subtitle">骑行安全，尽在掌握</text>
       </view>
 
-      <view class="feature-card glass-card" @click="goToSettings" hover-class="card-hover">
-        <uni-icons type="gear-filled" :size="60" color="#ffffff"></uni-icons>
-        <view class="card-title">设置</view>
-        <view class="card-desc">个性化配置</view>
+      <!-- 开始骑行按钮 -->
+      <view class="start-section">
+        <button class="start-btn" @click="startRiding" hover-class="start-btn-hover">
+          <m-icon name="directions_bike" :size="40" color="#FFFFFF"></m-icon>
+          <text class="btn-text">开始骑行</text>
+        </button>
+      </view>
+
+      <!-- 功能卡片 -->
+      <view class="feature-cards">
+        <view class="feature-card" @click="goToHistory" hover-class="card-hover">
+          <m-icon name="history" :size="48" color="#3B82F6"></m-icon>
+          <text class="card-title">历史记录</text>
+          <text class="card-desc">查看骑行数据</text>
+        </view>
+
+        <view class="feature-card" @click="goToSettings" hover-class="card-hover">
+          <m-icon name="settings" :size="48" color="#3B82F6"></m-icon>
+          <text class="card-title">设置</text>
+          <text class="card-desc">个性化配置</text>
+        </view>
+      </view>
+
+      <!-- 统计信息 -->
+      <view class="stats-section">
+        <text class="stats-title">我的统计</text>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-value">{{ totalRides }}</text>
+            <text class="stat-label">总次数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{ totalDistance }}</text>
+            <text class="stat-label">总里程(km)</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{ totalTime }}</text>
+            <text class="stat-label">总时长</text>
+          </view>
+        </view>
       </view>
     </view>
 
-    <!-- 统计信息 -->
-    <view class="stats-section glass-card">
-      <view class="stats-title">我的统计</view>
-      <view class="stats-grid">
-        <view class="stat-item">
-          <view class="stat-value">{{ totalRides }}</view>
-          <view class="stat-label">总次数</view>
-        </view>
-        <view class="stat-item">
-          <view class="stat-value">{{ totalDistance }}</view>
-          <view class="stat-label">总里程(km)</view>
-        </view>
-        <view class="stat-item">
-          <view class="stat-value">{{ totalTime }}</view>
-          <view class="stat-label">总时长</view>
-        </view>
-      </view>
-    </view>
+    <!-- 底部导航栏 -->
+    <tab-bar :current="0"></tab-bar>
   </view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import { useThemeStore } from '@/store/theme';
 
 // 状态
 const totalRides = ref(0);
 const totalDistance = ref('0.0');
 const totalTime = ref('0:00:00');
-
-// 主题
-const themeStore = useThemeStore();
-const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
-
-// 处理主题变化
-const handleThemeChange = (data) => {
-  // themeClass 是计算属性，会自动更新
-};
-
-// 初始化主题
-const initTheme = () => {
-  // 监听主题变化
-  uni.$on('themeChange', handleThemeChange);
-};
-
-// 更新主题（从 store 获取最新状态）
-const updateTheme = () => {
-  // themeClass 是基于 themeStore.isDark 的计算属性，会自动更新
-};
 
 // 检查位置权限
 const checkLocationPermission = () => {
@@ -182,72 +167,65 @@ const loadStats = () => {
 
 // 生命周期
 onLoad(() => {
-  initTheme();
   loadStats();
 });
 
 onShow(() => {
   loadStats();
-  updateTheme();
-});
-
-onUnmounted(() => {
-  // 移除主题变化监听
-  uni.$off('themeChange', handleThemeChange);
 });
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
-
 .index-page {
   min-height: 100vh;
-  padding: 80rpx 40rpx 40rpx;
-  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
-  position: relative;
+  background: #F3F4F6;
+  display: flex;
+  flex-direction: column;
+}
 
-  // 暗黑模式下的背景
-  &.theme-dark {
-    background: linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%);
-  }
+.main-content {
+  flex: 1;
+  padding: 32rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* 顶部标题 */
-.header-card {
+.header {
   text-align: center;
-  color: #ffffff;
-  margin-bottom: 60rpx;
+  margin: 32rpx 0 64rpx;
 
   .app-title {
-    font-size: 96rpx;
+    display: block;
+    font-size: 80rpx;
     font-weight: 700;
-    margin-bottom: 16rpx;
-    letter-spacing: 2rpx;
+    color: #3B82F6;
+    margin-bottom: 8rpx;
   }
 
   .app-subtitle {
-    font-size: 32rpx;
-    font-weight: 400;
-    opacity: 0.9;
+    display: block;
+    font-size: 28rpx;
+    color: #6B7280;
   }
 }
 
 /* 开始骑行按钮 */
-.quick-start {
-  margin-bottom: 48rpx;
+.start-section {
+  margin-bottom: 32rpx;
 
   .start-btn {
-    background: #ffffff;
-    color: #3B82F6;
-    border-radius: 80rpx;
-    padding: 40rpx 60rpx;
-    font-size: 40rpx;
-    font-weight: 600;
-    @include flex-center;
-    gap: 20rpx;
-    box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.2);
+    width: 100%;
+    background: #3B82F6;
+    border-radius: 16rpx;
+    padding: 48rpx;
     border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32rpx;
+    box-shadow: 0 4rpx 24rpx rgba(59, 130, 246, 0.2);
     transition: all 0.3s ease;
 
     &::after {
@@ -255,72 +233,67 @@ onUnmounted(() => {
     }
 
     .btn-text {
-      color: #3B82F6;
+      font-size: 48rpx;
+      font-weight: 600;
+      color: #FFFFFF;
     }
   }
 
   .start-btn-hover {
-    transform: scale(0.98);
-    opacity: 0.9;
-    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8rpx 32rpx rgba(59, 130, 246, 0.3);
   }
 }
 
 /* 功能卡片 */
 .feature-cards {
   display: flex;
-  gap: 24rpx;
-  margin-bottom: 48rpx;
+  gap: 32rpx;
+  margin-bottom: 32rpx;
 
   .feature-card {
     flex: 1;
-    padding: 48rpx 24rpx;
+    background: #FFFFFF;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    color: #ffffff;
-    border-radius: var(--radius-lg);
+    box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
     transition: all 0.3s ease;
 
     .card-title {
+      display: block;
       font-size: 32rpx;
       font-weight: 600;
-      margin-top: 20rpx;
-      margin-bottom: 8rpx;
+      color: #1F2937;
+      margin: 16rpx 0 8rpx;
     }
 
     .card-desc {
+      display: block;
       font-size: 24rpx;
-      opacity: 0.85;
+      color: #6B7280;
     }
   }
 
   .card-hover {
-    transform: translateY(-4rpx);
-    opacity: 0.95;
+    background: #F9FAFB;
   }
-}
-
-/* 玻璃态卡片效果 */
-.glass-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-}
-
-.theme-dark .glass-card {
-  background: rgba(31, 41, 55, 0.4);
-  border: 1rpx solid rgba(75, 85, 99, 0.3);
 }
 
 /* 统计信息 */
 .stats-section {
-  padding: 40rpx;
-  color: #ffffff;
-  border-radius: var(--radius-lg);
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 48rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
 
   .stats-title {
+    display: block;
     font-size: 36rpx;
     font-weight: 600;
+    color: #1F2937;
     margin-bottom: 32rpx;
   }
 
@@ -332,15 +305,17 @@ onUnmounted(() => {
       text-align: center;
 
       .stat-value {
-        font-size: 56rpx;
+        display: block;
+        font-size: 48rpx;
         font-weight: 700;
+        color: #3B82F6;
         margin-bottom: 8rpx;
-        color: #ffffff;
       }
 
       .stat-label {
+        display: block;
         font-size: 24rpx;
-        opacity: 0.85;
+        color: #6B7280;
       }
     }
   }
