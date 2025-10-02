@@ -6,84 +6,49 @@
       "^m-(.*)": "@/components/m-$1/m-$1.vue",
       "^stat-card$": "@/components/stat-card/stat-card.vue",
       "^glass-card$": "@/components/glass-card/glass-card.vue",
-      "^ride-card$": "@/components/ride-card/ride-card.vue"
+      "^ride-card$": "@/components/ride-card/ride-card.vue",
+      "^tab-bar$": "@/components/tab-bar/tab-bar.vue"
     }
   },
   "pages": [
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "CycloSafe",
-        "navigationBarBackgroundColor": "#3B82F6",
-        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": false
       }
     },
     {
       "path": "pages/riding/riding",
       "style": {
-        "navigationBarTitleText": "骑行中",
-        "navigationBarBackgroundColor": "#3B82F6",
-        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": false
       }
     },
     {
       "path": "pages/analysis/analysis",
       "style": {
-        "navigationBarTitleText": "骑行报告",
-        "navigationBarBackgroundColor": "#3B82F6",
-        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": false
       }
     },
     {
       "path": "pages/history/history",
       "style": {
-        "navigationBarTitleText": "历史记录",
-        "navigationBarBackgroundColor": "#3B82F6",
-        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": true
       }
     },
     {
       "path": "pages/settings/settings",
       "style": {
-        "navigationBarTitleText": "设置",
-        "navigationBarBackgroundColor": "#3B82F6",
-        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": false
       }
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "CycloSafe",
-    "navigationBarBackgroundColor": "#3B82F6",
+    "navigationStyle": "custom",
     "backgroundColor": "#F5F5F5"
-  },
-  "tabBar": {
-    "color": "#6B7280",
-    "selectedColor": "#3B82F6",
-    "borderStyle": "white",
-    "backgroundColor": "#FFFFFF",
-    "height": "50px",
-    "fontSize": "10px",
-    "iconWidth": "24px",
-    "spacing": "3px",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/history/history",
-        "text": "记录"
-      },
-      {
-        "pagePath": "pages/settings/settings",
-        "text": "设置"
-      }
-    ]
   }
 }

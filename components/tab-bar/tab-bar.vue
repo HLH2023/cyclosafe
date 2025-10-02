@@ -44,13 +44,8 @@ const onChange = (index) => {
     emit('change', index);
     const item = props.items[index];
     if (item.path) {
-      uni.switchTab({
-        url: item.path,
-        fail: () => {
-          uni.redirectTo({
-            url: item.path
-          });
-        }
+      uni.redirectTo({
+        url: item.path
       });
     }
   }

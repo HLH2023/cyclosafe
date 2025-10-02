@@ -118,14 +118,14 @@ const startRiding = async () => {
 
 // 跳转到历史记录
 const goToHistory = () => {
-  uni.switchTab({
+  uni.redirectTo({
     url: '/pages/history/history'
   });
 };
 
 // 跳转到设置
 const goToSettings = () => {
-  uni.switchTab({
+  uni.redirectTo({
     url: '/pages/settings/settings'
   });
 };
