@@ -18,6 +18,8 @@
   "license": "MIT",
   "dependencies": {
     "dayjs": "^1.11.18",
-    "pinia": "^3.0.3"
+    "pinia": "^3.0.3",
+    "@dcloudio/uni-ui": "^1.5.5",
+    "echarts": "^5.4.3"
   }
 }

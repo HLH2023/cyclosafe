@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CycloSafe - 实时骑行仪表盘</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&amp;family=Montserrat:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --accent-blue: #007AFF;
+      --accent-yellow: #FFCC00;
+      --accent-orange: #FF9500;
+      --text-primary-dark: #1C1C1E;
+      --text-secondary-dark: #3A3A3C;
+      --background-light: #F2F2F7;
+      --component-bg-light: rgba(255, 255, 255, 0.7);
+    }
+    body {
+      background-color: var(--background-light);
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-primary-dark);
+    }
+    .font-digital {
+      font-family: 'Roboto Mono', monospace;
+    }
+    .glass-morphism-light {
+      background: var(--component-bg-light);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .text-glow-blue {
+      text-shadow: 0 0 5px rgba(0, 122, 255, 0.5);
+    }
+    .button-shadow-blue {
+       box-shadow: 0 8px 25px -5px rgba(0, 122, 255, 0.6), 0 4px 15px -6px rgba(0, 122, 255, 0.4);
+    }
+    .button-shadow-dark-blue {
+       box-shadow: 0 8px 25px -5px rgba(0, 88, 185, 0.6), 0 4px 15px -6px rgba(0, 88, 185, 0.4);
+    }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen bg-[var(--background-light)]">
+<div class="flex h-screen w-full flex-col overflow-hidden p-4">
+<header class="flex items-center justify-between py-2 text-black">
+<h1 class="text-xl font-bold">骑行中</h1>
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined">
+                battery_horiz_075
+            </span>
+<span class="font-semibold">19:41</span>
+</div>
+</header>
+<main class="flex flex-grow flex-col">
+<div class="mb-4 flex-grow rounded-2xl border-2 border-gray-200 overflow-hidden shadow-lg">
+<img alt="Live map view of a cycling route" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLqj9cDVWUdtL8Og_TavH9iqrpMGsnoFSm8b4zBTR6-ZOuviLdnQKoi1B0ndjXLxCi-sk6jV40qocqMGYtVmxtDoSdZye1TuOnIKKIwtFooO8NMEQA-o2pdSjs6DdsvdEwY9JBKgbwo3aCvP0gC4uFDJe2dB7mtV2BwuVljRNqek9QGQ6BeeFzdD3xqkQxQ5MWipJ_Ld7aVwf_QNGDWLBOhKx5OrHrlbI7X5L0nbQMunWoSkZqG0PiUfCcPcon4rIIzhNtIlMofw"/>
+</div>
+<div class="glass-morphism-light rounded-3xl p-4 shadow-lg mb-6">
+<section class="grid grid-cols-2 gap-4">
+<div class="col-span-2 py-2 text-center border-b border-black/10 mb-2">
+<p class="font-digital text-8xl font-bold text-black text-glow-blue">28.5</p>
+<p class="text-lg font-semibold tracking-widest text-[var(--text-secondary-dark)]">KM/H</p>
+</div>
+<div class="flex flex-col justify-center items-center text-center">
+<p class="font-digital text-5xl font-bold text-black">3:45</p>
+<p class="text-sm font-semibold uppercase text-[var(--text-secondary-dark)] tracking-wider">配速</p>
+</div>
+<div class="flex flex-col justify-center items-center text-center">
+<p class="font-digital text-5xl font-bold text-black">34.7</p>
+<p class="text-sm font-semibold uppercase text-[var(--text-secondary-dark)] tracking-wider">距离 (KM)</p>
+</div>
+</section>
+</div>
+<section class="flex justify-center items-center space-x-8 pb-4">
+<button class="w-24 h-24 bg-[var(--accent-blue)] rounded-full flex items-center justify-center button-shadow-blue transform transition hover:scale-110 active:scale-100">
+<span class="material-symbols-outlined text-6xl text-white">
+                    pause
+                </span>
+</button>
+<button class="w-20 h-20 bg-[#0058B9] rounded-full flex items-center justify-center button-shadow-dark-blue transform transition hover:scale-110 active:scale-100">
+<span class="material-symbols-outlined text-5xl text-white">
+                    stop
+                </span>
+</button>
+</section>
+</main>
+</div>
+</body></html>

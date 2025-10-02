@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>单次骑行报告 - CycloSafe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --primary-color: #3B82F6;
+      --background-light: #F3F4F6;
+      --background-dark: #111827;
+      --card-light: #FFFFFF;
+      --card-dark: #1F2937;
+      --text-light-primary: #1F2937;
+      --text-dark-primary: #F9FAFB;
+      --text-light-secondary: #6B7280;
+      --text-dark-secondary: #9CA3AF;
+      --accent-green: #10B981;
+    }
+    body {
+      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+    }
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga';
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex flex-col h-screen">
+<header class="flex items-center justify-between p-4 bg-[var(--card-light)] dark:bg-[var(--card-dark)] shadow-md sticky top-0 z-10">
+<button class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">
+<span class="material-icons text-2xl">arrow_back_ios_new</span>
+</button>
+<h1 class="text-xl font-bold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">骑行报告</h1>
+<div class="w-8"></div> 
+</header>
+<main class="flex-grow overflow-y-auto pb-4">
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 m-4 rounded-lg shadow-md">
+<p class="font-semibold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">2023年10月26日 17:30</p>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 mt-4 text-sm text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">25.5 km</span>
+<span class="text-xs">总距离</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">1:15:30</span>
+<span class="text-xs">骑行时长</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">20.3 km/h</span>
+<span class="text-xs">平均速度</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">35.8 km/h</span>
+<span class="text-xs">最快速度</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">120 m</span>
+<span class="text-xs">累计爬升</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-bold text-lg text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">85 m</span>
+<span class="text-xs">累计下降</span>
+</div>
+<div class="flex flex-col items-center col-span-2 sm:col-span-2">
+<span class="font-bold text-lg text-[var(--accent-green)]">650 kcal</span>
+<span class="text-xs">预估卡路里</span>
+</div>
+</div>
+</div>
+<div class="h-64 md:h-80 mx-4 my-4 rounded-lg overflow-hidden shadow-md">
+<img alt="Full trajectory map of the ride" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPwjZ2OTFpGDRl7rJ4py6oG1-z2MFj5p8T0kXiUgQv7RJedjsWfySQ-Oi72OakTkbHPqBzP3b59O9yzJWQP1gpTjuNM3Z4GggnTSpAE9CeAehmjUyfQbIyXSm1uEGod-XsS4PuSHNnwSjSPneJAZmOLH6YcIfaBiBg8Nemv_FEzQaG0954WZKZfrz3ynYi5QFD0AACOVVScwmnxjt7GC9JAPL_06paT8BprKUDwH808LHy1eWIguotUYhAAfCrJAXuxdFBodeluA"/>
+</div>
+<div class="m-4">
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow-md p-4 mb-4">
+<h2 class="font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-2">速度-时间曲线</h2>
+<div class="h-48">
+<img alt="Speed-time curve chart" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbRN04Ovb4vHdZ51WdeP_8kej-v6zUC5qfQm7C7LZCHumMvyLfCZrJx-_45HV3GCx76hBmV1NgfU-_Bi8fx6D9OLTv1xxI8tjtKIsmscnEdjbqF9CoTel5UtShC71ZLbgakzkeLK9Cd2oo_ZFCLjY8Yt3P8Vjve3e4_pw4qKWuqCIuTUvKGJEDtwvNd_iLdUntZHJxOYWaMoMc-KAHEeqKqHM7YhkR0bqMO95IHSRe1NUR7Mn7PA_49pR9GffGs3JoOAfBJlwy_w"/>
+</div>
+</div>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow-md p-4">
+<h2 class="font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-2">海拔-距离曲线</h2>
+<div class="h-48">
+<img alt="Altitude-distance curve chart" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJRAO191eMT0qeM1rlR4Lrqa0e8wgqlX_ByqXVl6qD97Y6FAfx-1jdWd7E2yGg_27Fqy9XDCZAbJXMolIkBf_Y-CHoiFbrOk2OMyiJlX5OafxNBVWTEgNoqWS_7TRO1HEsZdmSmo9B0O7NuAW_sIV5peSR8bzkfQ_nX6Di-w8kKutuaPzmLwwJEI9APzC8dNeF7TmmpM5-jyQaIynSkmUGnO8dNhzmJOoTlyvqCqPC7A_V9B7eqtBEV648H7DacQi1gWABI_ftYA"/>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

@@ -1,52 +1,111 @@
 /**
- * 全局样式变量
+ * uniapp 全局样式变量
+ * 使用 CSS Variables 实现主题切换
  */
 
+/* 引入主题变量 */
+@import '@/styles/variables.scss';
+
+/* 主题色（使用 CSS Variables） */
+$uni-color-primary: var(--primary-color);
+$uni-color-success: var(--success-color);
+$uni-color-warning: var(--warning-color);
+$uni-color-error: var(--danger-color);
+
+/* 文本基础颜色 */
+$uni-text-color: var(--text-primary);
+$uni-text-color-grey: var(--text-secondary);
+
+/* 背景色 */
+$uni-bg-color: var(--background-color);
+$uni-bg-color-grey: var(--background-secondary);
+$uni-bg-color-hover: var(--card-background);
+$uni-bg-color-mask: var(--overlay-color);
+
+/* 边框颜色 */
+$uni-border-color: var(--border-color);
+
+/* 尺寸变量 */
+/* 文字尺寸 */
+$uni-font-size-sm: 24rpx;
+$uni-font-size-base: 28rpx;
+$uni-font-size-lg: 32rpx;
+
+/* 图片尺寸 */
+$uni-img-size-sm: 40rpx;
+$uni-img-size-base: 52rpx;
+$uni-img-size-lg: 80rpx;
+
+/* Border Radius */
+$uni-border-radius-sm: var(--radius-sm);
+$uni-border-radius-base: var(--radius-md);
+$uni-border-radius-lg: var(--radius-lg);
+$uni-border-radius-circle: var(--radius-full);
+
+/* 水平间距 */
+$uni-spacing-row-sm: var(--spacing-xs);
+$uni-spacing-row-base: var(--spacing-sm);
+$uni-spacing-row-lg: var(--spacing-md);
+
+/* 垂直间距 */
+$uni-spacing-col-sm: var(--spacing-xs);
+$uni-spacing-col-base: var(--spacing-sm);
+$uni-spacing-col-lg: var(--spacing-md);
+
+/* 透明度 */
+$uni-opacity-disabled: 0.3;
+
+/* 文章场景相关 */
+$uni-color-title: var(--text-primary);
+$uni-color-subtitle: var(--text-secondary);
+$uni-color-paragraph: var(--text-tertiary);
+
+/* ========== 兼容旧版变量 ========== */
 // 主题色
-$primary-color: #3B82F6;
-$success-color: #10B981;
-$warning-color: #F59E0B;
-$danger-color: #EF4444;
-$info-color: #6B7280;
+$primary-color: var(--primary-color);
+$success-color: var(--success-color);
+$warning-color: var(--warning-color);
+$danger-color: var(--danger-color);
+$info-color: var(--text-secondary);
 
 // 文字色
-$text-primary: #1F2937;
-$text-secondary: #6B7280;
-$text-placeholder: #9CA3AF;
+$text-primary: var(--text-primary);
+$text-secondary: var(--text-secondary);
+$text-placeholder: var(--text-tertiary);
 $text-white: #FFFFFF;
 
 // 背景色
-$bg-page: #F5F5F5;
-$bg-white: #FFFFFF;
-$bg-gray: #F9FAFB;
+$bg-page: var(--background-color);
+$bg-white: var(--card-background);
+$bg-gray: var(--background-secondary);
 
 // 边框色
-$border-color: #E5E7EB;
-$border-light: #F3F4F6;
+$border-color: var(--border-color);
+$border-light: var(--border-light);
 
 // 间距
-$spacing-xs: 10rpx;
-$spacing-sm: 20rpx;
-$spacing-md: 30rpx;
-$spacing-lg: 40rpx;
-$spacing-xl: 60rpx;
+$spacing-xs: var(--spacing-xs);
+$spacing-sm: var(--spacing-sm);
+$spacing-md: var(--spacing-md);
+$spacing-lg: var(--spacing-lg);
+$spacing-xl: var(--spacing-xl);
 
 // 字体大小
-$font-xs: 24rpx;
-$font-sm: 28rpx;
-$font-md: 32rpx;
-$font-lg: 36rpx;
-$font-xl: 48rpx;
-$font-xxl: 64rpx;
+$font-xs: var(--font-xs);
+$font-sm: var(--font-sm);
+$font-md: var(--font-md);
+$font-lg: var(--font-lg);
+$font-xl: var(--font-xl);
+$font-xxl: var(--font-2xl);
 
 // 圆角
-$radius-sm: 8rpx;
-$radius-md: 12rpx;
-$radius-lg: 16rpx;
-$radius-xl: 24rpx;
-$radius-full: 999rpx;
+$radius-sm: var(--radius-sm);
+$radius-md: var(--radius-md);
+$radius-lg: var(--radius-lg);
+$radius-xl: var(--radius-xl);
+$radius-full: var(--radius-full);
 
 // 阴影
-$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
-$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+$shadow-sm: var(--shadow-sm);
+$shadow-md: var(--shadow-md);
+$shadow-lg: var(--shadow-lg);

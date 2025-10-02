@@ -1,0 +1,153 @@
+/**
+ * CSS Variables - 主题颜色系统
+ * 支持亮色/暗色主题
+ */
+
+/* 浅色主题（默认） */
+page {
+  /* 主色调 */
+  --primary-color: #3B82F6;      /* 蓝色 */
+  --primary-hover: #2563EB;
+  --primary-light: #60A5FA;
+
+  /* 成功色 */
+  --success-color: #10B981;      /* 绿色 */
+  --success-light: #34D399;
+
+  /* 警告色 */
+  --warning-color: #F59E0B;      /* 橙色 */
+  --warning-light: #FBBF24;
+
+  /* 危险色 */
+  --danger-color: #EF4444;       /* 红色 */
+  --danger-light: #F87171;
+
+  /* 背景色 */
+  --background-color: #F3F4F6;   /* 浅灰 */
+  --background-secondary: #E5E7EB;
+
+  /* 卡片背景 */
+  --card-background: #FFFFFF;
+  --card-border: #E5E7EB;
+
+  /* 文本颜色 */
+  --text-primary: #1F2937;       /* 深灰 - 主文本 */
+  --text-secondary: #6B7280;     /* 灰色 - 次要文本 */
+  --text-tertiary: #9CA3AF;      /* 浅灰 - 辅助文本 */
+  --text-disabled: #D1D5DB;      /* 禁用文本 */
+
+  /* 边框颜色 */
+  --border-color: #E5E7EB;
+  --border-light: #F3F4F6;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* 遮罩 */
+  --overlay-color: rgba(0, 0, 0, 0.5);
+
+  /* 渐变色 */
+  --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+  --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 暗色主题 */
+page.theme-dark {
+  /* 主色调（稍微调亮） */
+  --primary-color: #60A5FA;
+  --primary-hover: #3B82F6;
+  --primary-light: #93C5FD;
+
+  /* 成功色 */
+  --success-color: #34D399;
+  --success-light: #6EE7B7;
+
+  /* 警告色 */
+  --warning-color: #FBBF24;
+  --warning-light: #FCD34D;
+
+  /* 危险色 */
+  --danger-color: #F87171;
+  --danger-light: #FCA5A5;
+
+  /* 背景色 */
+  --background-color: #111827;   /* 深蓝灰 */
+  --background-secondary: #1F2937;
+
+  /* 卡片背景 */
+  --card-background: #1F2937;    /* 深灰卡片 */
+  --card-border: #374151;
+
+  /* 文本颜色 */
+  --text-primary: #F9FAFB;       /* 白色 - 主文本 */
+  --text-secondary: #9CA3AF;     /* 浅灰 - 次要文本 */
+  --text-tertiary: #6B7280;      /* 灰色 - 辅助文本 */
+  --text-disabled: #4B5563;      /* 禁用文本 */
+
+  /* 边框颜色 */
+  --border-color: #374151;
+  --border-light: #4B5563;
+
+  /* 阴影（暗色下减弱） */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+
+  /* 遮罩 */
+  --overlay-color: rgba(0, 0, 0, 0.7);
+
+  /* 渐变色（暗色版本） */
+  --gradient-primary: linear-gradient(135deg, #2563EB 0%, #1E3A8A 100%);
+  --gradient-success: linear-gradient(135deg, #059669 0%, #047857 100%);
+  --gradient-purple: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+/* 通用 CSS 变量（不随主题变化） */
+page {
+  /* 圆角 */
+  --radius-sm: 8rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-xl: 32rpx;
+  --radius-full: 9999rpx;
+
+  /* 间距 */
+  --spacing-xs: 8rpx;
+  --spacing-sm: 16rpx;
+  --spacing-md: 24rpx;
+  --spacing-lg: 32rpx;
+  --spacing-xl: 48rpx;
+
+  /* 字体大小 */
+  --font-xs: 24rpx;
+  --font-sm: 28rpx;
+  --font-md: 32rpx;
+  --font-lg: 36rpx;
+  --font-xl: 48rpx;
+  --font-2xl: 60rpx;
+  --font-3xl: 72rpx;
+
+  /* 字体粗细 */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* 过渡动画 */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* Z-index 层级 */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-tooltip: 600;
+}

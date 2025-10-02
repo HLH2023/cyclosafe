@@ -1,0 +1,292 @@
+/**
+ * 通用样式类
+ * 基于 CSS Variables 和 Mixins
+ */
+
+@import './variables.scss';
+@import './mixins.scss';
+
+/* ========== 布局 ========== */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  @include flex-center;
+}
+
+.flex-between {
+  @include flex-between;
+}
+
+.flex-around {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* ========== 间距 ========== */
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.ml-xs { margin-left: var(--spacing-xs); }
+.ml-sm { margin-left: var(--spacing-sm); }
+.ml-md { margin-left: var(--spacing-md); }
+.ml-lg { margin-left: var(--spacing-lg); }
+
+.mr-xs { margin-right: var(--spacing-xs); }
+.mr-sm { margin-right: var(--spacing-sm); }
+.mr-md { margin-right: var(--spacing-md); }
+.mr-lg { margin-right: var(--spacing-lg); }
+
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+.px-xs { padding-left: var(--spacing-xs); padding-right: var(--spacing-xs); }
+.px-sm { padding-left: var(--spacing-sm); padding-right: var(--spacing-sm); }
+.px-md { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
+.px-lg { padding-left: var(--spacing-lg); padding-right: var(--spacing-lg); }
+
+.py-xs { padding-top: var(--spacing-xs); padding-bottom: var(--spacing-xs); }
+.py-sm { padding-top: var(--spacing-sm); padding-bottom: var(--spacing-sm); }
+.py-md { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+.py-lg { padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
+
+/* ========== 文本 ========== */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.text-disabled {
+  color: var(--text-disabled);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-xs { font-size: var(--font-xs); }
+.text-sm { font-size: var(--font-sm); }
+.text-md { font-size: var(--font-md); }
+.text-lg { font-size: var(--font-lg); }
+.text-xl { font-size: var(--font-xl); }
+.text-2xl { font-size: var(--font-2xl); }
+.text-3xl { font-size: var(--font-3xl); }
+
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+.text-ellipsis {
+  @include text-ellipsis;
+}
+
+.text-ellipsis-2 {
+  @include text-ellipsis-multi(2);
+}
+
+.text-ellipsis-3 {
+  @include text-ellipsis-multi(3);
+}
+
+/* ========== 颜色 ========== */
+.color-primary {
+  color: var(--primary-color);
+}
+
+.color-success {
+  color: var(--success-color);
+}
+
+.color-warning {
+  color: var(--warning-color);
+}
+
+.color-danger {
+  color: var(--danger-color);
+}
+
+.bg-primary {
+  background-color: var(--primary-color);
+}
+
+.bg-success {
+  background-color: var(--success-color);
+}
+
+.bg-warning {
+  background-color: var(--warning-color);
+}
+
+.bg-danger {
+  background-color: var(--danger-color);
+}
+
+.bg-card {
+  background-color: var(--card-background);
+}
+
+.bg-page {
+  background-color: var(--background-color);
+}
+
+/* ========== 卡片 ========== */
+.card {
+  @include card;
+}
+
+.card-sm {
+  @include card;
+  padding: var(--spacing-sm);
+}
+
+.card-lg {
+  @include card;
+  padding: var(--spacing-lg);
+}
+
+/* ========== 圆角 ========== */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ========== 阴影 ========== */
+.shadow-sm { @include shadow(sm); }
+.shadow-md { @include shadow(md); }
+.shadow-lg { @include shadow(lg); }
+.shadow-xl { @include shadow(xl); }
+
+/* ========== 边框 ========== */
+.border {
+  border: 1rpx solid var(--border-color);
+}
+
+.border-top {
+  border-top: 1rpx solid var(--border-color);
+}
+
+.border-bottom {
+  border-bottom: 1rpx solid var(--border-color);
+}
+
+.border-left {
+  border-left: 1rpx solid var(--border-color);
+}
+
+.border-right {
+  border-right: 1rpx solid var(--border-color);
+}
+
+/* ========== 特殊效果 ========== */
+.glass-light {
+  @include glass-morphism;
+}
+
+.theme-dark .glass-dark {
+  @include glass-morphism-dark;
+}
+
+.gradient-primary {
+  @include gradient-bg(var(--gradient-primary));
+}
+
+.gradient-success {
+  @include gradient-bg(var(--gradient-success));
+}
+
+.gradient-purple {
+  @include gradient-bg(var(--gradient-purple));
+}
+
+/* ========== 过渡动画 ========== */
+.transition {
+  @include transition;
+}
+
+.transition-fast {
+  @include transition(all, var(--transition-fast));
+}
+
+.transition-slow {
+  @include transition(all, var(--transition-slow));
+}
+
+/* ========== 按钮 ========== */
+.btn {
+  @include button-base;
+}
+
+.btn-primary {
+  @include button-primary;
+}
+
+.btn-success {
+  @include button-base;
+  background: var(--success-color);
+  color: #ffffff;
+}
+
+.btn-warning {
+  @include button-base;
+  background: var(--warning-color);
+  color: #ffffff;
+}
+
+.btn-danger {
+  @include button-base;
+  background: var(--danger-color);
+  color: #ffffff;
+}
+
+/* ========== 其他 ========== */
+.overlay {
+  @include overlay;
+}
+
+.fixed-bottom {
+  @include fixed-bottom;
+}
+
+.absolute-center {
+  @include absolute-center;
+}

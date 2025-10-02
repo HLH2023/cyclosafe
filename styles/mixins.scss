@@ -1,0 +1,196 @@
+/**
+ * SCSS Mixins - 常用样式混入
+ */
+
+/* 毛玻璃效果（玻璃态） */
+@mixin glass-morphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 暗色模式下的毛玻璃效果 */
+@mixin glass-morphism-dark {
+  background: rgba(31, 41, 55, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* Flex 居中 */
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Flex 两端对齐 */
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Flex 列布局居中 */
+@mixin flex-column-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 单行文本省略 */
+@mixin text-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 多行文本省略 */
+@mixin text-ellipsis-multi($lines: 2) {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+}
+
+/* 清除浮动 */
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+/* 卡片样式 */
+@mixin card {
+  background: var(--card-background);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+}
+
+/* 按钮基础样式 */
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 48rpx;
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+/* 主要按钮 */
+@mixin button-primary {
+  @include button-base;
+  background: var(--primary-color);
+  color: #ffffff;
+
+  &:hover {
+    background: var(--primary-hover);
+  }
+}
+
+/* 渐变背景 */
+@mixin gradient-bg($gradient: var(--gradient-primary)) {
+  background: $gradient;
+}
+
+/* 响应式字体大小 */
+@mixin responsive-font($min-size, $max-size) {
+  font-size: clamp(#{$min-size}rpx, 2vw, #{$max-size}rpx);
+}
+
+/* 固定宽高比 */
+@mixin aspect-ratio($width, $height) {
+  position: relative;
+
+  &::before {
+    content: '';
+    display: block;
+    padding-top: ($height / $width) * 100%;
+  }
+
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* 滚动条样式（H5） */
+@mixin scrollbar($size: 8rpx, $thumb-color: var(--border-color)) {
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $size / 2;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* 绝对定位居中 */
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 固定底部 */
+@mixin fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-fixed);
+}
+
+/* 遮罩层 */
+@mixin overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--overlay-color);
+  z-index: var(--z-modal);
+}
+
+/* 过渡动画 */
+@mixin transition($property: all, $duration: var(--transition-normal)) {
+  transition: $property $duration;
+}
+
+/* 阴影效果 */
+@mixin shadow($level: md) {
+  @if $level == sm {
+    box-shadow: var(--shadow-sm);
+  } @else if $level == md {
+    box-shadow: var(--shadow-md);
+  } @else if $level == lg {
+    box-shadow: var(--shadow-lg);
+  } @else if $level == xl {
+    box-shadow: var(--shadow-xl);
+  }
+}

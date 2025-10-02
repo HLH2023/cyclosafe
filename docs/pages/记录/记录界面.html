@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>骑行历史记录 - CycloSafe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --primary-color: #3B82F6;
+      --background-light: #F3F4F6;
+      --background-dark: #111827;
+      --card-light: #FFFFFF;
+      --card-dark: #1F2937;
+      --text-light-primary: #1F2937;
+      --text-dark-primary: #F9FAFB;
+      --text-light-secondary: #6B7280;
+      --text-dark-secondary: #9CA3AF;
+      --accent-green: #10B981;
+    }
+    body {
+      min-height: max(884px, 100dvh);
+      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+    }
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga';
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex flex-col h-screen">
+<header class="flex items-center justify-center p-4 bg-[var(--card-light)] dark:bg-[var(--card-dark)] shadow-md sticky top-0 z-10">
+<h1 class="text-xl font-bold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">历史记录</h1>
+</header>
+<main class="flex-grow p-4 space-y-4 overflow-y-auto">
+<div class="flex gap-2 mb-4">
+<div class="relative flex-grow">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--card-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition" placeholder="搜索日期范围，如 '2023-10-20 ~ 2023-10-22'" type="text"/>
+</div>
+<button class="flex items-center gap-1 px-3 py-2 rounded-lg bg-[var(--card-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] border border-gray-200 dark:border-gray-700">
+<span class="text-sm">时间</span>
+<span class="material-icons text-lg">arrow_downward</span>
+</button>
+</div>
+<div class="space-y-4">
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow-md p-4 group relative">
+<button class="absolute top-2 right-2 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity p-2 text-red-500">
+<span class="material-icons">delete</span>
+</button>
+<div class="flex gap-4">
+<div class="w-24 h-24 rounded-md overflow-hidden flex-shrink-0">
+<img alt="Map preview of the ride" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHFeSQyPQNXBYTL9jAoAUIATi_VM4YZzi2_0yTuuWHLp6CuVj_7Gnp-J-zRH6B4pVDV_cIfYhbVlaSl25moEZe0ihUlFfY98XFPfWHSEiMOxFOcq0EChX70MPJslwkSxLREyMZlZZ35kvtOnbUtIZ7GFSYz7Wp-pFc0Iuz1zJjT1KhKVedmCBAEFXIEloh-HCNP2lQhr3LXCM2NstT_bHCOUWzOeR0j4RGbsRmkdGt7zWE5c4cogklxd3JNeb8_zi7Br4rGSWAug"/>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-sm text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">2023年10月26日 17:30</p>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 text-sm text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">route</span><span>25.5 km</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">timer</span><span>1:15:30</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">speed</span><span>20.3 km/h</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow-md p-4 group relative">
+<button class="absolute top-2 right-2 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity p-2 text-red-500">
+<span class="material-icons">delete</span>
+</button>
+<div class="flex gap-4">
+<div class="w-24 h-24 rounded-md overflow-hidden flex-shrink-0">
+<img alt="Map preview of the ride" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8tL0grnLdBVX_YX1IqIq9PiUmKaM_uUJAax_oTAxIF2b2LXvSPmG3_fs-vnyN6pGtvgfMWNjm0IQKroGInBzNhX0rjpsE4i2VI1jkDMIeLoOxMtIPt00sKsennqD1cHQvMRSq9B5v0RjhdIy1DqbCSOG4-nAuRNpi95m_MGlDkFqr7FgM-nQvS--MTlNGz4HvRwUJbgn-L8fxxEcTFSsUSlLeJE384OaN4BxKwvh5VoYTagj0VOY_AMKmzAHVUCp_ydxDikH9Zg"/>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-sm text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">2023年10月24日 08:15</p>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 text-sm text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">route</span><span>15.2 km</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">timer</span><span>0:45:12</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">speed</span><span>20.1 km/h</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow-md p-4 group relative">
+<button class="absolute top-2 right-2 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity p-2 text-red-500">
+<span class="material-icons">delete</span>
+</button>
+<div class="flex gap-4">
+<div class="w-24 h-24 rounded-md overflow-hidden flex-shrink-0">
+<img alt="Map preview of the ride" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8IDOWMyehV3EEyzXdr7UBaJaQIsSGBbBzIRidVSLLmOhZ9aEcP5FClzuVvKXTowu2_W82T203qNWKvJoqXPpSF_DAXuNTb6N68YZGeAU9GQ9s0_P60XhFOF6-lH9uO27zFaaAdcU4ZxVdGF22DxEFg1Ewx-nDkXmof5S7sstAOSuMMSrd4yq2bAMePL7SJgtnLtKUaguyrIyg7jY3GF1b2divQ77lMLG7jlSVtVRAz6NJT5B1ID7B6nMcJuCbrS-YOGnis37GuQ"/>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-sm text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">2023年10月21日 19:00</p>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 text-sm text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">route</span><span>30.1 km</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">timer</span><span>1:30:55</span></div>
+<div class="flex items-center"><span class="material-icons text-base mr-1.5 text-[var(--primary-color)]">speed</span><span>19.8 km/h</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="text-center py-16 text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] hidden">
+<span class="material-icons text-6xl opacity-50">pedal_bike</span>
+<p class="mt-4 text-lg">暂无骑行记录</p>
+<p class="mt-1">开始您的第一次骑行吧！</p>
+</div>
+</div>
+</main>
+<footer class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] shadow-t sticky bottom-0 w-full">
+<nav class="flex justify-around items-center h-16">
+<a class="flex flex-col items-center text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] hover:text-[var(--primary-color)] dark:hover:text-[var(--primary-color)] transition-colors duration-300" href="#">
+<span class="material-icons">home</span>
+<span class="text-xs">首页</span>
+</a>
+<a class="flex flex-col items-center text-[var(--primary-color)]" href="#">
+<span class="material-icons">bar_chart</span>
+<span class="text-xs font-medium">记录</span>
+</a>
+<a class="flex flex-col items-center text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] hover:text-[var(--primary-color)] dark:hover:text-[var(--primary-color)] transition-colors duration-300" href="#">
+<span class="material-icons">settings</span>
+<span class="text-xs">设置</span>
+</a>
+</nav>
+</footer>
+</body></html>

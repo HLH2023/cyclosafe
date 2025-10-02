@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>设置 - CycloSafe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --primary-color: #3B82F6;
+      --background-light: #F3F4F6;
+      --background-dark: #111827;
+      --card-light: #FFFFFF;
+      --card-dark: #1F2937;
+      --text-light-primary: #1F2937;
+      --text-dark-primary: #F9FAFB;
+      --text-light-secondary: #6B7280;
+      --text-dark-secondary: #9CA3AF;
+      --accent-green: #10B981;
+      --accent-red: #EF4444;
+    }
+    body {
+      min-height: max(884px, 100dvh);
+      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+    }
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga';
+    }
+    .toggle-checkbox:checked {
+      @apply: bg-[var(--primary-color)];
+      right: 0;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      @apply: bg-[var(--primary-color)];
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex flex-col h-screen">
+<header class="flex items-center justify-center p-4 bg-[var(--card-light)] dark:bg-[var(--card-dark)] shadow-md sticky top-0 z-10">
+<h1 class="text-xl font-bold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">设置</h1>
+</header>
+<main class="flex-grow p-4 overflow-y-auto pb-20">
+<div class="space-y-6">
+<div>
+<h2 class="text-lg font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-3 px-2">单位设置</h2>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow">
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<label class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]" for="distance-unit">距离单位</label>
+<select class="rounded-md border-gray-300 dark:border-gray-600 bg-[var(--background-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] focus:ring-[var(--primary-color)]" id="distance-unit">
+<option>公里 (km)</option>
+<option>英里 (mi)</option>
+</select>
+</div>
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<label class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]" for="speed-unit">速度单位</label>
+<select class="rounded-md border-gray-300 dark:border-gray-600 bg-[var(--background-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] focus:ring-[var(--primary-color)]" id="speed-unit">
+<option>公里/小时 (km/h)</option>
+<option>英里/小时 (mph)</option>
+</select>
+</div>
+<div class="p-4 flex justify-between items-center">
+<label class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]" for="altitude-unit">海拔单位</label>
+<select class="rounded-md border-gray-300 dark:border-gray-600 bg-[var(--background-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] focus:ring-[var(--primary-color)]" id="altitude-unit">
+<option>米 (m)</option>
+<option>英尺 (ft)</option>
+</select>
+</div>
+</div>
+</div>
+<div>
+<h2 class="text-lg font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-3 px-2">安全设置</h2>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow">
+<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+<label class="block text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-2" for="speed-warning">超速提醒阈值: <span class="font-bold text-[var(--primary-color)]">40 km/h</span></label>
+<input class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" id="speed-warning" max="60" min="20" type="range" value="40"/>
+</div>
+<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+<label class="block text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-2" for="fall-detection">摔倒检测灵敏度: <span class="font-bold text-[var(--primary-color)]">高</span></label>
+<input class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" id="fall-detection" max="2" min="0" step="1" type="range" value="2"/>
+<div class="flex justify-between text-xs text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] px-1">
+<span>低</span>
+<span>中</span>
+<span>高</span>
+</div>
+</div>
+<div class="p-4 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">紧急联系人</span>
+<button class="flex items-center text-[var(--primary-color)]">
+<span>管理</span>
+<span class="material-icons text-xl">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<div>
+<h2 class="text-lg font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-3 px-2">地图设置</h2>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow">
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<label class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]" for="map-type">地图类型</label>
+<select class="rounded-md border-gray-300 dark:border-gray-600 bg-[var(--background-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] focus:ring-[var(--primary-color)]" id="map-type">
+<option>标准</option>
+<option>卫星</option>
+<option>夜间</option>
+</select>
+</div>
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<label class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]" for="track-color">轨迹颜色方案</label>
+<select class="rounded-md border-gray-300 dark:border-gray-600 bg-[var(--background-light)] dark:bg-[var(--card-dark)] text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] focus:ring-[var(--primary-color)]" id="track-color">
+<option>经典蓝</option>
+<option>活力橙</option>
+<option>醒目绿</option>
+</select>
+</div>
+<div class="p-4 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">显示危险点</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle-danger-points" name="toggle-danger-points" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle-danger-points"></label>
+</div>
+</div>
+</div>
+</div>
+<div>
+<h2 class="text-lg font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-3 px-2">数据管理</h2>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow">
+<button class="w-full text-left p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">清理缓存</span>
+<span class="material-icons text-xl text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">chevron_right</span>
+</button>
+<button class="w-full text-left p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center text-[var(--accent-red)]">
+<span>清除所有历史记录</span>
+<span class="material-icons text-xl">chevron_right</span>
+</button>
+<button class="w-full text-left p-4 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">导出所有数据</span>
+<span class="material-icons text-xl text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)]">chevron_right</span>
+</button>
+</div>
+</div>
+<div>
+<h2 class="text-lg font-semibold text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)] mb-3 px-2">其他设置</h2>
+<div class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] rounded-lg shadow">
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">自动暂停</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle-auto-pause" name="toggle-auto-pause" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle-auto-pause"></label>
+</div>
+</div>
+<div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">屏幕常亮</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle-screen-on" name="toggle-screen-on" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle-screen-on"></label>
+</div>
+</div>
+<div class="p-4 flex justify-between items-center">
+<span class="text-[var(--text-light-primary)] dark:text-[var(--text-dark-primary)]">震动反馈</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle-vibration" name="toggle-vibration" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle-vibration"></label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-[var(--card-light)] dark:bg-[var(--card-dark)] shadow-t sticky bottom-0 w-full">
+<nav class="flex justify-around items-center h-16">
+<a class="flex flex-col items-center text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] hover:text-[var(--primary-color)] dark:hover:text-[var(--primary-color)] transition-colors duration-300" href="#">
+<span class="material-icons">home</span>
+<span class="text-xs">首页</span>
+</a>
+<a class="flex flex-col items-center text-[var(--text-light-secondary)] dark:text-[var(--text-dark-secondary)] hover:text-[var(--primary-color)] dark:hover:text-[var(--primary-color)] transition-colors duration-300" href="#">
+<span class="material-icons">bar_chart</span>
+<span class="text-xs">记录</span>
+</a>
+<a class="flex flex-col items-center text-[var(--primary-color)]" href="#">
+<span class="material-icons">settings</span>
+<span class="text-xs font-medium">设置</span>
+</a>
+</nav>
+</footer>
+
+</body></html>

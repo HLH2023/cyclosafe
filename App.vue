@@ -1,7 +1,13 @@
 <script>
+import { useThemeStore } from '@/store/theme';
+
 export default {
   onLaunch: function() {
     console.log('App Launch');
+
+    // 初始化主题系统
+    this.initTheme();
+
     // 初始化应用
     this.checkPermissions();
   },
@@ -12,6 +18,33 @@ export default {
     console.log('App Hide');
   },
   methods: {
+    // 初始化主题
+    initTheme() {
+      const themeStore = useThemeStore();
+      themeStore.initTheme();
+
+      // 监听系统主题变化
+      themeStore.watchSystemTheme();
+
+      // 监听主题变化事件
+      uni.$on('themeChange', (data) => {
+        console.log('主题变化事件:', data);
+        // 更新页面类名
+        this.updatePageClass(data.isDark);
+      });
+    },
+
+    // 更新页面类名
+    updatePageClass(isDark) {
+      // 注意：小程序中需要通过页面实例来更新
+      // 这里只是示例，实际使用时在各个页面监听
+      const pages = getCurrentPages();
+      if (pages.length > 0) {
+        const currentPage = pages[pages.length - 1];
+        currentPage.$vm && (currentPage.$vm.themeClass = isDark ? 'theme-dark' : 'theme-light');
+      }
+    },
+
     // 检查必要权限
     checkPermissions() {
       uni.getSetting({
@@ -29,6 +62,14 @@ export default {
 <style lang="scss">
 /* 全局样式 */
 @import '@/uni.scss';
+
+/* 主题系统 */
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/common.scss';
+
+/* Material Icons 字体 */
+@import '@/static/css/material-icons.css';
 
 page {
   background-color: #f5f5f5;
