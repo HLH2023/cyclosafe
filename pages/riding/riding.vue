@@ -92,7 +92,7 @@ import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
 import { getMLDetector } from '@/utils/mlModel.js';
 import config from '@/utils/config.js';
-import { getRidingRecordRepository, getSettingsRepository } from '@/db/repositories/index.js';
+import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
 
 // 当前时间
@@ -125,6 +125,7 @@ const polyline = ref([]);
 const trackPoints = ref([]);
 const startTime = ref(0);
 const timer = ref(null);
+const nearbyDangerPoints = ref([]); // 附近的危险点
 
 // 数据采集器
 const dataCollector = ref(null);
@@ -219,6 +220,9 @@ const handleLocationUpdate = (location) => {
   // 更新速度（m/s 转 km/h）
   currentSpeed.value = (location.speed || 0) * 3.6;
 
+  // 更新传感器服务的速度数据（用于危险检测）
+  sensorService.updateSpeed(currentSpeed.value);
+
   // 更新最高速度
   if (currentSpeed.value > maxSpeed.value) {
     maxSpeed.value = currentSpeed.value;
@@ -241,6 +245,9 @@ const handleLocationUpdate = (location) => {
 
   // 计算距离
   calculateDistance();
+
+  // 检查附近危险点
+  checkNearbyDangerPoints();
 };
 
 // 开始定位更新
@@ -344,6 +351,9 @@ const performMLDetection = () => {
 
 // ML摔倒检测回调
 const handleMLFallDetected = (prediction) => {
+  // 记录危险点
+  recordDangerPoint('fall', 'ML摔倒检测');
+
   // 震动警告
   uni.vibrateLong();
 
@@ -451,6 +461,9 @@ const startSensorService = () => {
   // 设置摔倒检测回调
   sensorService.onFallDetected(handleFallDetected);
 
+  // 设置急刹车检测回调
+  sensorService.onHardBrakeDetected(handleHardBrakeDetected);
+
   // 启动服务
   sensorService.start({
     fallDetectionEnabled,
@@ -461,12 +474,158 @@ const startSensorService = () => {
 // 摔倒检测回调
 const handleFallDetected = (data) => {
   console.warn('检测到摔倒！', data);
+  console.log('  - 速度降低:', data.speedDrop, 'km/h');
+  console.log('  - 减速度:', data.deceleration, 'm/s²');
+
+  // 记录危险点
+  recordDangerPoint('fall', '摔倒检测');
 
   // 震动警告
   uni.vibrateLong();
 
   // 显示警告弹窗
   showFallAlert('传感器');
+};
+
+// 急刹车检测回调
+const handleHardBrakeDetected = (data) => {
+  console.warn('检测到急刹车！', data);
+  console.log('  - 速度降低:', data.speedDrop, 'km/h');
+  console.log('  - 减速度:', data.deceleration, 'm/s²');
+
+  // 记录危险点
+  recordDangerPoint('hard_brake', '急刹车检测');
+
+  // 震动提醒（短震动，比摔倒温和）
+  uni.vibrateShort();
+
+  // 显示提示（不是紧急警告）
+  uni.showToast({
+    title: '⚠️ 检测到急刹车',
+    icon: 'none',
+    duration: 2000
+  });
+};
+
+// 记录危险点
+const recordDangerPoint = async (dangerType, name) => {
+  try {
+    const repo = getDangerPointRepository();
+    const settingsRepo = getSettingsRepository();
+
+    // 检查是否启用危险点记录
+    const dangerPointEnabled = settingsRepo.getSetting('danger_point_enabled', true);
+    if (!dangerPointEnabled) {
+      return;
+    }
+
+    // 自动生成名称
+    const count = repo.getDangerPointCount() + 1;
+    const pointName = name || `危险点 ${count}`;
+
+    await repo.saveDangerPoint({
+      id: generateUUID(),
+      name: pointName,
+      latitude: currentLocation.value.latitude,
+      longitude: currentLocation.value.longitude,
+      danger_type: dangerType,
+      speed: currentSpeed.value,
+      record_id: null // 可以关联到当前骑行记录
+    });
+
+    console.log('危险点已记录:', pointName);
+  } catch (error) {
+    console.error('记录危险点失败:', error);
+  }
+};
+
+// 检查附近危险点
+let lastDangerPointWarning = 0; // 上次警告时间
+const checkNearbyDangerPoints = () => {
+  try {
+    const settingsRepo = getSettingsRepository();
+    const dangerPointWarning = settingsRepo.getSetting('show_track', true);
+
+    const repo = getDangerPointRepository();
+    const points = repo.getDangerPointsNearby(
+      currentLocation.value.latitude,
+      currentLocation.value.longitude,
+      0.05 // 50米范围
+    );
+
+    // 更新附近危险点列表（用于地图标记）
+    nearbyDangerPoints.value = points;
+
+    // 更新地图标记
+    updateDangerPointMarkers();
+
+    // 如果关闭了提醒，只更新标记不提醒
+    if (!dangerPointWarning) {
+      return;
+    }
+
+    // 防止频繁提醒（30秒内只提醒一次）
+    const now = Date.now();
+    if (now - lastDangerPointWarning < 30000) {
+      return;
+    }
+
+    if (points.length > 0) {
+      const nearest = points[0];
+      const distanceM = (nearest.distance * 1000).toFixed(0);
+
+      // 震动提醒
+      uni.vibrateShort();
+
+      // Toast提醒
+      uni.showToast({
+        title: `前方${distanceM}米有危险点`,
+        icon: 'none',
+        duration: 3000
+      });
+
+      lastDangerPointWarning = now;
+      console.log('危险点提醒:', nearest.name, distanceM + '米');
+    }
+  } catch (error) {
+    console.error('检查附近危险点失败:', error);
+  }
+};
+
+// 更新危险点标记
+const updateDangerPointMarkers = () => {
+  if (nearbyDangerPoints.value.length === 0) {
+    markers.value = [];
+    return;
+  }
+
+  // 将危险点转换为地图标记
+  markers.value = nearbyDangerPoints.value.map((point, index) => {
+    const distanceM = (point.distance * 1000).toFixed(0);
+    const typeIcon = {
+      fall: '⚠️',
+      hard_brake: '⚠️',
+      manual: '📍'
+    };
+
+    return {
+      id: index,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      width: 32,
+      height: 32,
+      iconPath: '/static/danger-pin.png', // 可选，会使用默认标记
+      callout: {
+        content: `${typeIcon[point.dangerType] || '⚠️'} ${point.name} (${distanceM}m)`,
+        color: '#FFFFFF',
+        fontSize: 12,
+        borderRadius: 8,
+        bgColor: '#EF4444',
+        padding: 8,
+        display: 'ALWAYS'
+      }
+    };
+  });
 };
 
 // 摔倒警告弹窗

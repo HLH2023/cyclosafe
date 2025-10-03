@@ -47,7 +47,7 @@ class MovingAverageFilter {
 
 /**
  * 摔倒检测器
- * 基于加速度计和陀螺仪数据进行摔倒检测
+ * 基于加速度计、陀螺仪和速度数据进行摔倒和急刹车检测
  */
 class FallDetector {
   constructor(options = {}) {
@@ -59,6 +59,7 @@ class FallDetector {
       enabled: options.enabled !== false,
       // 回调函数
       onFallDetected: options.onFallDetected || null,
+      onHardBrakeDetected: options.onHardBrakeDetected || null,
     };
 
     // 传感器数据
@@ -71,6 +72,7 @@ class FallDetector {
 
     // 历史数据（用于检测变化趋势）
     this.accHistory = [];
+    this.speedHistory = []; // 速度历史（km/h）
     this.maxHistoryLength = 10; // 保留最近10个数据点
 
     // 检测状态
@@ -88,19 +90,46 @@ class FallDetector {
   updateThresholds() {
     const thresholds = {
       low: {
+        // 摔倒检测阈值
         acceleration: 25,  // 25 m/s² (约2.5g)
         gyroscope: 250,    // 250°/s
-        impactDuration: 300 // 冲击持续时间（ms）
+        impactDuration: 300, // 冲击持续时间（ms）
+        speedDrop: 5,      // 速度降低阈值（km/h）
+
+        // 急刹车检测阈值
+        brakeAcceleration: 15,  // 急刹车加速度阈值
+        brakeGyroscope: 100,    // 急刹车角速度上限（低于此值才是刹车）
+        brakeSpeedDrop: 10,     // 急刹车速度降低阈值（km/h）
+        brakeDeceleration: -2.0, // 减速度阈值（m/s²）
+        minSpeedForBrake: 10    // 最低速度阈值（km/h）
       },
       medium: {
+        // 摔倒检测阈值
         acceleration: 18,  // 18 m/s² (约1.8g)
         gyroscope: 200,    // 200°/s
-        impactDuration: 400
+        impactDuration: 400,
+        speedDrop: 5,
+
+        // 急刹车检测阈值
+        brakeAcceleration: 12,
+        brakeGyroscope: 100,
+        brakeSpeedDrop: 8,
+        brakeDeceleration: -1.5,
+        minSpeedForBrake: 10
       },
       high: {
+        // 摔倒检测阈值
         acceleration: 15,  // 15 m/s² (约1.5g)
         gyroscope: 150,    // 150°/s
-        impactDuration: 500
+        impactDuration: 500,
+        speedDrop: 4,
+
+        // 急刹车检测阈值
+        brakeAcceleration: 10,
+        brakeGyroscope: 100,
+        brakeSpeedDrop: 6,
+        brakeDeceleration: -1.2,
+        minSpeedForBrake: 8
       }
     };
 
@@ -154,6 +183,57 @@ class FallDetector {
   }
 
   /**
+   * 更新速度数据（从GPS获取）
+   * @param {number} speed 速度（km/h）
+   */
+  updateSpeed(speed) {
+    this.speedHistory.push({
+      speed: speed,
+      timestamp: Date.now()
+    });
+
+    // 限制历史记录长度
+    if (this.speedHistory.length > this.maxHistoryLength) {
+      this.speedHistory.shift();
+    }
+  }
+
+  /**
+   * 计算速度变化
+   * @param {number} timeWindow 时间窗口（ms），默认1000ms
+   * @returns {Object} { speedDrop: 速度降低量(km/h), deceleration: 减速度(m/s²) }
+   */
+  calculateSpeedChange(timeWindow = 1000) {
+    if (this.speedHistory.length < 2) {
+      return { speedDrop: 0, deceleration: 0 };
+    }
+
+    const now = Date.now();
+    const recentSpeeds = this.speedHistory.filter(
+      item => now - item.timestamp <= timeWindow
+    );
+
+    if (recentSpeeds.length < 2) {
+      return { speedDrop: 0, deceleration: 0 };
+    }
+
+    // 计算速度降低量（初始速度 - 当前速度）
+    const initialSpeed = recentSpeeds[0].speed;
+    const currentSpeed = recentSpeeds[recentSpeeds.length - 1].speed;
+    const speedDrop = initialSpeed - currentSpeed;
+
+    // 计算减速度（m/s²）
+    const timeDiff = (recentSpeeds[recentSpeeds.length - 1].timestamp - recentSpeeds[0].timestamp) / 1000; // 秒
+    const speedDiff = speedDrop / 3.6; // km/h 转 m/s
+    const deceleration = timeDiff > 0 ? speedDiff / timeDiff : 0;
+
+    return {
+      speedDrop: speedDrop,        // km/h
+      deceleration: deceleration   // m/s²
+    };
+  }
+
+  /**
    * 计算向量的模（总量）
    */
   calculateMagnitude(x, y, z) {
@@ -161,7 +241,7 @@ class FallDetector {
   }
 
   /**
-   * 检测摔倒
+   * 主检测方法 - 检测摔倒和急刹车
    */
   detect() {
     // 如果未启用，直接返回
@@ -194,18 +274,33 @@ class FallDetector {
       this.gyroscopeData.z
     );
 
-    // 3. 检查是否超过阈值
-    const isHighAcceleration = totalAcc > this.thresholds.acceleration;
-    const isHighRotation = totalGyro > this.thresholds.gyroscope;
+    // 3. 计算速度变化（仅当有速度数据时）
+    let speedChange = { speedDrop: 0, deceleration: 0 };
+    if (this.speedHistory.length >= 2) {
+      speedChange = this.calculateSpeedChange(500); // 0.5秒窗口
+    }
 
     // 4. 检查加速度变化（冲击特征）
     const hasImpact = this.detectImpact();
 
-    // 5. 综合判断：需要同时满足多个条件
-    const isFalling = isHighAcceleration && isHighRotation && hasImpact;
+    // 5. 检查是否有速度降低（所有危险点的必要条件）
+    const hasSpeedDrop = speedChange.speedDrop > this.thresholds.speedDrop;
+
+    // 6. 摔倒检测（优先级高）
+    const isHighAcceleration = totalAcc > this.thresholds.acceleration;
+    const isHighRotation = totalGyro > this.thresholds.gyroscope;
+    const isFalling = isHighAcceleration && isHighRotation && hasImpact && hasSpeedDrop;
 
     if (isFalling) {
-      this.onFallDetected(totalAcc, totalGyro);
+      this.onFallDetected(totalAcc, totalGyro, speedChange);
+      return true;
+    }
+
+    // 7. 急刹车检测（当不是摔倒时）
+    const isHardBraking = this.detectHardBrake();
+
+    if (isHardBraking) {
+      this.onHardBrakeDetected(totalAcc, totalGyro, speedChange);
       return true;
     }
 
@@ -236,21 +331,105 @@ class FallDetector {
   }
 
   /**
+   * 检测急刹车
+   * 基于加速度变化、速度降低和低角速度
+   */
+  detectHardBrake() {
+    if (this.speedHistory.length < 2) {
+      return false;
+    }
+
+    // 1. 计算总加速度
+    const totalAcc = this.calculateMagnitude(
+      this.accelerometerData.x,
+      this.accelerometerData.y,
+      this.accelerometerData.z
+    );
+
+    // 2. 计算总角速度
+    const totalGyro = this.calculateMagnitude(
+      this.gyroscopeData.x,
+      this.gyroscopeData.y,
+      this.gyroscopeData.z
+    );
+
+    // 3. 计算速度变化
+    const speedChange = this.calculateSpeedChange(1000); // 1秒窗口
+
+    // 4. 获取当前速度
+    const currentSpeed = this.speedHistory[this.speedHistory.length - 1].speed;
+
+    // 5. 急刹车判断条件
+    const hasAcceleration = totalAcc > this.thresholds.brakeAcceleration;
+    const lowRotation = totalGyro < this.thresholds.brakeGyroscope; // 角速度低
+    const hasSpeedDrop = speedChange.speedDrop > this.thresholds.brakeSpeedDrop; // 速度降低明显
+    const hasDeceleration = speedChange.deceleration < this.thresholds.brakeDeceleration; // 负加速度
+    const isMoving = currentSpeed > this.thresholds.minSpeedForBrake; // 有一定速度
+
+    // 综合判断
+    const isHardBrake = hasAcceleration && lowRotation && hasSpeedDrop && hasDeceleration && isMoving;
+
+    if (isHardBrake) {
+      console.log('[FallDetector] 急刹车检测数据:', {
+        totalAcc: totalAcc.toFixed(2),
+        totalGyro: totalGyro.toFixed(2),
+        speedDrop: speedChange.speedDrop.toFixed(2),
+        deceleration: speedChange.deceleration.toFixed(2),
+        currentSpeed: currentSpeed.toFixed(2)
+      });
+    }
+
+    return isHardBrake;
+  }
+
+  /**
    * 摔倒检测回调
    */
-  onFallDetected(acceleration, gyroscope) {
+  onFallDetected(acceleration, gyroscope, speedChange) {
     this.lastDetectionTime = Date.now();
 
     console.warn('[FallDetector] 检测到摔倒！');
     console.log(`  加速度: ${acceleration.toFixed(2)} m/s²`);
     console.log(`  角速度: ${gyroscope.toFixed(2)} °/s`);
+    console.log(`  速度降低: ${speedChange.speedDrop.toFixed(2)} km/h`);
+    console.log(`  减速度: ${speedChange.deceleration.toFixed(2)} m/s²`);
     console.log(`  灵敏度: ${this.config.sensitivity}`);
 
     // 调用回调函数
     if (this.config.onFallDetected) {
       this.config.onFallDetected({
+        type: 'fall',
         acceleration,
         gyroscope,
+        speedDrop: speedChange.speedDrop,
+        deceleration: speedChange.deceleration,
+        timestamp: Date.now(),
+        sensitivity: this.config.sensitivity
+      });
+    }
+  }
+
+  /**
+   * 急刹车检测回调
+   */
+  onHardBrakeDetected(acceleration, gyroscope, speedChange) {
+    this.lastDetectionTime = Date.now();
+
+    console.warn('[FallDetector] 检测到急刹车！');
+    console.log(`  加速度: ${acceleration.toFixed(2)} m/s²`);
+    console.log(`  角速度: ${gyroscope.toFixed(2)} °/s`);
+    console.log(`  速度降低: ${speedChange.speedDrop.toFixed(2)} km/h`);
+    console.log(`  减速度: ${speedChange.deceleration.toFixed(2)} m/s²`);
+    console.log(`  灵敏度: ${this.config.sensitivity}`);
+
+    // 调用回调函数
+    if (this.config.onHardBrakeDetected) {
+      this.config.onHardBrakeDetected({
+        type: 'hard_brake',
+        acceleration,
+        gyroscope,
+        speedDrop: speedChange.speedDrop,
+        deceleration: speedChange.deceleration,
         timestamp: Date.now(),
         sensitivity: this.config.sensitivity
       });
@@ -264,6 +443,7 @@ class FallDetector {
     this.accFilter.reset();
     this.gyroFilter.reset();
     this.accHistory = [];
+    this.speedHistory = [];
     this.accelerometerData = { x: 0, y: 0, z: 0 };
     this.gyroscopeData = { x: 0, y: 0, z: 0 };
     this.lastDetectionTime = 0;
@@ -273,14 +453,15 @@ class FallDetector {
 
 /**
  * 传感器服务类
- * 管理传感器监听和摔倒检测
+ * 管理传感器监听和摔倒/急刹车检测
  */
 class SensorService {
   constructor() {
     this.isRunning = false;
     this.fallDetector = null;
     this.listeners = {
-      onFallDetected: null
+      onFallDetected: null,
+      onHardBrakeDetected: null
     };
   }
 
@@ -302,6 +483,11 @@ class SensorService {
       onFallDetected: (data) => {
         if (this.listeners.onFallDetected) {
           this.listeners.onFallDetected(data);
+        }
+      },
+      onHardBrakeDetected: (data) => {
+        if (this.listeners.onHardBrakeDetected) {
+          this.listeners.onHardBrakeDetected(data);
         }
       }
     });
@@ -388,6 +574,23 @@ class SensorService {
    */
   onFallDetected(callback) {
     this.listeners.onFallDetected = callback;
+  }
+
+  /**
+   * 设置急刹车检测回调
+   */
+  onHardBrakeDetected(callback) {
+    this.listeners.onHardBrakeDetected = callback;
+  }
+
+  /**
+   * 更新速度数据（从GPS获取）
+   * @param {number} speed 速度（km/h）
+   */
+  updateSpeed(speed) {
+    if (this.fallDetector) {
+      this.fallDetector.updateSpeed(speed);
+    }
   }
 
   /**

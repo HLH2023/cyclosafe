@@ -24,6 +24,12 @@
           <text class="card-desc">查看骑行数据</text>
         </view>
 
+        <view class="feature-card" @click="goToDangerPoints" hover-class="card-hover">
+          <m-icon name="location_on" :size="48" color="#EF4444"></m-icon>
+          <text class="card-title">危险点</text>
+          <text class="card-desc">查看与管理</text>
+        </view>
+
         <view class="feature-card" @click="goToSettings" hover-class="card-hover">
           <m-icon name="settings" :size="48" color="#3B82F6"></m-icon>
           <text class="card-title">设置</text>
@@ -121,6 +127,13 @@ const startRiding = async () => {
 const goToHistory = () => {
   uni.redirectTo({
     url: '/pages/history/history'
+  });
+};
+
+// 跳转到危险点
+const goToDangerPoints = () => {
+  uni.navigateTo({
+    url: '/pages/danger-points/danger-points'
   });
 };
 
@@ -244,14 +257,16 @@ onShow(() => {
 /* 功能卡片 */
 .feature-cards {
   display: flex;
-  gap: 32rpx;
+  flex-wrap: wrap;
+  gap: 24rpx;
   margin-bottom: 32rpx;
 
   .feature-card {
-    flex: 1;
+    flex: 1 1 calc(33.333% - 16rpx);
+    min-width: 180rpx;
     background: #FFFFFF;
     border-radius: 16rpx;
-    padding: 32rpx;
+    padding: 32rpx 16rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -261,7 +276,7 @@ onShow(() => {
 
     .card-title {
       display: block;
-      font-size: 32rpx;
+      font-size: 28rpx;
       font-weight: 600;
       color: #1F2937;
       margin: 16rpx 0 8rpx;
@@ -269,13 +284,14 @@ onShow(() => {
 
     .card-desc {
       display: block;
-      font-size: 24rpx;
+      font-size: 22rpx;
       color: #6B7280;
     }
   }
 
   .card-hover {
     background: #F9FAFB;
+    transform: translateY(-4rpx);
   }
 }
 

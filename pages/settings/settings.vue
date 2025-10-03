@@ -126,7 +126,7 @@
             </picker>
           </view>
           <view class="setting-item">
-            <text class="label">显示危险点</text>
+            <text class="label">危险点提醒</text>
             <switch :checked="showTrack" @change="onShowTrackChange" color="#3B82F6" />
           </view>
         </view>
@@ -144,6 +144,10 @@
           </view>
           <view class="setting-item action border-bottom danger" hover-class="item-hover" @click="clearAllData">
             <text class="label">清除所有历史记录</text>
+            <m-icon name="chevron_right" :size="20" color="#EF4444"></m-icon>
+          </view>
+          <view class="setting-item action border-bottom danger" hover-class="item-hover" @click="clearAllDangerPoints">
+            <text class="label">清除所有危险点</text>
             <m-icon name="chevron_right" :size="20" color="#EF4444"></m-icon>
           </view>
           <view class="setting-item action" hover-class="item-hover" @click="exportData">
@@ -184,7 +188,7 @@
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
-import { getSettingsRepository, getRidingRecordRepository } from '@/db/repositories/index.js';
+import { getSettingsRepository, getRidingRecordRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { clearAllData } from '@/db/database.js';
 
 // 主题设置
@@ -444,6 +448,39 @@ const clearAllData = () => {
     success: (res) => {
       if (res.confirm) {
         performClearAll();
+      }
+    }
+  });
+};
+
+// 清空所有危险点
+const clearAllDangerPoints = () => {
+  uni.showModal({
+    title: '清除危险点',
+    content: '确定要清除所有危险点吗？此操作不可恢复！',
+    confirmText: '确定清除',
+    confirmColor: '#EF4444',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          const dangerPointRepo = getDangerPointRepository();
+          const success = await dangerPointRepo.clearAllDangerPoints();
+
+          if (success) {
+            uni.showToast({
+              title: '已清除所有危险点',
+              icon: 'success'
+            });
+          } else {
+            throw new Error('清除失败');
+          }
+        } catch (error) {
+          console.error('清除危险点失败:', error);
+          uni.showToast({
+            title: '清除失败',
+            icon: 'none'
+          });
+        }
       }
     }
   });

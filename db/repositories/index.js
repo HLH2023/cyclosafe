@@ -4,6 +4,7 @@
 
 import RidingRecordRepository, { getRidingRecordRepository } from './RidingRecordRepository.js';
 import SettingsRepository, { getSettingsRepository } from './SettingsRepository.js';
+import DangerPointRepository, { getDangerPointRepository } from './DangerPointRepository.js';
 
 export {
   // 骑行记录仓储
@@ -12,7 +13,11 @@ export {
 
   // 设置仓储
   SettingsRepository,
-  getSettingsRepository
+  getSettingsRepository,
+
+  // 危险点仓储
+  DangerPointRepository,
+  getDangerPointRepository
 };
 
 /**
@@ -22,7 +27,8 @@ export {
 export function getAllRepositories() {
   return {
     ridingRecord: getRidingRecordRepository(),
-    settings: getSettingsRepository()
+    settings: getSettingsRepository(),
+    dangerPoint: getDangerPointRepository()
   };
 }
 
@@ -31,5 +37,7 @@ export default {
   getRidingRecordRepository,
   SettingsRepository,
   getSettingsRepository,
+  DangerPointRepository,
+  getDangerPointRepository,
   getAllRepositories
 };

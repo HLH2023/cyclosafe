@@ -65,6 +65,22 @@ function createTables(db) {
     )
   `);
 
+  // 5. 危险点表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS danger_points (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      danger_type TEXT NOT NULL,
+      speed REAL DEFAULT 0,
+      record_id TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (record_id) REFERENCES riding_records(id) ON DELETE SET NULL
+    )
+  `);
+
   console.log('数据库表创建成功');
 }
 
@@ -89,6 +105,18 @@ function createIndexes(db) {
   db.run(`
     CREATE INDEX IF NOT EXISTS idx_data_collections_record_id
     ON data_collections(record_id)
+  `);
+
+  // 危险点位置索引（用于范围查询）
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_danger_points_location
+    ON danger_points(latitude, longitude)
+  `);
+
+  // 危险点创建时间索引
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_danger_points_created_at
+    ON danger_points(created_at DESC)
   `);
 
   console.log('数据库索引创建成功');
