@@ -20,7 +20,7 @@
         <text class="card-title">{{ formatDateTime(recordData.startTime) }}</text>
         <view class="stats-grid">
           <view class="stat-item">
-            <text class="stat-value">{{ recordData.distance.toFixed(1) }} km</text>
+            <text class="stat-value">{{ convertDistance(recordData.distance).toFixed(1) }} {{ distanceUnit }}</text>
             <text class="stat-label">总距离</text>
           </view>
           <view class="stat-item">
@@ -28,15 +28,15 @@
             <text class="stat-label">骑行时长</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{ recordData.avgSpeed.toFixed(1) }} km/h</text>
+            <text class="stat-value">{{ convertSpeed(recordData.avgSpeed).toFixed(1) }} {{ speedUnit }}</text>
             <text class="stat-label">平均速度</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{ recordData.maxSpeed.toFixed(1) }} km/h</text>
+            <text class="stat-value">{{ convertSpeed(recordData.maxSpeed).toFixed(1) }} {{ speedUnit }}</text>
             <text class="stat-label">最快速度</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{ recordData.totalAscent.toFixed(0) }} m</text>
+            <text class="stat-value">{{ convertAltitude(recordData.totalAscent).toFixed(0) }} {{ altitudeUnit }}</text>
             <text class="stat-label">累计爬升</text>
           </view>
           <view class="stat-item">
@@ -104,6 +104,7 @@ import { ref, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 import { useMapSettingsStore } from '@/store/mapSettings';
+import { useUnits } from '@/composables/useUnits.js';
 import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
@@ -113,6 +114,9 @@ const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-ligh
 
 // 地图设置
 const mapSettingsStore = useMapSettingsStore();
+
+// 单位管理
+const { distanceUnit, speedUnit, altitudeUnit, convertDistance, convertSpeed, convertAltitude } = useUnits();
 
 // 返回
 const goBack = () => {
@@ -134,26 +138,26 @@ const speedChartData = ref({
   categories: [],
   series: []
 });
-const speedChartOpts = ref({
+const speedChartOpts = computed(() => ({
   xAxis: {
     title: '时间'
   },
   yAxis: {
-    title: '速度 (km/h)',
+    title: `速度 (${speedUnit.value})`,
     format: (val) => val.toFixed(1)
   }
-});
+}));
 
 const altitudeChartData = ref({
   categories: [],
   series: []
 });
-const altitudeChartOpts = ref({
+const altitudeChartOpts = computed(() => ({
   xAxis: {
-    title: '距离 (km)'
+    title: `距离 (${distanceUnit.value})`
   },
   yAxis: {
-    title: '海拔 (m)',
+    title: `海拔 (${altitudeUnit.value})`,
     format: (val) => val.toFixed(0)
   }
 });
@@ -303,7 +307,8 @@ const initCharts = () => {
     const seconds = elapsedSeconds % 60;
 
     speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
-    speedData.push(point.speed * 3.6); // m/s 转 km/h
+    const speedKmh = point.speed * 3.6; // m/s 转 km/h
+    speedData.push(convertSpeed(speedKmh)); // 转换为用户设置的单位
   }
 
   speedChartData.value = {
@@ -337,8 +342,9 @@ const initCharts = () => {
       accumulatedDistance += distance;
     }
 
-    altitudeCategories.push((accumulatedDistance / 1000).toFixed(1)); // 转换为km
-    altitudeData.push(point.altitude || 0);
+    const distanceKm = accumulatedDistance / 1000;
+    altitudeCategories.push(convertDistance(distanceKm).toFixed(1)); // 转换为用户设置的单位
+    altitudeData.push(convertAltitude(point.altitude || 0)); // 转换海拔单位
   }
 
   altitudeChartData.value = {

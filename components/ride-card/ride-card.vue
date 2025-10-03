@@ -11,8 +11,8 @@
     <view class="card-stats">
       <view class="stat-item">
         <uni-icons type="location-filled" size="16" color="#3B82F6"></uni-icons>
-        <text class="stat-value">{{ record.distance.toFixed(2) }}</text>
-        <text class="stat-unit">km</text>
+        <text class="stat-value">{{ convertDistance(record.distance).toFixed(2) }}</text>
+        <text class="stat-unit">{{ distanceUnit }}</text>
       </view>
       <view class="stat-item">
         <uni-icons type="clock" size="16" color="#10B981"></uni-icons>
@@ -20,8 +20,8 @@
       </view>
       <view class="stat-item">
         <uni-icons type="forward" size="16" color="#F59E0B"></uni-icons>
-        <text class="stat-value">{{ record.avgSpeed.toFixed(1) }}</text>
-        <text class="stat-unit">km/h</text>
+        <text class="stat-value">{{ convertSpeed(record.avgSpeed).toFixed(1) }}</text>
+        <text class="stat-unit">{{ speedUnit }}</text>
       </view>
     </view>
   </view>
@@ -30,6 +30,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useThemeStore } from '@/store/theme';
+import { useUnits } from '@/composables/useUnits.js';
 
 const props = defineProps({
   record: {
@@ -42,6 +43,9 @@ const emit = defineEmits(['click']);
 
 const themeStore = useThemeStore();
 const iconColor = computed(() => themeStore.isDark ? '#9CA3AF' : '#6B7280');
+
+// 单位管理
+const { distanceUnit, speedUnit, convertDistance, convertSpeed } = useUnits();
 
 const handleClick = () => {
   emit('click', props.record.id);

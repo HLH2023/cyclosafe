@@ -2,6 +2,8 @@
  * 格式化工具类
  */
 
+import { DISTANCE_CONVERSION, SPEED_CONVERSION } from './constants.js';
+
 /**
  * 格式化时长
  * @param {number} seconds 秒数
@@ -19,25 +21,71 @@ export function formatDuration(seconds) {
  * 格式化距离
  * @param {number} distance 距离（公里）
  * @param {number} precision 小数位数
+ * @param {number} unitIndex 单位索引（0=公制，1=英制）
  * @returns {string} 格式化后的距离
  */
-export function formatDistance(distance, precision = 2) {
-  if (distance < 1) {
-    // 小于1km，显示米
-    return `${(distance * 1000).toFixed(0)} m`;
+export function formatDistance(distance, precision = 2, unitIndex = 0) {
+  let value = distance;
+  let unit = 'km';
+  let smallUnit = 'm';
+
+  if (unitIndex === 1) {
+    // 转换为英里
+    value = distance * DISTANCE_CONVERSION.KM_TO_MILE;
+    unit = 'mi';
+    smallUnit = 'ft';
   }
 
-  return `${distance.toFixed(precision)} km`;
+  if (value < 1) {
+    // 小于1km/mi，显示米/英尺
+    if (unitIndex === 0) {
+      return `${(value * 1000).toFixed(0)} ${smallUnit}`;
+    } else {
+      return `${(value * 5280).toFixed(0)} ${smallUnit}`;
+    }
+  }
+
+  return `${value.toFixed(precision)} ${unit}`;
 }
 
 /**
  * 格式化速度
  * @param {number} speed 速度（km/h）
  * @param {number} precision 小数位数
+ * @param {number} unitIndex 单位索引（0=公制，1=英制）
  * @returns {string} 格式化后的速度
  */
-export function formatSpeed(speed, precision = 1) {
-  return `${speed.toFixed(precision)} km/h`;
+export function formatSpeed(speed, precision = 1, unitIndex = 0) {
+  let value = speed;
+  let unit = 'km/h';
+
+  if (unitIndex === 1) {
+    // 转换为 mph
+    value = speed * SPEED_CONVERSION.KMH_TO_MPH;
+    unit = 'mph';
+  }
+
+  return `${value.toFixed(precision)} ${unit}`;
+}
+
+/**
+ * 格式化海拔
+ * @param {number} altitude 海拔（米）
+ * @param {number} precision 小数位数
+ * @param {number} unitIndex 单位索引（0=公制，1=英制）
+ * @returns {string} 格式化后的海拔
+ */
+export function formatAltitude(altitude, precision = 0, unitIndex = 0) {
+  let value = altitude;
+  let unit = 'm';
+
+  if (unitIndex === 1) {
+    // 转换为英尺
+    value = altitude * 3.28084;
+    unit = 'ft';
+  }
+
+  return `${value.toFixed(precision)} ${unit}`;
 }
 
 /**
@@ -113,6 +161,7 @@ export default {
   formatDuration,
   formatDistance,
   formatSpeed,
+  formatAltitude,
   formatDate,
   formatDateTime,
   formatRelativeTime,

@@ -53,8 +53,8 @@
       <view class="data-card glass-morphism" :class="{ 'over-speed-card': isOverSpeed }">
         <!-- 速度显示 -->
         <view class="speed-display" :class="{ 'over-speed-display': isOverSpeed }">
-          <text class="speed-value" :class="{ 'over-speed-value': isOverSpeed }">{{ currentSpeed.toFixed(1) }}</text>
-          <text class="speed-unit">KM/H</text>
+          <text class="speed-value" :class="{ 'over-speed-value': isOverSpeed }">{{ convertSpeed(currentSpeed).toFixed(1) }}</text>
+          <text class="speed-unit">{{ speedUnit.toUpperCase() }}</text>
         </view>
 
         <!-- 其他数据 -->
@@ -64,8 +64,8 @@
             <text class="stat-label">配速</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{ distance.toFixed(1) }}</text>
-            <text class="stat-label">距离 (KM)</text>
+            <text class="stat-value">{{ convertDistance(distance).toFixed(1) }}</text>
+            <text class="stat-label">距离 ({{ distanceUnit.toUpperCase() }})</text>
           </view>
         </view>
       </view>
@@ -98,6 +98,7 @@ import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 import { useMapSettingsStore } from '@/store/mapSettings';
+import { useUnits } from '@/composables/useUnits.js';
 import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
 import { getMLDetector } from '@/utils/mlModel.js';
@@ -112,6 +113,9 @@ const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-ligh
 
 // 地图设置
 const mapSettingsStore = useMapSettingsStore();
+
+// 单位管理
+const { distanceUnit, speedUnit, convertDistance, convertSpeed } = useUnits();
 
 // 当前时间
 const currentTime = ref('');

@@ -63,7 +63,7 @@
           </view>
           <view class="info-row" v-if="selectedPoint.speed > 0">
             <text class="info-label">速度：</text>
-            <text class="info-value">{{ selectedPoint.speed.toFixed(1) }} km/h</text>
+            <text class="info-value">{{ convertSpeed(selectedPoint.speed).toFixed(1) }} {{ speedUnit }}</text>
           </view>
           <view class="info-row">
             <text class="info-label">时间：</text>
@@ -89,6 +89,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useThemeStore } from '@/store/theme';
 import { useMapSettingsStore } from '@/store/mapSettings';
+import { useUnits } from '@/composables/useUnits.js';
 import mapConfig from '@/config/map.config.js';
 import { getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
@@ -99,6 +100,9 @@ const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-ligh
 
 // 地图设置
 const mapSettingsStore = useMapSettingsStore();
+
+// 单位管理
+const { speedUnit, convertSpeed } = useUnits();
 
 // 地图中心和缩放
 const mapCenter = ref({

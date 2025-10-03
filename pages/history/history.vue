@@ -52,7 +52,7 @@
               <view class="record-stats">
                 <view class="stat-item">
                   <m-icon name="route" :size="16" color="#3B82F6"></m-icon>
-                  <text class="stat-text">{{ record.distance.toFixed(1) }} km</text>
+                  <text class="stat-text">{{ convertDistance(record.distance).toFixed(1) }} {{ distanceUnit }}</text>
                 </view>
                 <view class="stat-item">
                   <m-icon name="timer" :size="16" color="#3B82F6"></m-icon>
@@ -60,7 +60,7 @@
                 </view>
                 <view class="stat-item">
                   <m-icon name="speed" :size="16" color="#3B82F6"></m-icon>
-                  <text class="stat-text">{{ record.avgSpeed.toFixed(1) }} km/h</text>
+                  <text class="stat-text">{{ convertSpeed(record.avgSpeed).toFixed(1) }} {{ speedUnit }}</text>
                 </view>
               </view>
             </view>
@@ -81,11 +81,15 @@
 import { ref, computed } from 'vue';
 import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { useUnits } from '@/composables/useUnits.js';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 主题
 const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
+
+// 单位管理
+const { distanceUnit, speedUnit, convertDistance, convertSpeed } = useUnits();
 
 // 状态
 const recordList = ref([]);
