@@ -1,6 +1,7 @@
 <script>
 import { useThemeStore } from '@/store/theme';
 import { useMapSettingsStore } from '@/store/mapSettings';
+import { useUnitsStore } from '@/store/units';
 import { setupDatabase } from '@/db/database.js';
 
 export default {
@@ -15,6 +16,9 @@ export default {
 
     // 初始化地图设置
     this.initMapSettings();
+
+    // 初始化单位设置
+    this.initUnits();
 
     // 初始化应用
     this.checkPermissions();
@@ -57,6 +61,12 @@ export default {
     initMapSettings() {
       const mapSettingsStore = useMapSettingsStore();
       mapSettingsStore.initMapSettings();
+    },
+
+    // 初始化单位设置
+    initUnits() {
+      const unitsStore = useUnitsStore();
+      unitsStore.initUnits();
     },
 
     // 更新页面类名

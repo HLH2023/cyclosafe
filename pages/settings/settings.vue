@@ -206,6 +206,7 @@ import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 import { useMapSettingsStore } from '@/store/mapSettings';
+import { useUnitsStore } from '@/store/units';
 import { getSettingsRepository, getRidingRecordRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { clearAllData as clearAllDataFromDB } from '@/db/database.js';
 
@@ -218,13 +219,16 @@ const themeIndex = ref(0); // 默认跟随系统
 // 地图设置store
 const mapSettingsStore = useMapSettingsStore();
 
+// 单位设置store
+const unitsStore = useUnitsStore();
+
 // 单位设置
 const distanceUnits = ['公里 (km)', '英里 (mi)'];
-const distanceUnitIndex = ref(0);
+const distanceUnitIndex = computed(() => unitsStore.distanceUnitIndex);
 const speedUnits = ['公里/小时 (km/h)', '英里/小时 (mph)'];
-const speedUnitIndex = ref(0);
+const speedUnitIndex = computed(() => unitsStore.speedUnitIndex);
 const altitudeUnits = ['米 (m)', '英尺 (ft)'];
-const altitudeUnitIndex = ref(0);
+const altitudeUnitIndex = computed(() => unitsStore.altitudeUnitIndex);
 
 // 地图设置
 const mapTypes = ['标准', '卫星'];
@@ -255,10 +259,8 @@ const loadSettings = () => {
     const themeMap = { auto: 0, light: 1, dark: 2 };
     themeIndex.value = themeMap[savedTheme] || 0;
 
-    // 单位设置
-    distanceUnitIndex.value = settingsRepo.getSetting('distance_unit', 0);
-    speedUnitIndex.value = settingsRepo.getSetting('speed_unit', 0);
-    altitudeUnitIndex.value = settingsRepo.getSetting('altitude_unit', 0);
+    // 单位设置由 store 管理，这里刷新 store
+    unitsStore.refreshUnits();
 
     // 地图设置
     mapTypeIndex.value = settingsRepo.getSetting('map_type', 0);
@@ -305,9 +307,8 @@ const onThemeChange = (e) => {
 
 // 距离单位变化
 const onDistanceUnitChange = (e) => {
-  distanceUnitIndex.value = parseInt(e.detail.value);
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('distance_unit', distanceUnitIndex.value);
+  const index = parseInt(e.detail.value);
+  unitsStore.setDistanceUnit(index);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -316,9 +317,8 @@ const onDistanceUnitChange = (e) => {
 
 // 速度单位变化
 const onSpeedUnitChange = (e) => {
-  speedUnitIndex.value = parseInt(e.detail.value);
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('speed_unit', speedUnitIndex.value);
+  const index = parseInt(e.detail.value);
+  unitsStore.setSpeedUnit(index);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
@@ -327,9 +327,8 @@ const onSpeedUnitChange = (e) => {
 
 // 海拔单位变化
 const onAltitudeUnitChange = (e) => {
-  altitudeUnitIndex.value = parseInt(e.detail.value);
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('altitude_unit', altitudeUnitIndex.value);
+  const index = parseInt(e.detail.value);
+  unitsStore.setAltitudeUnit(index);
   uni.showToast({
     title: '设置已保存',
     icon: 'success'
