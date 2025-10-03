@@ -218,11 +218,16 @@ export async function setupDatabase() {
     // 初始化 SQLite
     const db = await initDatabase('cyclosafe.db');
 
-    // 初始化表结构
-    await initializeSchema(db);
-
-    // 检查并升级数据库
-    await checkAndUpgradeDatabase(db);
+    // 根据是否为新数据库决定初始化策略
+    if (db.isNewDatabase) {
+      // 新数据库：执行完整的 schema 初始化
+      console.log('检测到新数据库，执行初始化...');
+      await initializeSchema(db);
+    } else {
+      // 已存在的数据库：只检查版本并升级
+      console.log('检测到已存在数据库，跳过初始化...');
+      await checkAndUpgradeDatabase(db);
+    }
 
     return db;
   } catch (error) {

@@ -11,6 +11,7 @@ class SQLiteWrapper {
     this.SQL = null;
     this.dbPath = null;
     this.isInitialized = false;
+    this.isNewDatabase = false; // 标记是否为新建数据库
   }
 
   /**
@@ -34,7 +35,7 @@ class SQLiteWrapper {
       });
 
       // 设置数据库文件路径（使用微信小程序的用户数据目录）
-      this.dbPath = `${uni.env.USER_DATA_PATH}/${dbName}`;
+      this.dbPath = `${wx.env.USER_DATA_PATH}/${dbName}`;
 
       // 尝试从文件系统加载现有数据库
       const existingData = await this.loadDatabaseFromFile();
@@ -42,10 +43,12 @@ class SQLiteWrapper {
       if (existingData) {
         // 从现有数据创建数据库
         this.db = new this.SQL.Database(existingData);
+        this.isNewDatabase = false;
         console.log('已加载现有数据库');
       } else {
         // 创建新数据库
         this.db = new this.SQL.Database();
+        this.isNewDatabase = true;
         console.log('已创建新数据库');
       }
 
@@ -64,10 +67,11 @@ class SQLiteWrapper {
   async loadDatabaseFromFile() {
     return new Promise((resolve) => {
       try {
-        const fs = uni.getFileSystemManager();
+        const fs = wx.getFileSystemManager();
 
         fs.readFile({
           filePath: this.dbPath,
+          encoding: 'binary',
           success: (res) => {
             // 微信小程序返回 ArrayBuffer
             const buffer = res.data;
@@ -101,7 +105,7 @@ class SQLiteWrapper {
         // 导出数据库为 Uint8Array
         const data = this.db.export();
 
-        const fs = uni.getFileSystemManager();
+        const fs = wx.getFileSystemManager();
 
         // 将 Uint8Array 转换为 ArrayBuffer
         const buffer = data.buffer;
@@ -109,6 +113,7 @@ class SQLiteWrapper {
         fs.writeFile({
           filePath: this.dbPath,
           data: buffer,
+          encoding: 'binary',
           success: () => {
             console.log('数据库已保存到文件系统');
             resolve(true);
