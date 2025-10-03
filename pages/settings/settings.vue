@@ -125,9 +125,26 @@
               </view>
             </picker>
           </view>
-          <view class="setting-item">
+          <view class="setting-item border-bottom">
             <text class="label">危险点提醒</text>
             <switch :checked="showTrack" @change="onShowTrackChange" color="#3B82F6" />
+          </view>
+          <view class="setting-item vertical">
+            <view class="label-row">
+              <text class="label">危险点显示范围</text>
+              <text class="value-highlight">{{ dangerPointRange }} km</text>
+            </view>
+            <slider
+              :value="dangerPointRange"
+              :min="1"
+              :max="10"
+              :step="1"
+              @change="onDangerPointRangeChange"
+              @changing="onDangerPointRangeChanging"
+              activeColor="#3B82F6"
+              backgroundColor="#E5E7EB"
+              block-size="20"
+            />
           </view>
         </view>
       </view>
@@ -215,6 +232,7 @@ const mapTypeIndex = ref(0);
 const trackColorOptions = ['经典蓝', '活力橙', '醒目绿'];
 const trackColorIndex = ref(0);
 const showTrack = ref(true);
+const dangerPointRange = ref(5); // 危险点显示范围（公里），默认5km
 
 // 安全设置
 const speedThreshold = ref(40);
@@ -246,6 +264,7 @@ const loadSettings = () => {
     mapTypeIndex.value = settingsRepo.getSetting('map_type', 0);
     trackColorIndex.value = settingsRepo.getSetting('track_color', 0);
     showTrack.value = settingsRepo.getSetting('show_track', true);
+    dangerPointRange.value = settingsRepo.getSetting('danger_point_range', 5);
 
     // 安全设置
     speedThreshold.value = settingsRepo.getSetting('speed_threshold', 40);
@@ -344,6 +363,18 @@ const onShowTrackChange = (e) => {
   showTrack.value = e.detail.value;
   // 使用store更新危险点提醒
   mapSettingsStore.setShowDangerPoints(showTrack.value);
+};
+
+// 危险点显示范围变化
+const onDangerPointRangeChange = (e) => {
+  dangerPointRange.value = e.detail.value;
+  const settingsRepo = getSettingsRepository();
+  settingsRepo.saveSetting('danger_point_range', dangerPointRange.value);
+};
+
+// 危险点显示范围拖动中
+const onDangerPointRangeChanging = (e) => {
+  dangerPointRange.value = e.detail.value;
 };
 
 // 速度阈值变化

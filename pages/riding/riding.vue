@@ -556,17 +556,18 @@ const checkNearbyDangerPoints = () => {
   try {
     const settingsRepo = getSettingsRepository();
     const dangerPointWarning = settingsRepo.getSetting('show_track', true);
+    const dangerPointRange = settingsRepo.getSetting('danger_point_range', 5); // 从设置中读取显示范围，默认5km
 
     const repo = getDangerPointRepository();
 
-    // 显示范围：5km内的所有危险点（地图标记）
+    // 显示范围：配置的公里数内的所有危险点（地图标记）
     const displayPoints = repo.getDangerPointsNearby(
       currentLocation.value.latitude,
       currentLocation.value.longitude,
-      5 // 5公里显示范围
+      dangerPointRange
     );
 
-    console.log(`发现 ${displayPoints.length} 个危险点在5km范围内`);
+    console.log(`发现 ${displayPoints.length} 个危险点在${dangerPointRange}km范围内`);
 
     // 更新附近危险点列表（用于地图标记）
     nearbyDangerPoints.value = displayPoints;
