@@ -558,22 +558,30 @@ const checkNearbyDangerPoints = () => {
     const dangerPointWarning = settingsRepo.getSetting('show_track', true);
 
     const repo = getDangerPointRepository();
-    const points = repo.getDangerPointsNearby(
+
+    // 显示范围：5km内的所有危险点（地图标记）
+    const displayPoints = repo.getDangerPointsNearby(
       currentLocation.value.latitude,
       currentLocation.value.longitude,
-      0.05 // 50米范围
+      5 // 5公里显示范围
     );
 
+    console.log(`发现 ${displayPoints.length} 个危险点在5km范围内`);
+
     // 更新附近危险点列表（用于地图标记）
-    nearbyDangerPoints.value = points;
+    nearbyDangerPoints.value = displayPoints;
 
     // 更新地图标记
     updateDangerPointMarkers();
 
     // 如果关闭了提醒，只更新标记不提醒
     if (!dangerPointWarning) {
+      console.log('危险点提醒已关闭');
       return;
     }
+
+    // 提醒范围：只提醒50米内的危险点
+    const warningPoints = displayPoints.filter(p => p.distance <= 0.05);
 
     // 防止频繁提醒（30秒内只提醒一次）
     const now = Date.now();
@@ -581,8 +589,8 @@ const checkNearbyDangerPoints = () => {
       return;
     }
 
-    if (points.length > 0) {
-      const nearest = points[0];
+    if (warningPoints.length > 0) {
+      const nearest = warningPoints[0];
       const distanceM = (nearest.distance * 1000).toFixed(0);
 
       // 震动提醒
@@ -605,8 +613,11 @@ const checkNearbyDangerPoints = () => {
 
 // 更新危险点标记
 const updateDangerPointMarkers = () => {
+  console.log(`更新危险点标记，危险点数量: ${nearbyDangerPoints.value.length}`);
+
   if (nearbyDangerPoints.value.length === 0) {
     markers.value = [];
+    console.log('没有危险点，清空标记');
     return;
   }
 
@@ -619,7 +630,7 @@ const updateDangerPointMarkers = () => {
       manual: '📍'
     };
 
-    return {
+    const marker = {
       id: index,
       latitude: point.latitude,
       longitude: point.longitude,
@@ -636,7 +647,12 @@ const updateDangerPointMarkers = () => {
         display: 'ALWAYS'
       }
     };
+
+    console.log(`添加标记 ${index}: ${point.name} at (${point.latitude}, ${point.longitude}), 距离: ${distanceM}m`);
+    return marker;
   });
+
+  console.log(`✅ 已添加 ${markers.value.length} 个危险点标记到地图`);
 };
 
 // 摔倒警告弹窗
@@ -917,6 +933,9 @@ onLoad(() => {
         latitude: res.latitude
       };
       console.log('✅ 获取当前位置成功:', res.longitude, res.latitude);
+
+      // 初始化时检查一次附近的危险点
+      checkNearbyDangerPoints();
     },
     fail: (err) => {
       console.error('❌ 获取位置失败:', err);
