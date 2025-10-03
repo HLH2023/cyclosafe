@@ -493,9 +493,40 @@ class SensorService {
     }
 
     // 先确保传感器处于停止状态（防止状态不同步导致的启动失败）
-    uni.stopAccelerometer({ success: () => {}, fail: () => {} });
-    uni.stopGyroscope({ success: () => {}, fail: () => {} });
+    // 使用 Promise 等待停止操作完成
+    const stopSensors = () => {
+      return new Promise((resolve) => {
+        let stopCount = 0;
+        const checkComplete = () => {
+          stopCount++;
+          if (stopCount >= 2) {
+            // 两个传感器都停止后，延迟100ms确保状态同步
+            setTimeout(resolve, 100);
+          }
+        };
 
+        uni.stopAccelerometer({
+          success: checkComplete,
+          fail: checkComplete // 即使失败也继续（可能本来就没启动）
+        });
+
+        uni.stopGyroscope({
+          success: checkComplete,
+          fail: checkComplete
+        });
+      });
+    };
+
+    // 等待传感器停止后再启动
+    stopSensors().then(() => {
+      this._startSensors(options, systemInfo);
+    });
+  }
+
+  /**
+   * 启动传感器（内部方法）
+   */
+  _startSensors(options, systemInfo) {
     // 创建摔倒检测器
     this.fallDetector = new FallDetector({
       sensitivity: options.sensitivity || 'medium',
