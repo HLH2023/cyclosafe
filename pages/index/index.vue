@@ -19,19 +19,19 @@
       <!-- 功能卡片 -->
       <view class="feature-cards">
         <view class="feature-card" @click="goToHistory" hover-class="card-hover">
-          <m-icon name="history" :size="48" color="#3B82F6"></m-icon>
+          <m-icon name="history" :size="48" class="icon-primary"></m-icon>
           <text class="card-title">历史记录</text>
           <text class="card-desc">查看骑行数据</text>
         </view>
 
         <view class="feature-card" @click="goToDangerPoints" hover-class="card-hover">
-          <m-icon name="location_on" :size="48" color="#EF4444"></m-icon>
+          <m-icon name="location_on" :size="48" class="icon-danger"></m-icon>
           <text class="card-title">危险点</text>
           <text class="card-desc">查看与管理</text>
         </view>
 
         <view class="feature-card" @click="goToSettings" hover-class="card-hover">
-          <m-icon name="settings" :size="48" color="#3B82F6"></m-icon>
+          <m-icon name="settings" :size="48" class="icon-primary"></m-icon>
           <text class="card-title">设置</text>
           <text class="card-desc">个性化配置</text>
         </view>
@@ -278,6 +278,14 @@ onShow(() => {
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
+
+    .icon-primary {
+      color: var(--primary-color);
+    }
+
+    .icon-danger {
+      color: var(--danger-color);
+    }
 
     .card-title {
       display: block;

@@ -1,5 +1,5 @@
 <template>
-  <view class="tab-bar">
+  <view class="tab-bar" :class="themeClass">
     <view
       v-for="(item, index) in items"
       :key="index"
@@ -10,7 +10,7 @@
       <m-icon
         :name="item.icon"
         :size="24"
-        :color="current === index ? '#3B82F6' : '#6B7280'"
+        :class="current === index ? 'icon-active' : 'icon-inactive'"
       ></m-icon>
       <text class="tab-label" :class="{ 'active': current === index }">
         {{ item.text }}
@@ -20,7 +20,12 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
+import { useThemeStore } from '@/store/theme';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 const props = defineProps({
   current: {
@@ -31,7 +36,7 @@ const props = defineProps({
     type: Array,
     default: () => [
       { icon: 'home', text: '首页', path: '/pages/index/index' },
-      { icon: 'bar_chart', text: '记录', path: '/pages/history/history' },
+      { icon: 'history', text: '记录', path: '/pages/history/history' },
       { icon: 'settings', text: '设置', path: '/pages/settings/settings' }
     ]
   }
@@ -59,8 +64,8 @@ const onChange = (index) => {
   left: 0;
   right: 0;
   height: 128rpx;
-  background: #FFFFFF;
-  border-top: 1rpx solid #E5E7EB;
+  background: var(--card-background);
+  border-top: 1rpx solid var(--border-color);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -78,13 +83,21 @@ const onChange = (index) => {
   gap: 8rpx;
   transition: all 0.3s ease;
 
+  .icon-active {
+    color: var(--primary-color);
+  }
+
+  .icon-inactive {
+    color: var(--text-secondary);
+  }
+
   .tab-label {
     font-size: 24rpx;
-    color: #6B7280;
+    color: var(--text-secondary);
     transition: all 0.3s ease;
 
     &.active {
-      color: #3B82F6;
+      color: var(--primary-color);
       font-weight: 500;
     }
   }
