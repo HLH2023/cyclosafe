@@ -160,7 +160,7 @@ const altitudeChartOpts = computed(() => ({
     title: `海拔 (${altitudeUnit.value})`,
     format: (val) => val.toFixed(0)
   }
-});
+}));
 
 // 加载最新记录
 const loadLatestRecord = () => {
