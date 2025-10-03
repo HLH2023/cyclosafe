@@ -304,20 +304,25 @@ const initCharts = () => {
 
   for (let i = 0; i < points.length; i += speedStep) {
     const point = points[i];
-    const elapsedSeconds = Math.floor((point.timestamp - startTime) / 1000);
+    const elapsedSeconds = Math.max(0, Math.floor((point.timestamp - startTime) / 1000));
     const minutes = Math.floor(elapsedSeconds / 60);
     const seconds = elapsedSeconds % 60;
 
     speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
     // point.speed 已经是 km/h，直接转换为用户设置的单位
-    const speed = convertSpeed(point.speed || 0);
-    speedData.push(Math.max(0, speed)); // 确保速度不为负数
+    // 模拟器可能返回负数或无效值，强制转为正数
+    const rawSpeed = parseFloat(point.speed) || 0;
+    const speed = convertSpeed(Math.abs(rawSpeed)); // 取绝对值
+    speedData.push(Math.max(0, speed)); // 二次确保不为负数
   }
 
   console.log('速度图表数据:', {
     categories: speedCategories.length,
     data: speedData.length,
-    sampleData: speedData.slice(0, 5)
+    sampleData: speedData.slice(0, 5),
+    min: Math.min(...speedData),
+    max: Math.max(...speedData),
+    hasNegative: speedData.some(v => v < 0)
   });
 
   speedChartData.value = {
@@ -348,19 +353,24 @@ const initCharts = () => {
         point.latitude,
         point.longitude
       );
-      accumulatedDistance += distance;
+      accumulatedDistance += Math.max(0, distance); // 确保距离不为负数
     }
 
-    const distanceKm = accumulatedDistance / 1000;
+    const distanceKm = Math.max(0, accumulatedDistance / 1000);
     altitudeCategories.push(convertDistance(distanceKm).toFixed(1)); // 转换为用户设置的单位
-    const altitude = convertAltitude(point.altitude || 0);
-    altitudeData.push(altitude); // 转换海拔单位
+    // 模拟器可能返回负数海拔，取绝对值或默认为0
+    const rawAltitude = parseFloat(point.altitude) || 0;
+    const altitude = convertAltitude(Math.max(0, rawAltitude)); // 确保不为负数
+    altitudeData.push(Math.max(0, altitude)); // 二次确保不为负数
   }
 
   console.log('海拔图表数据:', {
     categories: altitudeCategories.length,
     data: altitudeData.length,
-    sampleData: altitudeData.slice(0, 5)
+    sampleData: altitudeData.slice(0, 5),
+    min: Math.min(...altitudeData),
+    max: Math.max(...altitudeData),
+    hasNegative: altitudeData.some(v => v < 0)
   });
 
   altitudeChartData.value = {
@@ -547,11 +557,11 @@ onLoad((options) => {
   }
 
   .chart-wrapper {
-    height: 384rpx;
+    height: 480rpx; // 增加图表高度，给更多空间
   }
 
   .chart-placeholder {
-    height: 384rpx;
+    height: 480rpx;
     background: var(--background-secondary);
     border-radius: 12rpx;
     display: flex;

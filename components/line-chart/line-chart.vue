@@ -81,30 +81,22 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [35, 10, 20, 30],
+        padding: [40, 15, 35, 45], // 上右下左，增加空间避免负数
         enableScroll: false,
         legend: {
-          show: true,
-          position: 'top',
-          float: 'center',
-          padding: 5,
-          margin: 5,
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderColor: 'rgba(0,0,0,0)',
-          borderWidth: 0,
-          fontColor: themeColors.value.legendColor,
-          fontSize: 13
+          show: false // 关闭图例，节省空间
         },
         xAxis: {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 11,
+          fontSize: 9, // 减小字体
           rotateLabel: false,
-          itemCount: 5,
-          boundaryGap: 'center',
+          itemCount: 5, // 只显示5个刻度
+          boundaryGap: 'justify',
           axisLine: true,
           axisLineColor: themeColors.value.gridColor,
+          scrollShow: false,
           ...props.opts.xAxis
         },
         yAxis: {
@@ -112,9 +104,14 @@ const initChart = () => {
           dashLength: 4,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 11,
-          format: (val) => val.toFixed(0),
+          fontSize: 9, // 减小字体
+          format: (val) => {
+            // 确保 Y 轴值不为负数
+            const safeVal = Math.max(0, val);
+            return safeVal.toFixed(0);
+          },
           axisLine: false,
+          min: 0, // 强制 Y 轴最小值为 0
           ...props.opts.yAxis
         },
         dataLabel: false,
@@ -123,7 +120,7 @@ const initChart = () => {
           line: {
             type: 'curve',
             width: 2,
-            activeType: 'hollow',
+            activeType: 'none', // 禁用激活状态
             linearType: 'none',
             onShadow: false
           }
