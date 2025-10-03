@@ -1,5 +1,15 @@
 <template>
+  <!-- 自定义CSS图标 -->
+  <view v-if="isCustomIcon" class="custom-icon" :style="customIconStyle">
+    <view v-if="name === 'play_arrow'" class="play-triangle"></view>
+    <view v-if="name === 'pause'" class="pause-bars">
+      <view class="pause-bar"></view>
+      <view class="pause-bar"></view>
+    </view>
+  </view>
+  <!-- uni-icons图标 -->
   <uni-icons
+    v-else
     :type="iconType"
     :size="iconSize"
     :color="color"
@@ -45,8 +55,7 @@ const ICON_MAP = {
   'science_off': 'pyq',
 
   // 媒体类
-  'play_arrow': 'right',  // 播放按钮使用右箭头
-  'pause': 'bars',  // 暂停按钮使用两条杠
+  // 'play_arrow' 和 'pause' 使用自定义CSS图标，不需要映射
   'stop': 'smallcircle-filled',  // 停止按钮使用实心小圆
   'refresh': 'refresh',
 
@@ -105,6 +114,22 @@ export default {
     }
   },
   computed: {
+    // 是否使用自定义CSS图标
+    isCustomIcon() {
+      return this.name === 'play_arrow' || this.name === 'pause';
+    },
+
+    // 自定义图标容器样式
+    customIconStyle() {
+      const size = this.iconSize;
+      return {
+        width: size + 'px',
+        height: size + 'px',
+        '--icon-color': this.color || '#333333',
+        '--icon-size': size + 'px'
+      };
+    },
+
     // 映射到 uni-icons 的图标类型
     iconType() {
       // 如果有映射，使用映射的图标
@@ -142,4 +167,39 @@ export default {
 
 <style scoped>
 /* 样式由 uni-icons 处理 */
+
+/* 自定义图标容器 */
+.custom-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* 播放三角形 */
+.play-triangle {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: calc(var(--icon-size) * 0.3) 0 calc(var(--icon-size) * 0.3) calc(var(--icon-size) * 0.5);
+  border-color: transparent transparent transparent var(--icon-color);
+  margin-left: calc(var(--icon-size) * 0.08);
+}
+
+/* 暂停两条竖线容器 */
+.pause-bars {
+  display: flex;
+  gap: calc(var(--icon-size) * 0.15);
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* 暂停竖线 */
+.pause-bar {
+  width: calc(var(--icon-size) * 0.2);
+  height: calc(var(--icon-size) * 0.6);
+  background-color: var(--icon-color);
+  border-radius: calc(var(--icon-size) * 0.04);
+}
 </style>
