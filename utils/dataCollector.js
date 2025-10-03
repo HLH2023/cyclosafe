@@ -68,6 +68,7 @@ class DataCollector {
 
   /**
    * 开始采集数据
+   * 注意：不启动传感器，只监听已启动的传感器数据（由 sensorService 管理）
    */
   startCollection() {
     if (this.isCollecting) {
@@ -80,15 +81,13 @@ class DataCollector {
     this.startTime = Date.now();
     this.dataBuffer = [];
 
-    // 启动加速度计
-    this._startAccelerometer();
-
-    // 启动陀螺仪
-    this._startGyroscope();
+    // 只注册监听器，不启动传感器（传感器已由 sensorService 启动）
+    this._registerListeners();
   }
 
   /**
    * 停止采集数据
+   * 注意：不停止传感器，只移除监听器（传感器由 sensorService 管理）
    */
   stopCollection() {
     if (!this.isCollecting) {
@@ -99,7 +98,7 @@ class DataCollector {
     console.log('停止数据采集...');
     this.isCollecting = false;
 
-    // 停止传感器监听
+    // 只移除监听器，不停止传感器（sensorService 可能还在使用）
     if (this.accelerometerListener) {
       uni.offAccelerometerChange(this.accelerometerListener);
       this.accelerometerListener = null;
@@ -110,25 +109,17 @@ class DataCollector {
       this.gyroscopeListener = null;
     }
 
-    uni.stopAccelerometer();
-    uni.stopGyroscope();
+    // 不调用 uni.stopAccelerometer() 和 uni.stopGyroscope()
+    // 因为 sensorService 还在使用这些传感器
   }
 
   /**
-   * 启动加速度计监听
+   * 注册传感器监听器（不启动传感器）
    */
-  _startAccelerometer() {
-    uni.startAccelerometer({
-      interval: 'game', // 20ms更新一次，约50Hz
-      success: () => {
-        console.log('加速度计启动成功');
-      },
-      fail: (err) => {
-        console.error('加速度计启动失败:', err);
-      }
-    });
+  _registerListeners() {
+    console.log('注册传感器监听器...');
 
-    // 保存监听器引用，方便后续移除
+    // 注册加速度计监听器
     this.accelerometerListener = (res) => {
       if (!this.isCollecting) return;
 
@@ -166,22 +157,8 @@ class DataCollector {
     };
 
     uni.onAccelerometerChange(this.accelerometerListener);
-  }
 
-  /**
-   * 启动陀螺仪监听
-   */
-  _startGyroscope() {
-    uni.startGyroscope({
-      interval: 'game', // 20ms更新一次，约50Hz
-      success: () => {
-        console.log('陀螺仪启动成功');
-      },
-      fail: (err) => {
-        console.error('陀螺仪启动失败:', err);
-      }
-    });
-
+    // 注册陀螺仪监听器
     this.gyroscopeListener = (res) => {
       if (!this.isCollecting) return;
 
