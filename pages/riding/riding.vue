@@ -1,5 +1,5 @@
 <template>
-  <view class="riding-page">
+  <view class="riding-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
       <text class="title">骑行中</text>
@@ -88,12 +88,17 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
+import { useThemeStore } from '@/store/theme';
 import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
 import { getMLDetector } from '@/utils/mlModel.js';
 import config from '@/utils/config.js';
 import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 // 当前时间
 const currentTime = ref('');

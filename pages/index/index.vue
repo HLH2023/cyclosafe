@@ -1,5 +1,5 @@
 <template>
-  <view class="index-page">
+  <view class="index-page" :class="themeClass">
     <!-- 主内容区 -->
     <view class="main-content">
       <!-- 顶部标题 -->
@@ -63,9 +63,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
+import { useThemeStore } from '@/store/theme';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 // 状态
 const totalRides = ref(0);
@@ -188,7 +193,7 @@ onShow(() => {
 <style lang="scss" scoped>
 .index-page {
   min-height: 100vh;
-  background: #F3F4F6;
+  background: var(--background-color);
   display: flex;
   flex-direction: column;
 }
@@ -210,14 +215,14 @@ onShow(() => {
     display: block;
     font-size: 80rpx;
     font-weight: 700;
-    color: #3B82F6;
+    color: var(--primary-color);
     margin-bottom: 8rpx;
   }
 
   .app-subtitle {
     display: block;
     font-size: 28rpx;
-    color: #6B7280;
+    color: var(--text-secondary);
   }
 }
 
@@ -227,7 +232,7 @@ onShow(() => {
 
   .start-btn {
     width: 100%;
-    background: #3B82F6;
+    background: var(--primary-color);
     border-radius: 16rpx;
     padding: 48rpx;
     border: none;
@@ -264,49 +269,49 @@ onShow(() => {
   .feature-card {
     flex: 1 1 calc(33.333% - 16rpx);
     min-width: 180rpx;
-    background: #FFFFFF;
+    background: var(--card-background);
     border-radius: 16rpx;
     padding: 32rpx 16rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
 
     .card-title {
       display: block;
       font-size: 28rpx;
       font-weight: 600;
-      color: #1F2937;
+      color: var(--text-primary);
       margin: 16rpx 0 8rpx;
     }
 
     .card-desc {
       display: block;
       font-size: 22rpx;
-      color: #6B7280;
+      color: var(--text-secondary);
     }
   }
 
   .card-hover {
-    background: #F9FAFB;
+    background: var(--background-secondary);
     transform: translateY(-4rpx);
   }
 }
 
 /* 统计信息 */
 .stats-section {
-  background: #FFFFFF;
+  background: var(--card-background);
   border-radius: 16rpx;
   padding: 48rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 
   .stats-title {
     display: block;
     font-size: 36rpx;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--text-primary);
     margin-bottom: 32rpx;
   }
 
@@ -321,14 +326,14 @@ onShow(() => {
         display: block;
         font-size: 48rpx;
         font-weight: 700;
-        color: #3B82F6;
+        color: var(--primary-color);
         margin-bottom: 8rpx;
       }
 
       .stat-label {
         display: block;
         font-size: 24rpx;
-        color: #6B7280;
+        color: var(--text-secondary);
       }
     }
   }

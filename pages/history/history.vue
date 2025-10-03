@@ -1,5 +1,5 @@
 <template>
-  <view class="history-page">
+  <view class="history-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
       <text class="title">历史记录</text>
@@ -78,9 +78,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app';
+import { useThemeStore } from '@/store/theme';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 // 状态
 const recordList = ref([]);
@@ -184,15 +189,15 @@ onPullDownRefresh(() => {
 <style lang="scss" scoped>
 .history-page {
   min-height: 100vh;
-  background: #F3F4F6;
+  background: var(--background-color);
   padding-bottom: 160rpx;
 }
 
 .header {
-  background: #FFFFFF;
+  background: var(--card-background);
   padding: 32rpx;
   text-align: center;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -200,31 +205,31 @@ onPullDownRefresh(() => {
   .title {
     font-size: 40rpx;
     font-weight: 700;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 }
 
 .search-section {
-  background: #FFFFFF;
+  background: var(--card-background);
   padding: 24rpx 32rpx;
   display: flex;
   gap: 16rpx;
-  border-bottom: 1rpx solid #E5E7EB;
+  border-bottom: 1rpx solid var(--border-color);
 
   .search-box {
     flex: 1;
     display: flex;
     align-items: center;
     gap: 16rpx;
-    background: #F3F4F6;
+    background: var(--background-secondary);
     border-radius: 16rpx;
     padding: 16rpx 24rpx;
-    border: 1rpx solid #E5E7EB;
+    border: 1rpx solid var(--border-color);
 
     .search-input {
       flex: 1;
       font-size: 28rpx;
-      color: #1F2937;
+      color: var(--text-primary);
     }
   }
 
@@ -232,14 +237,14 @@ onPullDownRefresh(() => {
     display: flex;
     align-items: center;
     gap: 8rpx;
-    background: #F3F4F6;
+    background: var(--background-secondary);
     padding: 16rpx 24rpx;
     border-radius: 16rpx;
-    border: 1rpx solid #E5E7EB;
+    border: 1rpx solid var(--border-color);
 
     .filter-text {
       font-size: 28rpx;
-      color: #1F2937;
+      color: var(--text-primary);
     }
   }
 }
@@ -258,14 +263,14 @@ onPullDownRefresh(() => {
 
   .empty-text {
     font-size: 36rpx;
-    color: #1F2937;
+    color: var(--text-primary);
     margin: 32rpx 0 16rpx;
     font-weight: 600;
   }
 
   .empty-hint {
     font-size: 28rpx;
-    color: #6B7280;
+    color: var(--text-secondary);
   }
 }
 
@@ -276,9 +281,9 @@ onPullDownRefresh(() => {
 }
 
 .record-item {
-  background: #FFFFFF;
+  background: var(--card-background);
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   padding: 32rpx;
   position: relative;
   transition: all 0.3s ease;
@@ -298,7 +303,7 @@ onPullDownRefresh(() => {
     .map-placeholder {
       width: 100%;
       height: 100%;
-      background: #F3F4F6;
+      background: var(--background-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -315,7 +320,7 @@ onPullDownRefresh(() => {
   .record-date {
     font-size: 28rpx;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--text-primary);
     margin-bottom: 24rpx;
   }
 
@@ -331,7 +336,7 @@ onPullDownRefresh(() => {
 
       .stat-text {
         font-size: 24rpx;
-        color: #6B7280;
+        color: var(--text-secondary);
       }
     }
   }
@@ -359,6 +364,6 @@ onPullDownRefresh(() => {
 
 .record-item-hover {
   transform: scale(0.98);
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 </style>

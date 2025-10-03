@@ -1,5 +1,5 @@
 <template>
-  <view class="settings-page">
+  <view class="settings-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
       <text class="title">设置</text>
@@ -185,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 import { getSettingsRepository, getRidingRecordRepository, getDangerPointRepository } from '@/db/repositories/index.js';
@@ -193,6 +193,7 @@ import { clearAllData as clearAllDataFromDB } from '@/db/database.js';
 
 // 主题设置
 const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 const themeOptions = ['跟随系统', '明亮模式', '黑夜模式'];
 const themeIndex = ref(0); // 默认跟随系统
 
@@ -523,15 +524,15 @@ onShow(() => {
 <style lang="scss" scoped>
 .settings-page {
   min-height: 100vh;
-  background: #F3F4F6;
+  background: var(--background-color);
   padding-bottom: 160rpx;
 }
 
 .header {
-  background: #FFFFFF;
+  background: var(--card-background);
   padding: 32rpx;
   text-align: center;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -539,7 +540,7 @@ onShow(() => {
   .title {
     font-size: 40rpx;
     font-weight: 700;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 }
 
@@ -556,14 +557,14 @@ onShow(() => {
     .section-title {
       font-size: 36rpx;
       font-weight: 600;
-      color: #1F2937;
+      color: var(--text-primary);
     }
   }
 
   .card {
-    background: #FFFFFF;
+    background: var(--card-background);
     border-radius: 16rpx;
-    box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
   }
 }
@@ -576,7 +577,7 @@ onShow(() => {
   transition: background-color 0.2s ease;
 
   &.border-bottom {
-    border-bottom: 1rpx solid #E5E7EB;
+    border-bottom: 1rpx solid var(--border-color);
   }
 
   &.vertical {
@@ -589,29 +590,29 @@ onShow(() => {
     cursor: pointer;
 
     &:active {
-      background-color: #F9FAFB;
+      background-color: var(--background-secondary);
     }
   }
 
   &.danger .label {
-    color: #EF4444;
+    color: var(--danger-color);
   }
 
   .label {
     font-size: 32rpx;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 
   .picker-value {
     font-size: 28rpx;
-    color: #6B7280;
+    color: var(--text-secondary);
     padding: 8rpx 16rpx;
     border-radius: 8rpx;
-    background: #F3F4F6;
+    background: var(--background-secondary);
 
     &.disabled {
       opacity: 0.5;
-      background: #E5E7EB;
+      background: var(--border-color);
     }
   }
 
@@ -626,7 +627,7 @@ onShow(() => {
   .value-highlight {
     font-size: 28rpx;
     font-weight: 700;
-    color: #3B82F6;
+    color: var(--primary-color);
   }
 
   .action-link {
@@ -636,7 +637,7 @@ onShow(() => {
 
     .link-text {
       font-size: 28rpx;
-      color: #3B82F6;
+      color: var(--primary-color);
     }
   }
 
@@ -646,6 +647,6 @@ onShow(() => {
 }
 
 .item-hover {
-  background: #F9FAFB;
+  background: var(--background-secondary);
 }
 </style>

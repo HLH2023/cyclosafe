@@ -1,5 +1,5 @@
 <template>
-  <view class="danger-points-page">
+  <view class="danger-points-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
       <button class="back-btn" @click="goBack">
@@ -86,8 +86,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useThemeStore } from '@/store/theme';
 import { getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 // 地图中心和缩放
 const mapCenter = ref({
@@ -372,7 +377,7 @@ onMounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #F3F4F6;
+  background: var(--background-color);
 }
 
 .header {
@@ -380,8 +385,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 32rpx;
-  background: #FFFFFF;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  background: var(--card-background);
+  box-shadow: var(--shadow-sm);
 
   .back-btn {
     padding: 0;
@@ -399,7 +404,7 @@ onMounted(() => {
   .title {
     font-size: 36rpx;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 
   .placeholder {
@@ -424,7 +429,7 @@ onMounted(() => {
 
 .bottom-bar {
   padding: 32rpx;
-  background: #FFFFFF;
+  background: var(--card-background);
   box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.04);
 
   .add-btn {
@@ -472,20 +477,20 @@ onMounted(() => {
     }
 
     .cancel-btn {
-      background: #E5E7EB;
-      color: #6B7280;
+      background: var(--border-color);
+      color: var(--text-secondary);
 
       &:active {
-        background: #D1D5DB;
+        background: var(--border-light);
       }
     }
 
     .confirm-btn {
-      background: #3B82F6;
+      background: var(--primary-color);
       color: #FFFFFF;
 
       &:active {
-        background: #2563EB;
+        background: var(--primary-hover);
       }
     }
   }
@@ -498,7 +503,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-color);
   display: flex;
   align-items: flex-end;
   z-index: 100;
@@ -506,7 +511,7 @@ onMounted(() => {
 
 .info-popup {
   width: 100%;
-  background: #FFFFFF;
+  background: var(--card-background);
   border-radius: 32rpx 32rpx 0 0;
   padding: 48rpx;
   animation: slideUp 0.3s ease;
@@ -530,7 +535,7 @@ onMounted(() => {
   .popup-title {
     font-size: 40rpx;
     font-weight: 700;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 
   .close-btn {
@@ -550,7 +555,7 @@ onMounted(() => {
   .info-row {
     display: flex;
     padding: 24rpx 0;
-    border-bottom: 1rpx solid #E5E7EB;
+    border-bottom: 1rpx solid var(--border-color);
 
     &:last-child {
       border-bottom: none;
@@ -558,14 +563,14 @@ onMounted(() => {
 
     .info-label {
       font-size: 28rpx;
-      color: #6B7280;
+      color: var(--text-secondary);
       width: 150rpx;
     }
 
     .info-value {
       flex: 1;
       font-size: 28rpx;
-      color: #1F2937;
+      color: var(--text-primary);
       font-weight: 500;
     }
   }

@@ -1,5 +1,5 @@
 <template>
-  <view class="analysis-page">
+  <view class="analysis-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
       <button class="back-btn" @click="goBack">
@@ -99,9 +99,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
+import { useThemeStore } from '@/store/theme';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
+
+// 主题
+const themeStore = useThemeStore();
+const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
 // 返回
 const goBack = () => {
@@ -381,16 +386,16 @@ onLoad((options) => {
 <style lang="scss" scoped>
 .analysis-page {
   min-height: 100vh;
-  background: #F3F4F6;
+  background: var(--background-color);
 }
 
 .header {
-  background: #FFFFFF;
+  background: var(--card-background);
   padding: 32rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -410,7 +415,7 @@ onLoad((options) => {
   .title {
     font-size: 40rpx;
     font-weight: 700;
-    color: #1F2937;
+    color: var(--text-primary);
   }
 
   .placeholder {
@@ -422,7 +427,7 @@ onLoad((options) => {
   padding: 200rpx 0;
   text-align: center;
   font-size: 36rpx;
-  color: #1F2937;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -431,16 +436,16 @@ onLoad((options) => {
 }
 
 .data-card {
-  background: #FFFFFF;
+  background: var(--card-background);
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 
   .card-title {
     font-size: 36rpx;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--text-primary);
     margin-bottom: 32rpx;
   }
 
@@ -462,17 +467,17 @@ onLoad((options) => {
       .stat-value {
         font-size: 36rpx;
         font-weight: 700;
-        color: #1F2937;
+        color: var(--text-primary);
         margin-bottom: 8rpx;
 
         &.highlight {
-          color: #10B981;
+          color: var(--success-color);
         }
       }
 
       .stat-label {
         font-size: 24rpx;
-        color: #6B7280;
+        color: var(--text-secondary);
       }
     }
   }
@@ -483,20 +488,20 @@ onLoad((options) => {
   margin-bottom: 32rpx;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-card {
-  background: #FFFFFF;
+  background: var(--card-background);
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 
   .chart-title {
     font-size: 32rpx;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--text-primary);
     margin-bottom: 24rpx;
   }
 
@@ -506,12 +511,12 @@ onLoad((options) => {
 
   .chart-placeholder {
     height: 384rpx;
-    background: #F3F4F6;
+    background: var(--background-secondary);
     border-radius: 12rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9CA3AF;
+    color: var(--text-tertiary);
     font-size: 28rpx;
   }
 }

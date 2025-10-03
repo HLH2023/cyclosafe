@@ -1,5 +1,5 @@
 <template>
-  <view class="simulate-page">
+  <view class="simulate-page" :class="themeClass">
     <!-- 顶部标题 -->
     <view class="header">
       <text class="title">模拟摔倒数据采集</text>
@@ -106,8 +106,16 @@
 
 <script>
 import DataCollector from '@/utils/dataCollector.js';
+import { useThemeStore } from '@/store/theme';
+import { mapState } from 'pinia';
 
 export default {
+  computed: {
+    ...mapState(useThemeStore, ['isDark']),
+    themeClass() {
+      return this.isDark ? 'theme-dark' : 'theme-light';
+    }
+  },
   data() {
     return {
       // 数据采集器
