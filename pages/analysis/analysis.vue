@@ -491,6 +491,7 @@ onLoad((options) => {
 }
 
 .map-card {
+  position: relative;
   height: 512rpx;
   margin-bottom: 32rpx;
   border-radius: 16rpx;
@@ -498,6 +499,11 @@ onLoad((options) => {
   box-shadow: var(--shadow-sm);
 
   .analysis-map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
     border-radius: 12rpx;
