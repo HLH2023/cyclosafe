@@ -73,20 +73,20 @@
       <!-- 控制按钮 -->
       <view class="control-section">
         <template v-if="!isRiding">
-          <button class="control-btn start-btn circle-btn" @click="startRiding">
+          <view class="control-btn start-btn circle-btn" hover-class="btn-hover" @click="startRiding">
             <m-icon name="play_arrow" :size="60" color="#FFFFFF"></m-icon>
-          </button>
+          </view>
         </template>
         <template v-else>
-          <button v-if="!isPaused" class="control-btn pause-btn circle-btn" @click="pauseRiding">
+          <view v-if="!isPaused" class="control-btn pause-btn circle-btn" hover-class="btn-hover" @click="pauseRiding">
             <m-icon name="pause" :size="60" color="#FFFFFF"></m-icon>
-          </button>
-          <button v-else class="control-btn resume-btn circle-btn" @click="resumeRiding">
+          </view>
+          <view v-else class="control-btn resume-btn circle-btn" hover-class="btn-hover" @click="resumeRiding">
             <m-icon name="play_arrow" :size="60" color="#FFFFFF"></m-icon>
-          </button>
-          <button class="control-btn stop-btn circle-btn-small" @click="stopRiding">
+          </view>
+          <view class="control-btn stop-btn circle-btn-small" hover-class="btn-hover" @click="stopRiding">
             <m-icon name="stop" :size="50" color="#FFFFFF"></m-icon>
-          </button>
+          </view>
         </template>
       </view>
     </view>
@@ -1170,15 +1170,11 @@ onUnmounted(() => {
   padding-bottom: 32rpx;
 
   .control-btn {
-    border: none;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    &::after {
-      border: none;
-    }
+    cursor: pointer;
 
     &.circle-btn {
       width: 192rpx;
@@ -1203,6 +1199,11 @@ onUnmounted(() => {
     &.stop-btn {
       background: #0058B9;
     }
+  }
+
+  .btn-hover {
+    opacity: 0.8;
+    transform: scale(0.95);
 
     &:active {
       transform: scale(0.95);

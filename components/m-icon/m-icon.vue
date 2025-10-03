@@ -45,9 +45,9 @@ const ICON_MAP = {
   'science_off': 'pyq',
 
   // 媒体类
-  'play_arrow': 'play-filled',
-  'pause': 'pause-filled',
-  'stop': 'stop-filled',
+  'play_arrow': 'right',  // 播放按钮使用右箭头
+  'pause': 'bars',  // 暂停按钮使用两条杠
+  'stop': 'smallcircle-filled',  // 停止按钮使用实心小圆
   'refresh': 'refresh',
 
   // 通信类
