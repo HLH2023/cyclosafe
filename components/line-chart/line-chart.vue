@@ -1,7 +1,6 @@
 <template>
   <view class="chart-container">
     <canvas
-      type="2d"
       :canvas-id="canvasId"
       :id="canvasId"
       class="chart-canvas"
@@ -13,13 +12,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, getCurrentInstance } from 'vue';
 import { useThemeStore } from '@/store/theme';
 import uCharts from '@qiun/ucharts';
 
 // 主题管理
 const themeStore = useThemeStore();
 const isDark = computed(() => themeStore.isDark);
+
+// 获取组件实例
+const instance = getCurrentInstance();
 
 // 主题相关颜色配置
 const themeColors = computed(() => ({
@@ -55,27 +57,23 @@ const initChart = () => {
     return;
   }
 
-  // 获取canvas上下文
-  const query = uni.createSelectorQuery();
-  query.select(`#${props.canvasId}`).fields({ node: true, size: true }).exec((res) => {
-    if (res && res[0]) {
-      const canvas = res[0].node;
-      const ctx = canvas.getContext('2d');
+  // 使用旧版 Canvas API (uni-app 兼容方式)
+  const ctx = uni.createCanvasContext(props.canvasId, instance.proxy);
+  canvasContext.value = ctx;
 
-      // 获取设备像素比
-      const dpr = uni.getSystemInfoSync().pixelRatio;
-      canvas.width = res[0].width * dpr;
-      canvas.height = res[0].height * dpr;
-      ctx.scale(dpr, dpr);
-
-      canvasContext.value = ctx;
+  // 获取容器尺寸
+  const query = uni.createSelectorQuery().in(instance.proxy);
+  query.select(`#${props.canvasId}`).boundingClientRect((rect) => {
+    if (rect) {
+      const pixelRatio = uni.getSystemInfoSync().pixelRatio || 1;
 
       // 创建图表
       chartInstance = new uCharts({
         type: 'line',
         context: ctx,
-        width: res[0].width,
-        height: res[0].height,
+        width: rect.width,
+        height: rect.height,
+        pixelRatio: pixelRatio,
         categories: props.chartData.categories,
         series: props.chartData.series,
         animation: true,
@@ -136,8 +134,10 @@ const initChart = () => {
         },
         ...props.opts
       });
+
+      console.log('图表初始化成功:', props.canvasId);
     }
-  });
+  }).exec();
 };
 
 // 触摸事件
