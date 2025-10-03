@@ -106,6 +106,7 @@ import config from '@/utils/config.js';
 import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
+import { showEmergencyCountdown } from '@/utils/emergencyHelper.js';
 
 // 主题
 const themeStore = useThemeStore();
@@ -583,6 +584,17 @@ const handleFallDetected = (data) => {
 
   // 显示警告弹窗
   showFallAlert('传感器');
+
+  // 触发紧急呼叫倒计时
+  showEmergencyCountdown({
+    type: 'fall',
+    location: {
+      latitude: currentLocation.value.latitude,
+      longitude: currentLocation.value.longitude
+    },
+    speed: currentSpeed.value,
+    timestamp: Date.now()
+  });
 };
 
 // 急刹车检测回调

@@ -93,7 +93,7 @@
               </view>
             </picker>
           </view>
-          <view class="setting-item">
+          <view class="setting-item action" hover-class="item-hover" @click="goToEmergencyContacts">
             <text class="label">紧急联系人</text>
             <view class="action-link">
               <text class="link-text">管理</text>
@@ -414,6 +414,13 @@ const onFallSensitivityChange = (e) => {
   uni.showToast({
     title: '灵敏度已更新',
     icon: 'success'
+  });
+};
+
+// 跳转到紧急联系人管理页面
+const goToEmergencyContacts = () => {
+  uni.navigateTo({
+    url: '/pages/emergency-contacts/emergency-contacts'
   });
 };
 
