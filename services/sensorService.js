@@ -119,8 +119,8 @@ class FallDetector {
       },
       high: {
         // 摔倒检测阈值（高灵敏度 - 轻微摔倒/测试）
-        acceleration: 6,   // 6 m/s²（略低于测试值7）
-        gyroscope: 8,      // 8°/s（更容易触发）
+        acceleration: 8,   // 8 m/s²（略低于实测值9.06）
+        gyroscope: 12,     // 12°/s（略低于实测值14.70）
         impactDuration: 500,
         speedDrop: 4,
 

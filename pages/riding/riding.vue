@@ -707,6 +707,22 @@ const recordDangerPoint = async (dangerType, name) => {
       return;
     }
 
+    // 检查附近是否已有危险点（50米范围内）
+    const nearbyPoints = repo.getDangerPointsNearby(
+      currentLocation.value.latitude,
+      currentLocation.value.longitude,
+      0.05 // 50米
+    );
+
+    if (nearbyPoints.length > 0) {
+      console.log('附近已存在危险点，跳过记录:', {
+        附近危险点数量: nearbyPoints.length,
+        最近距离: (nearbyPoints[0].distance * 1000).toFixed(0) + '米',
+        现有危险点: nearbyPoints[0].name
+      });
+      return;
+    }
+
     // 自动生成名称
     const count = repo.getDangerPointCount() + 1;
     const pointName = name || `危险点 ${count}`;
@@ -721,7 +737,7 @@ const recordDangerPoint = async (dangerType, name) => {
       record_id: null // 可以关联到当前骑行记录
     });
 
-    console.log('危险点已记录:', pointName);
+    console.log('✅ 危险点已记录:', pointName);
   } catch (error) {
     console.error('记录危险点失败:', error);
   }
