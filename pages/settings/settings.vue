@@ -189,7 +189,7 @@ import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
 import { getSettingsRepository, getRidingRecordRepository, getDangerPointRepository } from '@/db/repositories/index.js';
-import { clearAllData } from '@/db/database.js';
+import { clearAllData as clearAllDataFromDB } from '@/db/database.js';
 
 // 主题设置
 const themeStore = useThemeStore();
@@ -491,7 +491,7 @@ const performClearAll = async () => {
   try {
     // 使用数据库清空函数
     const ridingRecordRepo = getRidingRecordRepository();
-    const success = await clearAllData(ridingRecordRepo.db);
+    const success = await clearAllDataFromDB(ridingRecordRepo.db);
 
     if (success) {
       uni.showToast({
