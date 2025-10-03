@@ -1,49 +1,86 @@
 /**
  * 危险点仓储类
  * 负责危险点的CRUD操作
+ * 基于 wx.setStorage 实现
  */
 
-import { getDatabase } from '../database.js';
 import { generateUUID } from '@/utils/uuid.js';
+import { COLLECTIONS } from '@/utils/storage-engine.js';
 
-class DangerPointRepository {
-  constructor(db) {
-    this.db = db || getDatabase();
+/**
+ * 更新危险点索引
+ * @param {string} id 危险点ID
+ * @param {number} createdAt 创建时间
+ */
+function updateDangerPointIndex(id, createdAt) {
+  const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || { riding_records_by_time: [], danger_points_by_time: [] };
+
+  // 移除旧索引
+  const oldIndex = indexes.danger_points_by_time.indexOf(id);
+  if (oldIndex > -1) {
+    indexes.danger_points_by_time.splice(oldIndex, 1);
   }
 
+  // 找到插入位置（保持时间倒序）
+  const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+  const insertIndex = indexes.danger_points_by_time.findIndex(existingId => {
+    const existingPoint = dangerPoints[existingId];
+    return createdAt > (existingPoint?.created_at || 0);
+  });
+
+  if (insertIndex === -1) {
+    indexes.danger_points_by_time.push(id);
+  } else {
+    indexes.danger_points_by_time.splice(insertIndex, 0, id);
+  }
+
+  wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
+}
+
+/**
+ * 从索引中移除危险点
+ * @param {string} id 危险点ID
+ */
+function removeFromDangerPointIndex(id) {
+  const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || { riding_records_by_time: [], danger_points_by_time: [] };
+  const index = indexes.danger_points_by_time.indexOf(id);
+  if (index > -1) {
+    indexes.danger_points_by_time.splice(index, 1);
+    wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
+  }
+}
+
+class DangerPointRepository {
   /**
    * 保存危险点
    * @param {Object} dangerPoint 危险点对象
-   * @returns {Promise<boolean>} 是否保存成功
+   * @returns {string|boolean} 危险点ID或false
    */
-  async saveDangerPoint(dangerPoint) {
+  saveDangerPoint(dangerPoint) {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        const now = Date.now();
-        const id = dangerPoint.id || generateUUID();
+      const now = Date.now();
+      const id = dangerPoint.id || generateUUID();
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
 
-        txDb.run(`
-          INSERT INTO danger_points (
-            id, name, latitude, longitude, danger_type,
-            speed, record_id, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          id,
-          dangerPoint.name,
-          dangerPoint.latitude,
-          dangerPoint.longitude,
-          dangerPoint.danger_type,
-          dangerPoint.speed || 0,
-          dangerPoint.record_id || null,
-          now,
-          now
-        ]);
+      dangerPoints[id] = {
+        id: id,
+        name: dangerPoint.name,
+        latitude: dangerPoint.latitude,
+        longitude: dangerPoint.longitude,
+        danger_type: dangerPoint.danger_type,
+        speed: dangerPoint.speed || 0,
+        record_id: dangerPoint.record_id || null,
+        created_at: now,
+        updated_at: now
+      };
 
-        return id;
-      });
+      wx.setStorageSync(COLLECTIONS.DANGER_POINTS, dangerPoints);
 
-      console.log('危险点保存成功:', result);
-      return result;
+      // 更新索引
+      updateDangerPointIndex(id, now);
+
+      console.log('危险点保存成功:', id);
+      return id;
     } catch (error) {
       console.error('保存危险点失败:', error);
       return false;
@@ -56,10 +93,12 @@ class DangerPointRepository {
    */
   getAllDangerPoints() {
     try {
-      const results = this.db.execute(`
-        SELECT * FROM danger_points
-        ORDER BY created_at DESC
-      `);
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || {};
+      const sortedIds = indexes.danger_points_by_time || [];
+
+      // 按时间倒序返回
+      const results = sortedIds.map(id => dangerPoints[id]).filter(p => p);
 
       return results.map(row => ({
         id: row.id,
@@ -85,9 +124,8 @@ class DangerPointRepository {
    */
   getDangerPoint(id) {
     try {
-      const row = this.db.executeOne(`
-        SELECT * FROM danger_points WHERE id = ?
-      `, [id]);
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      const row = dangerPoints[id];
 
       if (!row) {
         return null;
@@ -118,13 +156,19 @@ class DangerPointRepository {
    */
   updateDangerPointName(id, name) {
     try {
-      this.db.run(`
-        UPDATE danger_points
-        SET name = ?, updated_at = ?
-        WHERE id = ?
-      `, [name, Date.now(), id]);
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      const point = dangerPoints[id];
 
-      this.db.saveDatabaseToFile();
+      if (!point) {
+        return false;
+      }
+
+      point.name = name;
+      point.updated_at = Date.now();
+
+      dangerPoints[id] = point;
+      wx.setStorageSync(COLLECTIONS.DANGER_POINTS, dangerPoints);
+
       console.log('危险点名称更新成功:', id);
       return true;
     } catch (error) {
@@ -136,17 +180,20 @@ class DangerPointRepository {
   /**
    * 删除危险点
    * @param {string} id 危险点ID
-   * @returns {Promise<boolean>} 是否删除成功
+   * @returns {boolean} 是否删除成功
    */
-  async deleteDangerPoint(id) {
+  deleteDangerPoint(id) {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        txDb.run('DELETE FROM danger_points WHERE id = ?', [id]);
-        return true;
-      });
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+
+      delete dangerPoints[id];
+      wx.setStorageSync(COLLECTIONS.DANGER_POINTS, dangerPoints);
+
+      // 删除索引
+      removeFromDangerPointIndex(id);
 
       console.log('危险点删除成功:', id);
-      return result;
+      return true;
     } catch (error) {
       console.error('删除危险点失败:', error);
       return false;
@@ -162,8 +209,10 @@ class DangerPointRepository {
    */
   getDangerPointsNearby(latitude, longitude, radius = 0.05) {
     try {
-      // 简化版：使用矩形范围查询（实际应用中应使用Haversine距离计算）
-      // 1度纬度约等于111公里
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      const allPoints = Object.values(dangerPoints);
+
+      // 简化版：使用矩形范围过滤
       const latDelta = radius / 111;
       const lngDelta = radius / (111 * Math.cos(latitude * Math.PI / 180));
 
@@ -172,15 +221,14 @@ class DangerPointRepository {
       const minLng = longitude - lngDelta;
       const maxLng = longitude + lngDelta;
 
-      const results = this.db.execute(`
-        SELECT * FROM danger_points
-        WHERE latitude BETWEEN ? AND ?
-          AND longitude BETWEEN ? AND ?
-        ORDER BY created_at DESC
-      `, [minLat, maxLat, minLng, maxLng]);
+      // 矩形范围内的点
+      const candidates = allPoints.filter(point =>
+        point.latitude >= minLat && point.latitude <= maxLat &&
+        point.longitude >= minLng && point.longitude <= maxLng
+      );
 
       // 精确计算距离并过滤
-      const points = results.map(row => {
+      const points = candidates.map(row => {
         const distance = this.calculateDistance(
           latitude, longitude,
           row.latitude, row.longitude
@@ -199,6 +247,9 @@ class DangerPointRepository {
           distance: distance // 距离（公里）
         };
       }).filter(p => p.distance <= radius);
+
+      // 按距离排序
+      points.sort((a, b) => a.distance - b.distance);
 
       return points;
     } catch (error) {
@@ -231,17 +282,19 @@ class DangerPointRepository {
 
   /**
    * 清空所有危险点
-   * @returns {Promise<boolean>} 是否清空成功
+   * @returns {boolean} 是否清空成功
    */
-  async clearAllDangerPoints() {
+  clearAllDangerPoints() {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        txDb.run('DELETE FROM danger_points');
-        return true;
-      });
+      wx.setStorageSync(COLLECTIONS.DANGER_POINTS, {});
+
+      // 清空索引
+      const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || {};
+      indexes.danger_points_by_time = [];
+      wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
 
       console.log('所有危险点已清空');
-      return result;
+      return true;
     } catch (error) {
       console.error('清空危险点失败:', error);
       return false;
@@ -254,8 +307,8 @@ class DangerPointRepository {
    */
   getDangerPointCount() {
     try {
-      const result = this.db.executeOne('SELECT COUNT(*) as count FROM danger_points');
-      return result?.count || 0;
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      return Object.keys(dangerPoints).length;
     } catch (error) {
       console.error('获取危险点总数失败:', error);
       return 0;
@@ -268,11 +321,8 @@ class DangerPointRepository {
    */
   getDangerPointStatsByType() {
     try {
-      const results = this.db.execute(`
-        SELECT danger_type, COUNT(*) as count
-        FROM danger_points
-        GROUP BY danger_type
-      `);
+      const dangerPoints = wx.getStorageSync(COLLECTIONS.DANGER_POINTS) || {};
+      const allPoints = Object.values(dangerPoints);
 
       const stats = {
         fall: 0,
@@ -280,8 +330,10 @@ class DangerPointRepository {
         manual: 0
       };
 
-      results.forEach(row => {
-        stats[row.danger_type] = row.count;
+      allPoints.forEach(point => {
+        if (stats.hasOwnProperty(point.danger_type)) {
+          stats[point.danger_type]++;
+        }
       });
 
       return stats;

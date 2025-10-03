@@ -1,15 +1,12 @@
 /**
  * 设置仓储类
  * 负责应用设置的键值对存储
+ * 基于 wx.setStorage 实现
  */
 
-import { getDatabase } from '../database.js';
+import { COLLECTIONS } from '@/utils/storage-engine.js';
 
 class SettingsRepository {
-  constructor(db) {
-    this.db = db || getDatabase();
-  }
-
   /**
    * 保存设置
    * @param {string} key 设置键名
@@ -18,15 +15,15 @@ class SettingsRepository {
    */
   saveSetting(key, value) {
     try {
-      // 将值序列化为JSON字符串
-      const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const valueToStore = typeof value === 'string' ? value : JSON.stringify(value);
 
-      this.db.run(`
-        INSERT OR REPLACE INTO settings (key, value, updated_at)
-        VALUES (?, ?, ?)
-      `, [key, valueStr, Date.now()]);
+      settings[key] = {
+        value: valueToStore,
+        updated_at: Date.now()
+      };
 
-      this.db.saveDatabaseToFile();
+      wx.setStorageSync(COLLECTIONS.SETTINGS, settings);
 
       console.log('设置已保存:', key);
       return true;
@@ -44,19 +41,20 @@ class SettingsRepository {
    */
   getSetting(key, defaultValue = null) {
     try {
-      const result = this.db.executeOne(`
-        SELECT value FROM settings WHERE key = ?
-      `, [key]);
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const setting = settings[key];
 
-      if (!result) {
+      if (!setting) {
         return defaultValue;
       }
 
+      const valueStr = setting.value;
+
       // 尝试解析JSON，如果失败则返回原始字符串
       try {
-        return JSON.parse(result.value);
+        return JSON.parse(valueStr);
       } catch {
-        return result.value;
+        return valueStr;
       }
     } catch (error) {
       console.error('获取设置失败:', error);
@@ -71,8 +69,9 @@ class SettingsRepository {
    */
   deleteSetting(key) {
     try {
-      this.db.run('DELETE FROM settings WHERE key = ?', [key]);
-      this.db.saveDatabaseToFile();
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      delete settings[key];
+      wx.setStorageSync(COLLECTIONS.SETTINGS, settings);
 
       console.log('设置已删除:', key);
       return true;
@@ -88,18 +87,19 @@ class SettingsRepository {
    */
   getAllSettings() {
     try {
-      const results = this.db.execute('SELECT key, value FROM settings');
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const result = {};
 
-      const settings = {};
-      results.forEach(row => {
+      Object.entries(settings).forEach(([key, setting]) => {
+        const valueStr = setting.value;
         try {
-          settings[row.key] = JSON.parse(row.value);
+          result[key] = JSON.parse(valueStr);
         } catch {
-          settings[row.key] = row.value;
+          result[key] = valueStr;
         }
       });
 
-      return settings;
+      return result;
     } catch (error) {
       console.error('获取所有设置失败:', error);
       return {};
@@ -108,28 +108,26 @@ class SettingsRepository {
 
   /**
    * 批量保存设置
-   * @param {Object} settings 设置对象
-   * @returns {Promise<boolean>} 是否保存成功
+   * @param {Object} settingsToSave 设置对象
+   * @returns {boolean} 是否保存成功
    */
-  async batchSaveSettings(settings) {
+  batchSaveSettings(settingsToSave) {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        const now = Date.now();
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const now = Date.now();
 
-        Object.entries(settings).forEach(([key, value]) => {
-          const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
-
-          txDb.run(`
-            INSERT OR REPLACE INTO settings (key, value, updated_at)
-            VALUES (?, ?, ?)
-          `, [key, valueStr, now]);
-        });
-
-        return true;
+      Object.entries(settingsToSave).forEach(([key, value]) => {
+        const valueToStore = typeof value === 'string' ? value : JSON.stringify(value);
+        settings[key] = {
+          value: valueToStore,
+          updated_at: now
+        };
       });
 
-      console.log('批量保存设置成功，共', Object.keys(settings).length, '项');
-      return result;
+      wx.setStorageSync(COLLECTIONS.SETTINGS, settings);
+
+      console.log('批量保存设置成功，共', Object.keys(settingsToSave).length, '项');
+      return true;
     } catch (error) {
       console.error('批量保存设置失败:', error);
       return false;
@@ -143,16 +141,17 @@ class SettingsRepository {
    */
   clearSettings(preserveKeys = ['db_version']) {
     try {
-      if (preserveKeys.length > 0) {
-        const placeholders = preserveKeys.map(() => '?').join(',');
-        this.db.run(`
-          DELETE FROM settings WHERE key NOT IN (${placeholders})
-        `, preserveKeys);
-      } else {
-        this.db.run('DELETE FROM settings');
-      }
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const newSettings = {};
 
-      this.db.saveDatabaseToFile();
+      // 保留指定的设置
+      preserveKeys.forEach(key => {
+        if (settings[key]) {
+          newSettings[key] = settings[key];
+        }
+      });
+
+      wx.setStorageSync(COLLECTIONS.SETTINGS, newSettings);
 
       console.log('设置已清空');
       return true;
@@ -169,11 +168,8 @@ class SettingsRepository {
    */
   hasSetting(key) {
     try {
-      const result = this.db.executeOne(`
-        SELECT 1 FROM settings WHERE key = ?
-      `, [key]);
-
-      return result !== null;
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      return settings.hasOwnProperty(key);
     } catch (error) {
       console.error('检查设置失败:', error);
       return false;
@@ -187,11 +183,9 @@ class SettingsRepository {
    */
   getSettingUpdatedAt(key) {
     try {
-      const result = this.db.executeOne(`
-        SELECT updated_at FROM settings WHERE key = ?
-      `, [key]);
-
-      return result ? result.updated_at : null;
+      const settings = wx.getStorageSync(COLLECTIONS.SETTINGS) || {};
+      const setting = settings[key];
+      return setting ? setting.updated_at : null;
     } catch (error) {
       console.error('获取设置更新时间失败:', error);
       return null;

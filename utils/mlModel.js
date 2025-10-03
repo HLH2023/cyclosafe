@@ -541,7 +541,7 @@ export class MLFallDetector {
       if (loaded) {
         debugLog('ML模型', `模型更新成功: v${updateInfo.serverVersion}`);
 
-        // 保存版本信息到SQLite
+        // 保存版本信息到本地存储
         const settingsRepo = getSettingsRepository();
         settingsRepo.saveSetting('ml_model_version', updateInfo.serverVersion);
         settingsRepo.saveSetting('ml_model_checksum', updateInfo.updateInfo.checksum);

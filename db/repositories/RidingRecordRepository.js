@@ -1,71 +1,99 @@
 /**
  * 骑行记录仓储类
  * 负责骑行记录和轨迹点的CRUD操作
+ * 基于 wx.setStorage 实现
  */
 
-import { getDatabase } from '../database.js';
+import { COLLECTIONS } from '@/utils/storage-engine.js';
 
-class RidingRecordRepository {
-  constructor(db) {
-    this.db = db || getDatabase();
+/**
+ * 更新骑行记录索引
+ * @param {string} id 记录ID
+ * @param {number} startTime 开始时间
+ */
+function updateRidingRecordIndex(id, startTime) {
+  const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || { riding_records_by_time: [], danger_points_by_time: [] };
+
+  // 移除旧索引
+  const oldIndex = indexes.riding_records_by_time.indexOf(id);
+  if (oldIndex > -1) {
+    indexes.riding_records_by_time.splice(oldIndex, 1);
   }
 
+  // 找到插入位置（保持时间倒序）
+  const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+  const insertIndex = indexes.riding_records_by_time.findIndex(existingId => {
+    const existingRecord = ridingRecords[existingId];
+    return startTime > (existingRecord?.start_time || 0);
+  });
+
+  if (insertIndex === -1) {
+    indexes.riding_records_by_time.push(id);
+  } else {
+    indexes.riding_records_by_time.splice(insertIndex, 0, id);
+  }
+
+  wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
+}
+
+/**
+ * 从索引中移除骑行记录
+ * @param {string} id 记录ID
+ */
+function removeFromRidingRecordIndex(id) {
+  const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || { riding_records_by_time: [], danger_points_by_time: [] };
+  const index = indexes.riding_records_by_time.indexOf(id);
+  if (index > -1) {
+    indexes.riding_records_by_time.splice(index, 1);
+    wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
+  }
+}
+
+class RidingRecordRepository {
   /**
    * 保存骑行记录（包含轨迹点）
    * @param {Object} record 骑行记录对象
-   * @returns {Promise<boolean>} 是否保存成功
+   * @returns {boolean} 是否保存成功
    */
-  async saveRecord(record) {
+  saveRecord(record) {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        const now = Date.now();
+      const now = Date.now();
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const trackPointsStorage = wx.getStorageSync(COLLECTIONS.TRACK_POINTS) || {};
 
-        // 插入骑行记录
-        txDb.run(`
-          INSERT INTO riding_records (
-            id, start_time, end_time, duration, distance,
-            avg_speed, max_speed, total_ascent, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          record.id,
-          record.startTime,
-          record.endTime,
-          record.duration,
-          record.distance,
-          record.avgSpeed,
-          record.maxSpeed,
-          record.totalAscent || 0,
-          now,
-          now
-        ]);
+      // 保存骑行记录
+      ridingRecords[record.id] = {
+        id: record.id,
+        start_time: record.startTime,
+        end_time: record.endTime,
+        duration: record.duration,
+        distance: record.distance,
+        avg_speed: record.avgSpeed,
+        max_speed: record.maxSpeed,
+        total_ascent: record.totalAscent || 0,
+        created_at: now,
+        updated_at: now
+      };
+      wx.setStorageSync(COLLECTIONS.RIDING_RECORDS, ridingRecords);
 
-        // 批量插入轨迹点
-        if (record.trackPoints && record.trackPoints.length > 0) {
-          const stmt = `
-            INSERT INTO track_points (
-              record_id, latitude, longitude, altitude,
-              speed, timestamp, sequence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          `;
+      // 保存轨迹点
+      if (record.trackPoints && record.trackPoints.length > 0) {
+        trackPointsStorage[record.id] = record.trackPoints.map((point, index) => ({
+          latitude: point.latitude,
+          longitude: point.longitude,
+          altitude: point.altitude || 0,
+          speed: point.speed || 0,
+          timestamp: point.timestamp,
+          sequence: index
+        }));
+        wx.setStorageSync(COLLECTIONS.TRACK_POINTS, trackPointsStorage);
+      }
 
-          record.trackPoints.forEach((point, index) => {
-            txDb.run(stmt, [
-              record.id,
-              point.latitude,
-              point.longitude,
-              point.altitude || 0,
-              point.speed || 0,
-              point.timestamp,
-              index
-            ]);
-          });
-        }
-
-        return true;
-      });
+      // 更新索引
+      updateRidingRecordIndex(record.id, record.startTime);
 
       console.log('骑行记录保存成功:', record.id);
-      return result;
+      return true;
     } catch (error) {
       console.error('保存骑行记录失败:', error);
       return false;
@@ -79,24 +107,16 @@ class RidingRecordRepository {
    */
   getRecord(id) {
     try {
-      // 查询记录基本信息
-      const record = this.db.executeOne(`
-        SELECT * FROM riding_records WHERE id = ?
-      `, [id]);
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const record = ridingRecords[id];
 
       if (!record) {
         return null;
       }
 
-      // 查询轨迹点
-      const trackPoints = this.db.execute(`
-        SELECT latitude, longitude, altitude, speed, timestamp
-        FROM track_points
-        WHERE record_id = ?
-        ORDER BY sequence ASC
-      `, [id]);
+      const trackPointsStorage = wx.getStorageSync(COLLECTIONS.TRACK_POINTS) || {};
+      const trackPoints = trackPointsStorage[id] || [];
 
-      // 组装完整对象
       return {
         id: record.id,
         startTime: record.start_time,
@@ -120,12 +140,8 @@ class RidingRecordRepository {
    */
   getRecordList() {
     try {
-      const results = this.db.execute(`
-        SELECT id FROM riding_records
-        ORDER BY start_time DESC
-      `);
-
-      return results.map(row => row.id);
+      const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || {};
+      return indexes.riding_records_by_time || [];
     } catch (error) {
       console.error('获取记录列表失败:', error);
       return [];
@@ -141,49 +157,36 @@ class RidingRecordRepository {
     try {
       const { limit, offset, startDate, endDate } = options;
 
-      let sql = `
-        SELECT id, start_time, end_time, duration, distance,
-               avg_speed, max_speed, total_ascent
-        FROM riding_records
-        WHERE 1=1
-      `;
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || {};
+      const sortedIds = indexes.riding_records_by_time || [];
 
-      const params = [];
+      // 按索引顺序获取记录
+      let records = sortedIds.map(id => ridingRecords[id]).filter(r => r);
 
       // 时间范围过滤
       if (startDate) {
-        sql += ' AND start_time >= ?';
-        params.push(startDate);
+        records = records.filter(r => r.start_time >= startDate);
       }
       if (endDate) {
-        sql += ' AND start_time <= ?';
-        params.push(endDate);
+        records = records.filter(r => r.start_time <= endDate);
       }
-
-      // 排序
-      sql += ' ORDER BY start_time DESC';
 
       // 分页
-      if (limit) {
-        sql += ' LIMIT ?';
-        params.push(limit);
-      }
-      if (offset) {
-        sql += ' OFFSET ?';
-        params.push(offset);
-      }
+      const start = offset || 0;
+      const end = limit ? start + limit : undefined;
+      records = records.slice(start, end);
 
-      const results = this.db.execute(sql, params);
-
-      return results.map(row => ({
-        id: row.id,
-        startTime: row.start_time,
-        endTime: row.end_time,
-        duration: row.duration,
-        distance: row.distance,
-        avgSpeed: row.avg_speed,
-        maxSpeed: row.max_speed,
-        totalAscent: row.total_ascent
+      // 转换字段名
+      return records.map(record => ({
+        id: record.id,
+        startTime: record.start_time,
+        endTime: record.end_time,
+        duration: record.duration,
+        distance: record.distance,
+        avgSpeed: record.avg_speed,
+        maxSpeed: record.max_speed,
+        totalAscent: record.total_ascent
       }));
     } catch (error) {
       console.error('获取所有记录失败:', error);
@@ -199,46 +202,23 @@ class RidingRecordRepository {
    */
   updateRecord(id, updates) {
     try {
-      const fields = [];
-      const params = [];
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const record = ridingRecords[id];
 
-      // 构建更新字段
-      if (updates.distance !== undefined) {
-        fields.push('distance = ?');
-        params.push(updates.distance);
-      }
-      if (updates.avgSpeed !== undefined) {
-        fields.push('avg_speed = ?');
-        params.push(updates.avgSpeed);
-      }
-      if (updates.maxSpeed !== undefined) {
-        fields.push('max_speed = ?');
-        params.push(updates.maxSpeed);
-      }
-      if (updates.totalAscent !== undefined) {
-        fields.push('total_ascent = ?');
-        params.push(updates.totalAscent);
-      }
-
-      if (fields.length === 0) {
+      if (!record) {
         return false;
       }
 
-      // 添加更新时间
-      fields.push('updated_at = ?');
-      params.push(Date.now());
+      // 更新字段
+      if (updates.distance !== undefined) record.distance = updates.distance;
+      if (updates.avgSpeed !== undefined) record.avg_speed = updates.avgSpeed;
+      if (updates.maxSpeed !== undefined) record.max_speed = updates.maxSpeed;
+      if (updates.totalAscent !== undefined) record.total_ascent = updates.totalAscent;
 
-      // 添加ID参数
-      params.push(id);
+      record.updated_at = Date.now();
 
-      const sql = `
-        UPDATE riding_records
-        SET ${fields.join(', ')}
-        WHERE id = ?
-      `;
-
-      this.db.run(sql, params);
-      this.db.saveDatabaseToFile();
+      ridingRecords[id] = record;
+      wx.setStorageSync(COLLECTIONS.RIDING_RECORDS, ridingRecords);
 
       console.log('骑行记录更新成功:', id);
       return true;
@@ -251,22 +231,26 @@ class RidingRecordRepository {
   /**
    * 删除骑行记录（级联删除轨迹点）
    * @param {string} id 记录ID
-   * @returns {Promise<boolean>} 是否删除成功
+   * @returns {boolean} 是否删除成功
    */
-  async deleteRecord(id) {
+  deleteRecord(id) {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        // 删除轨迹点
-        txDb.run('DELETE FROM track_points WHERE record_id = ?', [id]);
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const trackPointsStorage = wx.getStorageSync(COLLECTIONS.TRACK_POINTS) || {};
 
-        // 删除记录
-        txDb.run('DELETE FROM riding_records WHERE id = ?', [id]);
+      // 删除骑行记录
+      delete ridingRecords[id];
+      wx.setStorageSync(COLLECTIONS.RIDING_RECORDS, ridingRecords);
 
-        return true;
-      });
+      // 删除轨迹点
+      delete trackPointsStorage[id];
+      wx.setStorageSync(COLLECTIONS.TRACK_POINTS, trackPointsStorage);
+
+      // 删除索引
+      removeFromRidingRecordIndex(id);
 
       console.log('骑行记录删除成功:', id);
-      return result;
+      return true;
     } catch (error) {
       console.error('删除骑行记录失败:', error);
       return false;
@@ -275,18 +259,20 @@ class RidingRecordRepository {
 
   /**
    * 清空所有骑行记录
-   * @returns {Promise<boolean>} 是否清空成功
+   * @returns {boolean} 是否清空成功
    */
-  async clearAllRecords() {
+  clearAllRecords() {
     try {
-      const result = await this.db.transaction(async (txDb) => {
-        txDb.run('DELETE FROM track_points');
-        txDb.run('DELETE FROM riding_records');
-        return true;
-      });
+      wx.setStorageSync(COLLECTIONS.TRACK_POINTS, {});
+      wx.setStorageSync(COLLECTIONS.RIDING_RECORDS, {});
+
+      // 清空索引
+      const indexes = wx.getStorageSync(COLLECTIONS.INDEXES) || {};
+      indexes.riding_records_by_time = [];
+      wx.setStorageSync(COLLECTIONS.INDEXES, indexes);
 
       console.log('所有骑行记录已清空');
-      return result;
+      return true;
     } catch (error) {
       console.error('清空骑行记录失败:', error);
       return false;
@@ -299,22 +285,37 @@ class RidingRecordRepository {
    */
   getStatistics() {
     try {
-      const result = this.db.executeOne(`
-        SELECT
-          COUNT(*) as totalRides,
-          SUM(distance) as totalDistance,
-          SUM(duration) as totalDuration,
-          MAX(max_speed) as maxSpeed,
-          AVG(avg_speed) as avgSpeed
-        FROM riding_records
-      `);
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      const records = Object.values(ridingRecords);
+
+      if (records.length === 0) {
+        return {
+          totalRides: 0,
+          totalDistance: 0,
+          totalDuration: 0,
+          maxSpeed: 0,
+          avgSpeed: 0
+        };
+      }
+
+      let totalDistance = 0;
+      let totalDuration = 0;
+      let maxSpeed = 0;
+      let totalAvgSpeed = 0;
+
+      records.forEach(record => {
+        totalDistance += record.distance || 0;
+        totalDuration += record.duration || 0;
+        maxSpeed = Math.max(maxSpeed, record.max_speed || 0);
+        totalAvgSpeed += record.avg_speed || 0;
+      });
 
       return {
-        totalRides: result?.totalRides || 0,
-        totalDistance: result?.totalDistance || 0,
-        totalDuration: result?.totalDuration || 0,
-        maxSpeed: result?.maxSpeed || 0,
-        avgSpeed: result?.avgSpeed || 0
+        totalRides: records.length,
+        totalDistance: totalDistance,
+        totalDuration: totalDuration,
+        maxSpeed: maxSpeed,
+        avgSpeed: records.length > 0 ? totalAvgSpeed / records.length : 0
       };
     } catch (error) {
       console.error('获取统计数据失败:', error);
@@ -334,8 +335,8 @@ class RidingRecordRepository {
    */
   getRecordCount() {
     try {
-      const result = this.db.executeOne('SELECT COUNT(*) as count FROM riding_records');
-      return result?.count || 0;
+      const ridingRecords = wx.getStorageSync(COLLECTIONS.RIDING_RECORDS) || {};
+      return Object.keys(ridingRecords).length;
     } catch (error) {
       console.error('获取记录总数失败:', error);
       return 0;

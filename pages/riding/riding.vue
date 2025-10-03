@@ -451,7 +451,7 @@ const startRiding = () => {
 
 // 启动传感器服务
 const startSensorService = () => {
-  // 获取设置（从SQLite读取）
+  // 获取设置（从本地存储读取）
   const settingsRepo = getSettingsRepository();
   const fallDetectionEnabled = settingsRepo.getSetting('fallDetectionEnabled', true); // 默认开启
   const sensitivity = settingsRepo.getSetting('fallDetectionSensitivity', 'medium');
@@ -797,12 +797,12 @@ const saveRidingRecord = async () => {
   };
 
   try {
-    // 使用Repository保存记录到SQLite
+    // 使用Repository保存记录到本地存储
     const repository = getRidingRecordRepository();
     const success = await repository.saveRecord(record);
 
     if (success) {
-      console.log('✅ 骑行记录已保存到SQLite:', recordId);
+      console.log('✅ 骑行记录已保存到本地存储:', recordId);
     } else {
       console.error('❌ 骑行记录保存失败');
       uni.showToast({
@@ -850,7 +850,7 @@ const finishRiding = async () => {
   // 上传训练数据（如果启用）
   await stopDataCollectionAndUpload();
 
-  // 保存数据到SQLite
+  // 保存数据到本地存储
   await saveRidingRecord();
 
   // 重置状态
@@ -881,7 +881,7 @@ const stopRiding = () => {
 const toggleDataCollection = () => {
   isDataCollectionEnabled.value = !isDataCollectionEnabled.value;
 
-  // 保存设置到SQLite
+  // 保存设置到本地存储
   const settingsRepo = getSettingsRepository();
   settingsRepo.saveSetting('riding_data_collection_enabled', isDataCollectionEnabled.value);
 

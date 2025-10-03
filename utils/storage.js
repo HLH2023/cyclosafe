@@ -1,6 +1,6 @@
 /**
  * 本地存储工具类
- * 使用 SQLite 作为底层存储
+ * 使用 wx.setStorage 作为底层存储
  */
 
 import { STORAGE_KEYS } from './constants';

@@ -6,7 +6,7 @@ export default {
   onLaunch: async function() {
     console.log('App Launch');
 
-    // 初始化SQLite数据库
+    // 初始化本地存储
     await this.initDatabase();
 
     // 初始化主题系统
@@ -25,15 +25,11 @@ export default {
     // 初始化数据库
     async initDatabase() {
       try {
-        console.log('开始初始化SQLite数据库...');
+        console.log('开始初始化本地存储...');
         await setupDatabase();
-        console.log('✅ SQLite数据库初始化成功');
+        console.log('✅ 本地存储初始化成功');
       } catch (error) {
-        console.error('❌ SQLite数据库初始化失败:', error);
-        uni.showToast({
-          title: '数据库初始化失败',
-          icon: 'none'
-        });
+        console.error('❌ 本地存储初始化失败:', error);
       }
     },
 

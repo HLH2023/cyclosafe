@@ -89,10 +89,10 @@ const searchText = ref('');
 // 加载记录
 const loadRecords = () => {
   try {
-    // 使用Repository从SQLite读取记录
+    // 使用Repository从本地存储读取记录
     const repository = getRidingRecordRepository();
     recordList.value = repository.getAllRecords();
-    console.log('✅ 从SQLite加载了', recordList.value.length, '条记录');
+    console.log('✅ 从本地存储加载了', recordList.value.length, '条记录');
   } catch (err) {
     console.error('❌ 加载记录失败:', err);
     uni.showToast({
@@ -140,12 +140,12 @@ const deleteRecord = (id) => {
 // 执行删除
 const performDelete = async (id) => {
   try {
-    // 使用Repository从SQLite删除记录
+    // 使用Repository从本地存储删除记录
     const repository = getRidingRecordRepository();
     const success = await repository.deleteRecord(id);
 
     if (success) {
-      console.log('✅ 记录已从SQLite删除:', id);
+      console.log('✅ 记录已从本地存储删除:', id);
 
       // 重新加载
       loadRecords();

@@ -256,7 +256,7 @@ const loadSettings = () => {
     autoPause.value = settingsRepo.getSetting('auto_pause', true);
     keepScreenOn.value = settingsRepo.getSetting('keep_screen_on', false);
 
-    console.log('✅ 从SQLite加载了所有设置');
+    console.log('✅ 从本地存储加载了所有设置');
   } catch (error) {
     console.error('❌ 加载设置失败:', error);
   }

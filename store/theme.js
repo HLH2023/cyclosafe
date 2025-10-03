@@ -33,14 +33,14 @@ export const useThemeStore = defineStore('theme', {
     initTheme() {
       console.log('初始化主题系统...');
 
-      // 从SQLite读取用户设置
+      // 从本地存储读取用户设置
       try {
         const settingsRepo = getSettingsRepository();
         const savedMode = settingsRepo.getSetting('theme_mode', 'auto');
         if (savedMode && ['auto', 'light', 'dark'].includes(savedMode)) {
           this.mode = savedMode;
         }
-        console.log('✅ 从SQLite读取主题设置:', savedMode);
+        console.log('✅ 从本地存储读取主题设置:', savedMode);
       } catch (error) {
         console.error('❌ 读取主题设置失败:', error);
       }
@@ -89,11 +89,11 @@ export const useThemeStore = defineStore('theme', {
       console.log('切换主题模式:', mode);
       this.mode = mode;
 
-      // 保存到SQLite
+      // 保存到本地存储
       try {
         const settingsRepo = getSettingsRepository();
         settingsRepo.saveSetting('theme_mode', mode);
-        console.log('✅ 主题设置已保存到SQLite:', mode);
+        console.log('✅ 主题设置已保存到本地存储:', mode);
       } catch (error) {
         console.error('❌ 保存主题设置失败:', error);
       }

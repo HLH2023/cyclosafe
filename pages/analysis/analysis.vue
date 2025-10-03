@@ -150,14 +150,14 @@ const altitudeChartOpts = ref({
 // 加载最新记录
 const loadLatestRecord = () => {
   try {
-    // 使用Repository从SQLite读取最新记录
+    // 使用Repository从本地存储读取最新记录
     const repository = getRidingRecordRepository();
     const records = repository.getAllRecords({ limit: 1 });
 
     if (records.length > 0) {
       recordId.value = records[0].id;
       loadRecord(records[0].id);
-      console.log('✅ 从SQLite加载最新记录:', records[0].id);
+      console.log('✅ 从本地存储加载最新记录:', records[0].id);
     } else {
       console.log('暂无骑行记录');
       uni.showToast({
@@ -177,7 +177,7 @@ const loadLatestRecord = () => {
 // 加载记录
 const loadRecord = (id) => {
   try {
-    // 使用Repository从SQLite读取记录详情
+    // 使用Repository从本地存储读取记录详情
     const repository = getRidingRecordRepository();
     const record = repository.getRecord(id);
 
@@ -185,7 +185,7 @@ const loadRecord = (id) => {
       recordData.value = record;
       initMap();
       initCharts();
-      console.log('✅ 从SQLite加载记录详情:', id);
+      console.log('✅ 从本地存储加载记录详情:', id);
     } else {
       console.log('记录不存在:', id);
       uni.showToast({
