@@ -287,10 +287,12 @@ const initMap = () => {
 // 初始化图表数据
 const initCharts = () => {
   if (!recordData.value || !recordData.value.trackPoints || recordData.value.trackPoints.length === 0) {
+    console.log('无轨迹点数据');
     return;
   }
 
   const points = recordData.value.trackPoints;
+  console.log('开始初始化图表，轨迹点数量:', points.length);
 
   // 处理速度-时间曲线数据
   const speedCategories = [];
@@ -308,8 +310,15 @@ const initCharts = () => {
 
     speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
     // point.speed 已经是 km/h，直接转换为用户设置的单位
-    speedData.push(convertSpeed(point.speed || 0));
+    const speed = convertSpeed(point.speed || 0);
+    speedData.push(Math.max(0, speed)); // 确保速度不为负数
   }
+
+  console.log('速度图表数据:', {
+    categories: speedCategories.length,
+    data: speedData.length,
+    sampleData: speedData.slice(0, 5)
+  });
 
   speedChartData.value = {
     categories: speedCategories,
@@ -344,8 +353,15 @@ const initCharts = () => {
 
     const distanceKm = accumulatedDistance / 1000;
     altitudeCategories.push(convertDistance(distanceKm).toFixed(1)); // 转换为用户设置的单位
-    altitudeData.push(convertAltitude(point.altitude || 0)); // 转换海拔单位
+    const altitude = convertAltitude(point.altitude || 0);
+    altitudeData.push(altitude); // 转换海拔单位
   }
+
+  console.log('海拔图表数据:', {
+    categories: altitudeCategories.length,
+    data: altitudeData.length,
+    sampleData: altitudeData.slice(0, 5)
+  });
 
   altitudeChartData.value = {
     categories: altitudeCategories,

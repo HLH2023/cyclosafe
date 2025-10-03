@@ -65,10 +65,12 @@ const initChart = () => {
   const query = uni.createSelectorQuery().in(instance.proxy);
   query.select(`#${props.canvasId}`).boundingClientRect((rect) => {
     if (rect) {
-      const pixelRatio = uni.getSystemInfoSync().pixelRatio || 1;
+      const pixelRatio = uni.getWindowInfo().pixelRatio || 1;
 
-      // 创建图表
-      chartInstance = new uCharts({
+      // 创建图表配置
+      const chartConfig = {
+        $this: instance.proxy,
+        canvasId: props.canvasId,
         type: 'line',
         context: ctx,
         width: rect.width,
@@ -79,7 +81,7 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [15, 15, 0, 5],
+        padding: [35, 10, 20, 30],
         enableScroll: false,
         legend: {
           show: true,
@@ -94,17 +96,12 @@ const initChart = () => {
           fontSize: 13
         },
         xAxis: {
-          disableGrid: true,
-          type: 'calibration',
-          gridType: 'dash',
-          dashLength: 4,
+          disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
           fontSize: 11,
           rotateLabel: false,
           itemCount: 5,
-          scrollShow: true,
-          scrollAlign: 'left',
           boundaryGap: 'center',
           axisLine: true,
           axisLineColor: themeColors.value.gridColor,
@@ -128,40 +125,50 @@ const initChart = () => {
             width: 2,
             activeType: 'hollow',
             linearType: 'none',
-            onShadow: false,
-            animation: 'vertical'
+            onShadow: false
           }
-        },
-        ...props.opts
+        }
+      };
+
+      console.log('图表配置:', {
+        canvasId: props.canvasId,
+        width: rect.width,
+        height: rect.height,
+        categoriesCount: props.chartData.categories.length,
+        seriesCount: props.chartData.series.length,
+        firstSeriesDataCount: props.chartData.series[0]?.data?.length
       });
+
+      // 创建图表
+      chartInstance = new uCharts(chartConfig);
 
       console.log('图表初始化成功:', props.canvasId);
     }
   }).exec();
 };
 
-// 触摸事件
+// 触摸事件（仅当 chartInstance 支持时才调用）
 const touchStart = (e) => {
-  if (chartInstance) {
+  if (chartInstance && typeof chartInstance.touchStart === 'function') {
     chartInstance.touchStart(e);
   }
 };
 
 const touchMove = (e) => {
-  if (chartInstance) {
+  if (chartInstance && typeof chartInstance.touchMove === 'function') {
     chartInstance.touchMove(e);
   }
 };
 
 const touchEnd = (e) => {
-  if (chartInstance) {
+  if (chartInstance && typeof chartInstance.touchEnd === 'function') {
     chartInstance.touchEnd(e);
   }
 };
 
 // 监听数据变化
 watch(() => props.chartData, () => {
-  if (chartInstance) {
+  if (chartInstance && typeof chartInstance.updateData === 'function') {
     chartInstance.updateData({
       categories: props.chartData.categories,
       series: props.chartData.series
