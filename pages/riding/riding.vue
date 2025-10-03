@@ -31,6 +31,7 @@
       <view class="map-section">
         <map
           id="riding-map"
+          class="riding-map"
           :longitude="currentLocation.longitude"
           :latitude="currentLocation.latitude"
           :scale="mapConfig.defaultScale"
@@ -38,7 +39,6 @@
           :polyline="polyline"
           :show-location="true"
           :enable-satellite="mapSettingsStore.isSatelliteEnabled"
-          style="width: 100%; height: 100%; border-radius: 24rpx;"
         />
       </view>
 
@@ -1005,17 +1005,23 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .map-section {
   flex: 1;
-  min-height: 0;
+  position: relative;
   margin-bottom: 32rpx;
   border-radius: 24rpx;
   border: 4rpx solid #E5E5EA;
   overflow: hidden;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+
+  .riding-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 20rpx;
+  }
 }
 
 .data-card {

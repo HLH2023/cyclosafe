@@ -13,6 +13,7 @@
     <view class="map-container">
       <map
         id="danger-map"
+        class="danger-map"
         :longitude="mapCenter.longitude"
         :latitude="mapCenter.latitude"
         :scale="mapScale"
@@ -22,7 +23,6 @@
         @markertap="onMarkerTap"
         @tap="onMapTap"
         @regionchange="onRegionChange"
-        style="width: 100%; height: 100%;"
       />
 
       <!-- 添加模式的可拖动标记 -->
@@ -413,7 +413,12 @@ onMounted(() => {
 .map-container {
   flex: 1;
   position: relative;
-  min-height: 0;
+  overflow: hidden;
+
+  .danger-map {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .center-marker {

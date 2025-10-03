@@ -54,13 +54,13 @@
       <view class="map-card">
         <map
           v-if="mapCenter.latitude"
+          class="analysis-map"
           :longitude="mapCenter.longitude"
           :latitude="mapCenter.latitude"
           :scale="mapConfig.defaultScale"
           :polyline="polyline"
           :markers="markers"
           :enable-satellite="mapSettingsStore.isSatelliteEnabled"
-          style="width: 100%; height: 100%; border-radius: 16rpx;"
         />
       </view>
 
@@ -496,6 +496,12 @@ onLoad((options) => {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+
+  .analysis-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 12rpx;
+  }
 }
 
 .chart-card {
