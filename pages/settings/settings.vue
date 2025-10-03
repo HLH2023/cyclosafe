@@ -269,7 +269,7 @@ const loadSettings = () => {
 
 // 主题变化
 const onThemeChange = (e) => {
-  themeIndex.value = e.detail.value;
+  themeIndex.value = parseInt(e.detail.value);
 
   // 映射到主题模式
   const indexToMode = ['auto', 'light', 'dark'];
@@ -286,7 +286,7 @@ const onThemeChange = (e) => {
 
 // 距离单位变化
 const onDistanceUnitChange = (e) => {
-  distanceUnitIndex.value = e.detail.value;
+  distanceUnitIndex.value = parseInt(e.detail.value);
   const settingsRepo = getSettingsRepository();
   settingsRepo.saveSetting('distance_unit', distanceUnitIndex.value);
   uni.showToast({
@@ -297,7 +297,7 @@ const onDistanceUnitChange = (e) => {
 
 // 速度单位变化
 const onSpeedUnitChange = (e) => {
-  speedUnitIndex.value = e.detail.value;
+  speedUnitIndex.value = parseInt(e.detail.value);
   const settingsRepo = getSettingsRepository();
   settingsRepo.saveSetting('speed_unit', speedUnitIndex.value);
   uni.showToast({
@@ -308,7 +308,7 @@ const onSpeedUnitChange = (e) => {
 
 // 海拔单位变化
 const onAltitudeUnitChange = (e) => {
-  altitudeUnitIndex.value = e.detail.value;
+  altitudeUnitIndex.value = parseInt(e.detail.value);
   const settingsRepo = getSettingsRepository();
   settingsRepo.saveSetting('altitude_unit', altitudeUnitIndex.value);
   uni.showToast({
@@ -319,7 +319,7 @@ const onAltitudeUnitChange = (e) => {
 
 // 地图类型变化
 const onMapTypeChange = (e) => {
-  mapTypeIndex.value = e.detail.value;
+  mapTypeIndex.value = parseInt(e.detail.value);
   // 使用store更新地图类型
   mapSettingsStore.setMapType(mapTypeIndex.value);
   uni.showToast({
@@ -330,7 +330,7 @@ const onMapTypeChange = (e) => {
 
 // 轨迹颜色变化
 const onTrackColorChange = (e) => {
-  trackColorIndex.value = e.detail.value;
+  trackColorIndex.value = parseInt(e.detail.value);
   // 使用store更新轨迹颜色
   mapSettingsStore.setTrackColor(trackColorIndex.value);
   uni.showToast({
@@ -372,7 +372,7 @@ const onFallDetectionChange = (e) => {
 
 // 摔倒检测灵敏度变化
 const onFallSensitivityChange = (e) => {
-  fallSensitivityIndex.value = e.detail.value;
+  fallSensitivityIndex.value = parseInt(e.detail.value);
 
   // 转换为存储值
   const indexToSensitivity = ['low', 'medium', 'high'];
