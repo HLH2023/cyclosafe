@@ -398,6 +398,7 @@ onLoad((options) => {
 .header {
   background: var(--card-background);
   padding: 32rpx;
+  padding-top: calc(var(--status-bar-height) + 32rpx);
   display: flex;
   justify-content: space-between;
   align-items: center;

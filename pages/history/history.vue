@@ -190,12 +190,13 @@ onPullDownRefresh(() => {
 .history-page {
   min-height: 100vh;
   background: var(--background-color);
-  padding-bottom: 160rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .header {
   background: var(--card-background);
   padding: 32rpx;
+  padding-top: calc(var(--status-bar-height) + 32rpx);
   text-align: center;
   box-shadow: var(--shadow-sm);
   position: sticky;

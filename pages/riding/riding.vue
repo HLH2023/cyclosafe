@@ -943,11 +943,12 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .riding-page {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: #F2F2F7;
   padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   overflow: hidden;
 }
 
@@ -956,6 +957,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16rpx 0;
+  padding-top: calc(var(--status-bar-height) + 16rpx);
   color: #1C1C1E;
 
   .title {

@@ -382,6 +382,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 32rpx;
+  padding-top: calc(var(--status-bar-height) + 32rpx);
   background: var(--card-background);
   box-shadow: var(--shadow-sm);
 
@@ -426,6 +427,7 @@ onMounted(() => {
 
 .bottom-bar {
   padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   background: var(--card-background);
   box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.04);
 

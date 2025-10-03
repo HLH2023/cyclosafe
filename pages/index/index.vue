@@ -201,6 +201,7 @@ onShow(() => {
 .main-content {
   flex: 1;
   padding: 32rpx 48rpx;
+  padding-bottom: calc(128rpx + env(safe-area-inset-bottom) + 32rpx);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -210,6 +211,7 @@ onShow(() => {
 .header {
   text-align: center;
   margin: 32rpx 0 64rpx;
+  padding-top: var(--status-bar-height);
 
   .app-title {
     display: block;
