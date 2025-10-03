@@ -517,7 +517,7 @@ const stopDataCollectionAndUpload = async () => {
 };
 
 // 开始骑行
-const startRiding = () => {
+const startRiding = async () => {
   console.log('开始骑行');
   isRiding.value = true;
   isPaused.value = false;
@@ -529,10 +529,10 @@ const startRiding = () => {
   // 开始计时
   startTimer();
 
-  // 启动传感器服务（摔倒检测）
-  startSensorService();
+  // 启动传感器服务（摔倒检测）- 等待完全启动
+  await startSensorService();
 
-  // 启动数据采集（如果启用）
+  // 传感器启动完成后，再启动数据采集（如果启用）
   startDataCollection();
 
   uni.showToast({
@@ -542,7 +542,7 @@ const startRiding = () => {
 };
 
 // 启动传感器服务
-const startSensorService = () => {
+const startSensorService = async () => {
   // 获取设置（从本地存储读取）
   const settingsRepo = getSettingsRepository();
   const fallDetectionEnabled = settingsRepo.getSetting('fallDetectionEnabled', true); // 默认开启
@@ -556,11 +556,13 @@ const startSensorService = () => {
   // 设置急刹车检测回调
   sensorService.onHardBrakeDetected(handleHardBrakeDetected);
 
-  // 启动服务
-  sensorService.start({
+  // 启动服务并等待完成
+  await sensorService.start({
     fallDetectionEnabled,
     sensitivity
   });
+
+  console.log('✅ 传感器服务启动完成，可以安全启动数据采集');
 };
 
 // 摔倒检测回调
@@ -866,7 +868,7 @@ const pauseRiding = () => {
 };
 
 // 继续骑行
-const resumeRiding = () => {
+const resumeRiding = async () => {
   console.log('继续骑行');
   isPaused.value = false;
 
@@ -876,8 +878,8 @@ const resumeRiding = () => {
   // 恢复计时
   startTimer();
 
-  // 重新启动传感器服务
-  startSensorService();
+  // 重新启动传感器服务 - 等待完全启动
+  await startSensorService();
 
   // 恢复数据采集
   if (dataCollector.value && isDataCollectionEnabled.value) {

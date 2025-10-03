@@ -467,66 +467,87 @@ class SensorService {
 
   /**
    * 启动传感器监听
+   * @returns {Promise} - 返回 Promise，在传感器启动完成后 resolve
    */
   start(options = {}) {
-    // 如果已在运行，先停止再重新启动（确保干净的状态）
-    if (this.isRunning) {
-      console.warn('[SensorService] 传感器服务已在运行，先停止再重启');
-      this.stop();
-    }
+    return new Promise((resolve) => {
+      // 如果已在运行，先停止再重新启动（确保干净的状态）
+      if (this.isRunning) {
+        console.warn('[SensorService] 传感器服务已在运行，先停止再重启');
+        this.stop();
+      }
 
-    console.log('[SensorService] 启动传感器服务...');
+      console.log('[SensorService] 启动传感器服务...');
 
-    // 检查是否在模拟器环境
-    const systemInfo = uni.getSystemInfoSync();
-    if (systemInfo.platform === 'devtools') {
-      console.warn('[SensorService] ⚠️ 检测到模拟器环境，传感器功能可能不可用');
-      console.warn('[SensorService] ⚠️ 请在真机上测试传感器功能');
+      // 检查是否在模拟器环境
+      const systemInfo = uni.getSystemInfoSync();
+      if (systemInfo.platform === 'devtools') {
+        console.warn('[SensorService] ⚠️ 检测到模拟器环境，传感器功能可能不可用');
+        console.warn('[SensorService] ⚠️ 请在真机上测试传感器功能');
 
-      // 在模拟器中显示提示
-      uni.showModal({
-        title: '传感器功能提示',
-        content: '检测到您正在模拟器中运行。传感器功能（摔倒检测、急刹车检测）需要在真机上才能正常使用。',
-        showCancel: false,
-        confirmText: '我知道了'
-      });
-    }
+        // 在模拟器中显示提示
+        uni.showModal({
+          title: '传感器功能提示',
+          content: '检测到您正在模拟器中运行。传感器功能（摔倒检测、急刹车检测）需要在真机上才能正常使用。',
+          showCancel: false,
+          confirmText: '我知道了'
+        });
+      }
 
-    // 先确保传感器处于停止状态（防止状态不同步导致的启动失败）
-    // 使用 Promise 等待停止操作完成
-    const stopSensors = () => {
-      return new Promise((resolve) => {
-        let stopCount = 0;
-        const checkComplete = () => {
-          stopCount++;
-          if (stopCount >= 2) {
-            // 两个传感器都停止后，延迟100ms确保状态同步
-            setTimeout(resolve, 100);
+      // 先确保传感器处于停止状态（防止状态不同步导致的启动失败）
+      // 使用 Promise 等待停止操作完成
+      const stopSensors = () => {
+        return new Promise((resolveStop) => {
+          // 1. 先清除所有监听器（关键步骤）
+          try {
+            uni.offAccelerometerChange();
+            console.log('[SensorService] 已清除旧的加速度计监听器');
+          } catch (e) {
+            console.warn('[SensorService] 清除加速度计监听器失败:', e);
           }
-        };
 
-        uni.stopAccelerometer({
-          success: checkComplete,
-          fail: checkComplete // 即使失败也继续（可能本来就没启动）
-        });
+          try {
+            uni.offGyroscopeChange();
+            console.log('[SensorService] 已清除旧的陀螺仪监听器');
+          } catch (e) {
+            console.warn('[SensorService] 清除陀螺仪监听器失败:', e);
+          }
 
-        uni.stopGyroscope({
-          success: checkComplete,
-          fail: checkComplete
+          // 2. 停止传感器
+          let stopCount = 0;
+          const checkComplete = () => {
+            stopCount++;
+            if (stopCount >= 2) {
+              // 两个传感器都停止后，延迟200ms确保状态完全同步
+              console.log('[SensorService] 传感器已停止，等待200ms后启动...');
+              setTimeout(resolveStop, 200);
+            }
+          };
+
+          uni.stopAccelerometer({
+            success: checkComplete,
+            fail: checkComplete // 即使失败也继续（可能本来就没启动）
+          });
+
+          uni.stopGyroscope({
+            success: checkComplete,
+            fail: checkComplete
+          });
         });
+      };
+
+      // 等待传感器停止后再启动
+      stopSensors().then(() => {
+        this._startSensors(options, systemInfo, resolve);
       });
-    };
-
-    // 等待传感器停止后再启动
-    stopSensors().then(() => {
-      this._startSensors(options, systemInfo);
     });
   }
 
   /**
    * 启动传感器（内部方法）
+   * @param {Function} resolve - Promise 的 resolve 函数
    */
-  _startSensors(options, systemInfo) {
+  _startSensors(options, systemInfo, resolve) {
     // 创建摔倒检测器
     this.fallDetector = new FallDetector({
       sensitivity: options.sensitivity || 'medium',
@@ -543,6 +564,20 @@ class SensorService {
       }
     });
 
+    // 用于追踪传感器启动完成情况
+    let startCount = 0;
+    const checkAllStarted = () => {
+      startCount++;
+      if (startCount >= 2) {
+        // 两个传感器都已处理完成（成功或失败）
+        this.isRunning = true;
+        console.log('[SensorService] 传感器服务已完全启动');
+        if (resolve) {
+          resolve(); // 通知调用者启动完成
+        }
+      }
+    };
+
     // 启动加速度计
     uni.startAccelerometer({
       interval: 'game', // 20ms/次，适合实时检测
@@ -554,6 +589,8 @@ class SensorService {
           this.fallDetector.updateAccelerometer(res);
           this.fallDetector.detect();
         });
+
+        checkAllStarted(); // 通知加速度计启动完成
       },
       fail: (err) => {
         console.error('[SensorService] ❌ 加速度计启动失败:', err);
@@ -569,6 +606,8 @@ class SensorService {
             duration: 3000
           });
         }
+
+        checkAllStarted(); // 即使失败也要通知（让陀螺仪继续）
       }
     });
 
@@ -583,6 +622,8 @@ class SensorService {
           this.fallDetector.updateGyroscope(res);
           this.fallDetector.detect();
         });
+
+        checkAllStarted(); // 通知陀螺仪启动完成
       },
       fail: (err) => {
         console.error('[SensorService] ❌ 陀螺仪启动失败:', err);
@@ -593,11 +634,12 @@ class SensorService {
         } else {
           console.warn('[SensorService] 将仅使用加速度计进行检测');
         }
+
+        checkAllStarted(); // 即使失败也要通知
       }
     });
 
-    this.isRunning = true;
-    console.log('[SensorService] 传感器服务已启动');
+    // 注意：不在这里设置 isRunning，而是在 checkAllStarted 中设置
   }
 
   /**
@@ -610,10 +652,28 @@ class SensorService {
 
     console.log('[SensorService] 停止传感器服务...');
 
+    // 先清除所有监听器（避免状态冲突）
+    try {
+      uni.offAccelerometerChange();
+      console.log('[SensorService] 已清除加速度计监听器');
+    } catch (e) {
+      console.warn('[SensorService] 清除加速度计监听器失败:', e);
+    }
+
+    try {
+      uni.offGyroscopeChange();
+      console.log('[SensorService] 已清除陀螺仪监听器');
+    } catch (e) {
+      console.warn('[SensorService] 清除陀螺仪监听器失败:', e);
+    }
+
     // 停止加速度计
     uni.stopAccelerometer({
       success: () => {
         console.log('[SensorService] 加速度计已停止');
+      },
+      fail: (err) => {
+        console.warn('[SensorService] 停止加速度计失败:', err);
       }
     });
 
@@ -621,6 +681,9 @@ class SensorService {
     uni.stopGyroscope({
       success: () => {
         console.log('[SensorService] 陀螺仪已停止');
+      },
+      fail: (err) => {
+        console.warn('[SensorService] 停止陀螺仪失败:', err);
       }
     });
 
