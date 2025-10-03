@@ -18,6 +18,7 @@
         :scale="mapScale"
         :markers="markers"
         :show-location="true"
+        :enable-satellite="mapSettingsStore.isSatelliteEnabled"
         @markertap="onMarkerTap"
         @tap="onMapTap"
         @regionchange="onRegionChange"
@@ -87,6 +88,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useThemeStore } from '@/store/theme';
+import { useMapSettingsStore } from '@/store/mapSettings';
+import mapConfig from '@/config/map.config.js';
 import { getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
 
@@ -94,12 +97,15 @@ import { generateUUID } from '@/utils/uuid.js';
 const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 
+// 地图设置
+const mapSettingsStore = useMapSettingsStore();
+
 // 地图中心和缩放
 const mapCenter = ref({
-  longitude: 116.404,
-  latitude: 39.915
+  longitude: mapConfig.defaultCenter.longitude,
+  latitude: mapConfig.defaultCenter.latitude
 });
-const mapScale = ref(15);
+const mapScale = ref(mapConfig.defaultScale);
 
 // 危险点数据
 const dangerPoints = ref([]);
@@ -137,17 +143,8 @@ const loadDangerPoints = () => {
     const repo = getDangerPointRepository();
     dangerPoints.value = repo.getAllDangerPoints();
 
-    // 如果有危险点，将地图中心设置为第一个危险点
-    if (dangerPoints.value.length > 0) {
-      const firstPoint = dangerPoints.value[0];
-      mapCenter.value = {
-        longitude: firstPoint.longitude,
-        latitude: firstPoint.latitude
-      };
-    } else {
-      // 否则获取当前位置
-      getCurrentLocation();
-    }
+    // 始终先获取当前位置
+    getCurrentLocation();
   } catch (err) {
     console.error('加载危险点失败:', err);
     uni.showToast({

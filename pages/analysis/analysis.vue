@@ -56,9 +56,10 @@
           v-if="mapCenter.latitude"
           :longitude="mapCenter.longitude"
           :latitude="mapCenter.latitude"
-          :scale="14"
+          :scale="mapConfig.defaultScale"
           :polyline="polyline"
           :markers="markers"
+          :enable-satellite="mapSettingsStore.isSatelliteEnabled"
           style="width: 100%; height: 100%; border-radius: 16rpx;"
         />
       </view>
@@ -102,11 +103,16 @@
 import { ref, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { useMapSettingsStore } from '@/store/mapSettings';
+import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 主题
 const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
+
+// 地图设置
+const mapSettingsStore = useMapSettingsStore();
 
 // 返回
 const goBack = () => {

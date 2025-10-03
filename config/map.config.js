@@ -20,9 +20,10 @@ export default {
   // 默认缩放级别
   defaultScale: 15,
 
-  // 地图类型
+  // 地图类型常量（仅用于定义，实际选择存储在 store/mapSettings.js）
   mapType: {
-    STANDARD: 0, // 标准地图
-    SATELLITE: 1 // 卫星地图
+    STANDARD: 0,  // 标准地图
+    SATELLITE: 1, // 卫星地图
+    NIGHT: 2      // 夜间地图
   }
 };

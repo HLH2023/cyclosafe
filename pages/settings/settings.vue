@@ -188,6 +188,7 @@
 import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { useMapSettingsStore } from '@/store/mapSettings';
 import { getSettingsRepository, getRidingRecordRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { clearAllData as clearAllDataFromDB } from '@/db/database.js';
 
@@ -196,6 +197,9 @@ const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
 const themeOptions = ['跟随系统', '明亮模式', '黑夜模式'];
 const themeIndex = ref(0); // 默认跟随系统
+
+// 地图设置store
+const mapSettingsStore = useMapSettingsStore();
 
 // 单位设置
 const distanceUnits = ['公里 (km)', '英里 (mi)'];
@@ -316,10 +320,10 @@ const onAltitudeUnitChange = (e) => {
 // 地图类型变化
 const onMapTypeChange = (e) => {
   mapTypeIndex.value = e.detail.value;
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('map_type', mapTypeIndex.value);
+  // 使用store更新地图类型
+  mapSettingsStore.setMapType(mapTypeIndex.value);
   uni.showToast({
-    title: '设置已保存',
+    title: '地图类型已切换',
     icon: 'success'
   });
 };
@@ -327,10 +331,10 @@ const onMapTypeChange = (e) => {
 // 轨迹颜色变化
 const onTrackColorChange = (e) => {
   trackColorIndex.value = e.detail.value;
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('track_color', trackColorIndex.value);
+  // 使用store更新轨迹颜色
+  mapSettingsStore.setTrackColor(trackColorIndex.value);
   uni.showToast({
-    title: '设置已保存',
+    title: '轨迹颜色已更新',
     icon: 'success'
   });
 };
@@ -338,8 +342,8 @@ const onTrackColorChange = (e) => {
 // 显示轨迹变化
 const onShowTrackChange = (e) => {
   showTrack.value = e.detail.value;
-  const settingsRepo = getSettingsRepository();
-  settingsRepo.saveSetting('show_track', showTrack.value);
+  // 使用store更新危险点提醒
+  mapSettingsStore.setShowDangerPoints(showTrack.value);
 };
 
 // 速度阈值变化

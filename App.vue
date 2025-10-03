@@ -1,5 +1,6 @@
 <script>
 import { useThemeStore } from '@/store/theme';
+import { useMapSettingsStore } from '@/store/mapSettings';
 import { setupDatabase } from '@/db/database.js';
 
 export default {
@@ -11,6 +12,9 @@ export default {
 
     // 初始化主题系统
     this.initTheme();
+
+    // 初始化地图设置
+    this.initMapSettings();
 
     // 初始化应用
     this.checkPermissions();
@@ -47,6 +51,12 @@ export default {
         // 更新页面类名
         this.updatePageClass(data.isDark);
       });
+    },
+
+    // 初始化地图设置
+    initMapSettings() {
+      const mapSettingsStore = useMapSettingsStore();
+      mapSettingsStore.initMapSettings();
     },
 
     // 更新页面类名

@@ -33,10 +33,11 @@
           id="riding-map"
           :longitude="currentLocation.longitude"
           :latitude="currentLocation.latitude"
-          :scale="15"
+          :scale="mapConfig.defaultScale"
           :markers="markers"
           :polyline="polyline"
           :show-location="true"
+          :enable-satellite="mapSettingsStore.isSatelliteEnabled"
           style="width: 100%; height: 100%; border-radius: 24rpx;"
         />
       </view>
@@ -89,16 +90,21 @@
 import { ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { useMapSettingsStore } from '@/store/mapSettings';
 import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
 import { getMLDetector } from '@/utils/mlModel.js';
 import config from '@/utils/config.js';
+import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
 
 // 主题
 const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
+
+// 地图设置
+const mapSettingsStore = useMapSettingsStore();
 
 // 当前时间
 const currentTime = ref('');
@@ -121,8 +127,8 @@ const altitude = ref(0);
 const totalAscent = ref(0);
 
 const currentLocation = ref({
-  longitude: 116.404,
-  latitude: 39.915
+  longitude: mapConfig.defaultCenter.longitude,
+  latitude: mapConfig.defaultCenter.latitude
 });
 
 const markers = ref([]);
@@ -901,6 +907,22 @@ const toggleDataCollection = () => {
 // 生命周期
 onLoad(() => {
   console.log('骑行页面加载');
+
+  // 获取当前位置以显示在地图上
+  uni.getLocation({
+    type: 'gcj02',
+    success: (res) => {
+      currentLocation.value = {
+        longitude: res.longitude,
+        latitude: res.latitude
+      };
+      console.log('✅ 获取当前位置成功:', res.longitude, res.latitude);
+    },
+    fail: (err) => {
+      console.error('❌ 获取位置失败:', err);
+      // 失败时使用配置的默认位置
+    }
+  });
 
   // 读取数据采集设置（默认开启）
   const settingsRepo = getSettingsRepository();

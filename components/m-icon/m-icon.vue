@@ -17,7 +17,10 @@ const ICON_MAP = {
   // 导航类
   'home': 'home-filled',
   'arrow_back': 'back',
+  'arrow_back_ios_new': 'back',
   'arrow_forward': 'forward',
+  'chevron_right': 'right',
+  'arrow_downward': 'bottom',
   'menu': 'bars',
   'close': 'closeempty',
   'search': 'search',
@@ -27,7 +30,10 @@ const ICON_MAP = {
   'settings': 'gear-filled',
   'history': 'bars',
   'location': 'location',
+  'location_on': 'location-filled',  // 位置标记
+  'place': 'location-filled',
   'map': 'map-filled',
+  'add_location': 'location',
 
   // 操作类
   'delete': 'trash',
@@ -35,6 +41,8 @@ const ICON_MAP = {
   'add': 'plus',
   'remove': 'minus',
   'check': 'checkmarkempty',
+  'science': 'pyq',
+  'science_off': 'pyq',
 
   // 媒体类
   'play_arrow': 'play-filled',
@@ -49,8 +57,9 @@ const ICON_MAP = {
 
   // 状态类
   'info': 'info',
-  'warning': 'info',
+  'warning': 'info-filled',
   'error': 'closeempty',
+  'report': 'info-filled',
   'check_circle': 'checkbox-filled',
 
   // 时间类
@@ -69,7 +78,11 @@ const ICON_MAP = {
   'person': 'contact-filled',
   'notifications': 'notification',
   'battery_full': 'notification',
-  'speed': 'forward'
+  'battery_horiz_075': 'notification',
+  'speed': 'forward',
+  'pedal_bike': 'location-filled',
+  'bar_chart': 'bars',
+  'route': 'map-pin'
 };
 
 export default {
