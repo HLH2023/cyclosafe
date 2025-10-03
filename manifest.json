@@ -34,13 +34,7 @@
             "getLocation",
             "onLocationChange",
             "startLocationUpdate",
-            "chooseLocation",
-            "startAccelerometer",
-            "onAccelerometerChange",
-            "startGyroscope",
-            "onGyroscopeChange",
-            "startCompass",
-            "onCompassChange"
+            "chooseLocation"
         ],
         "lazyCodeLoading" : "requiredComponents"
     },
