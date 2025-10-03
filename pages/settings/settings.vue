@@ -163,13 +163,9 @@
             <text class="label">清除所有历史记录</text>
             <m-icon name="chevron_right" :size="20" color="#EF4444"></m-icon>
           </view>
-          <view class="setting-item action border-bottom danger" hover-class="item-hover" @click="clearAllDangerPoints">
+          <view class="setting-item action danger" hover-class="item-hover" @click="clearAllDangerPoints">
             <text class="label">清除所有危险点</text>
             <m-icon name="chevron_right" :size="20" color="#EF4444"></m-icon>
-          </view>
-          <view class="setting-item action" hover-class="item-hover" @click="exportData">
-            <text class="label">导出所有数据</text>
-            <m-icon name="chevron_right" :size="20" color="#6B7280"></m-icon>
           </view>
         </view>
       </view>
@@ -453,15 +449,6 @@ const onKeepScreenOnChange = (e) => {
       keepScreenOn: false
     });
   }
-};
-
-// 导出数据
-const exportData = () => {
-  uni.showModal({
-    title: '导出数据',
-    content: '导出功能开发中，敬请期待',
-    showCancel: false
-  });
 };
 
 // 清除缓存

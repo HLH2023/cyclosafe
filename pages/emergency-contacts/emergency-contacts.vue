@@ -166,6 +166,7 @@ import {
   setPrimaryContact,
   callEmergencyContact
 } from '@/utils/emergencyHelper.js';
+import { vibrateShort } from '@/utils/vibrationHelper.js';
 
 // 主题
 const themeStore = useThemeStore();
@@ -352,7 +353,7 @@ const handleDelete = (contact) => {
 const showQuickMenu = (contact) => {
   selectedContact.value = contact;
   showMenu.value = true;
-  uni.vibrateShort();
+  vibrateShort();
 };
 
 // 关闭快捷菜单

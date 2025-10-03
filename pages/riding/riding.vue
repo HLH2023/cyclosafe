@@ -107,6 +107,7 @@ import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
 import { showEmergencyCountdown } from '@/utils/emergencyHelper.js';
+import { vibrateLong, vibrateShort } from '@/utils/vibrationHelper.js';
 
 // 主题
 const themeStore = useThemeStore();
@@ -147,6 +148,15 @@ const markers = ref([]);
 const polyline = ref([]);
 const trackPoints = ref([]);
 const startTime = ref(0);
+
+// 自动暂停相关
+const autoPauseEnabled = ref(true); // 是否启用自动暂停
+const lowSpeedStartTime = ref(0); // 低速开始时间
+const LOW_SPEED_THRESHOLD = 2; // 低速阈值（km/h）
+const LOW_SPEED_DURATION = 5000; // 低速持续时间（毫秒）
+
+// 屏幕常亮设置
+const keepScreenOnEnabled = ref(false); // 是否启用屏幕常亮
 
 // 骑行状态显示
 const ridingStatusText = computed(() => {
@@ -295,6 +305,9 @@ const handleLocationUpdate = (location) => {
   // 超速检测
   checkOverSpeed();
 
+  // 自动暂停检测
+  checkAutoPause();
+
   // 更新海拔
   altitude.value = location.altitude || 0;
 
@@ -333,7 +346,7 @@ const checkOverSpeed = () => {
     const now = Date.now();
     if (now - lastOverSpeedWarning > 30000) {
       // 震动警告
-      uni.vibrateLong();
+      vibrateLong();
 
       // Toast提示
       uni.showToast({
@@ -349,6 +362,53 @@ const checkOverSpeed = () => {
   // 如果速度降回正常（从超速变为不超速）
   if (!currentlyOverSpeed && wasOverSpeed) {
     console.log('✅ 速度已恢复正常');
+  }
+};
+
+// 自动暂停检测
+const checkAutoPause = () => {
+  // 如果未启用自动暂停，直接返回
+  if (!autoPauseEnabled.value) {
+    return;
+  }
+
+  // 如果已经暂停，检查是否需要自动恢复
+  if (isPaused.value) {
+    // 如果速度恢复到阈值以上，自动恢复骑行
+    if (currentSpeed.value >= LOW_SPEED_THRESHOLD) {
+      console.log('速度恢复，自动继续骑行');
+      resumeRiding();
+      lowSpeedStartTime.value = 0;
+    }
+    return;
+  }
+
+  // 如果速度低于阈值
+  if (currentSpeed.value < LOW_SPEED_THRESHOLD) {
+    const now = Date.now();
+
+    // 如果是第一次检测到低速，记录开始时间
+    if (lowSpeedStartTime.value === 0) {
+      lowSpeedStartTime.value = now;
+      console.log('检测到低速，开始计时');
+    } else {
+      // 如果低速持续时间超过阈值，自动暂停
+      const lowSpeedDuration = now - lowSpeedStartTime.value;
+      if (lowSpeedDuration >= LOW_SPEED_DURATION) {
+        console.log('低速持续时间超过阈值，自动暂停');
+        pauseRiding();
+
+        // 提示用户
+        uni.showToast({
+          title: '速度过低，自动暂停',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    }
+  } else {
+    // 速度恢复正常，重置低速计时器
+    lowSpeedStartTime.value = 0;
   }
 };
 
@@ -457,7 +517,7 @@ const handleMLFallDetected = (prediction) => {
   recordDangerPoint('fall', 'ML摔倒检测');
 
   // 震动警告
-  uni.vibrateLong();
+  vibrateLong();
 
   // 显示警告弹窗
   showFallAlert('ML');
@@ -533,6 +593,19 @@ const startRiding = async () => {
   isPaused.value = false;
   startTime.value = Date.now();
 
+  // 启用屏幕常亮（如果设置开启）
+  if (keepScreenOnEnabled.value) {
+    uni.setKeepScreenOn({
+      keepScreenOn: true,
+      success: () => {
+        console.log('✅ 屏幕常亮已启用');
+      },
+      fail: (err) => {
+        console.error('❌ 启用屏幕常亮失败:', err);
+      }
+    });
+  }
+
   // 开始定位
   startLocationUpdate();
 
@@ -585,7 +658,7 @@ const handleFallDetected = (data) => {
   recordDangerPoint('fall', '摔倒检测');
 
   // 震动警告
-  uni.vibrateLong();
+  vibrateLong();
 
   // 显示警告弹窗
   showFallAlert('传感器');
@@ -612,7 +685,7 @@ const handleHardBrakeDetected = (data) => {
   recordDangerPoint('hard_brake', '急刹车检测');
 
   // 震动提醒（短震动，比摔倒温和）
-  uni.vibrateShort();
+  vibrateShort();
 
   // 显示提示（不是紧急警告）
   uni.showToast({
@@ -699,7 +772,7 @@ const checkNearbyDangerPoints = () => {
       const distanceM = (nearest.distance * 1000).toFixed(0);
 
       // 震动提醒
-      uni.vibrateShort();
+      vibrateShort();
 
       // Toast提醒
       uni.showToast({
@@ -846,7 +919,7 @@ const sendHelpRequest = () => {
       });
 
       // 震动提示
-      uni.vibrateLong();
+      vibrateLong();
 
       console.log('求助信息已发送:', message);
     },
@@ -970,6 +1043,17 @@ const cleanup = () => {
   if (dataCollector.value && isDataCollectionEnabled.value) {
     dataCollector.value.stopCollection();
   }
+
+  // 关闭屏幕常亮
+  uni.setKeepScreenOn({
+    keepScreenOn: false,
+    success: () => {
+      console.log('✅ 屏幕常亮已关闭');
+    },
+    fail: (err) => {
+      console.error('❌ 关闭屏幕常亮失败:', err);
+    }
+  });
 };
 
 // 完成骑行
@@ -1057,6 +1141,14 @@ onLoad(() => {
   // 读取超速阈值设置（默认40 km/h）
   speedThreshold.value = settingsRepo.getSetting('speed_threshold', 40);
   console.log('超速阈值设置:', speedThreshold.value, 'km/h');
+
+  // 读取自动暂停设置（默认开启）
+  autoPauseEnabled.value = settingsRepo.getSetting('auto_pause', true);
+  console.log('自动暂停设置:', autoPauseEnabled.value);
+
+  // 读取屏幕常亮设置（默认关闭）
+  keepScreenOnEnabled.value = settingsRepo.getSetting('keep_screen_on', false);
+  console.log('屏幕常亮设置:', keepScreenOnEnabled.value);
 
   // 初始化ML检测器
   initMLDetector().catch(err => {

@@ -4,6 +4,7 @@
  */
 
 import { getSettingsRepository } from '@/db/repositories/SettingsRepository.js';
+import { vibrateShort } from './vibrationHelper.js';
 
 // 倒计时时长（毫秒）
 const COUNTDOWN_DURATION = 10000; // 10秒
@@ -119,7 +120,7 @@ export function showEmergencyCountdown(dangerInfo = {}) {
   }
 
   // 震动提醒
-  uni.vibrateShort({
+  vibrateShort({
     type: 'heavy'
   });
 
