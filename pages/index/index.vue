@@ -47,7 +47,7 @@
           </view>
           <view class="stat-item">
             <text class="stat-value">{{ totalDistance }}</text>
-            <text class="stat-label">总里程(km)</text>
+            <text class="stat-label">总里程({{ distanceUnit }})</text>
           </view>
           <view class="stat-item">
             <text class="stat-value">{{ totalTime }}</text>
@@ -66,11 +66,15 @@
 import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useThemeStore } from '@/store/theme';
+import { useUnits } from '@/composables/useUnits.js';
 import { getRidingRecordRepository } from '@/db/repositories/index.js';
 
 // 主题
 const themeStore = useThemeStore();
 const themeClass = computed(() => themeStore.isDark ? 'theme-dark' : 'theme-light');
+
+// 单位管理
+const { distanceUnit, convertDistance } = useUnits();
 
 // 状态
 const totalRides = ref(0);
@@ -173,7 +177,8 @@ const loadStats = async () => {
       duration += record.duration || 0;
     });
 
-    totalDistance.value = distance.toFixed(1);
+    // 转换为用户设置的单位
+    totalDistance.value = convertDistance(distance).toFixed(1);
     totalTime.value = formatDuration(duration);
   } catch (err) {
     console.error('加载统计数据失败:', err);
