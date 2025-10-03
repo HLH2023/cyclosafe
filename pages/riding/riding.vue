@@ -108,6 +108,7 @@ import { getRidingRecordRepository, getSettingsRepository, getDangerPointReposit
 import { generateUUID } from '@/utils/uuid.js';
 import { showEmergencyCountdown } from '@/utils/emergencyHelper.js';
 import { vibrateLong, vibrateShort } from '@/utils/vibrationHelper.js';
+import { calculateElevationChange } from '@/utils/gpsCalculator.js';
 
 // 主题
 const themeStore = useThemeStore();
@@ -138,6 +139,7 @@ const avgSpeed = ref(0);
 const maxSpeed = ref(0);
 const altitude = ref(0);
 const totalAscent = ref(0);
+const totalDescent = ref(0);
 
 const currentLocation = ref({
   longitude: mapConfig.defaultCenter.longitude,
@@ -1004,6 +1006,14 @@ const resumeRiding = async () => {
 
 // 保存骑行记录
 const saveRidingRecord = async () => {
+  // 计算海拔爬升和下降
+  if (trackPoints.value.length > 1) {
+    const elevation = calculateElevationChange(trackPoints.value);
+    totalAscent.value = elevation.ascent;
+    totalDescent.value = elevation.descent;
+    console.log('海拔爬升:', totalAscent.value.toFixed(1), 'm, 海拔下降:', totalDescent.value.toFixed(1), 'm');
+  }
+
   const recordId = generateUUID();
   const record = {
     id: recordId,
@@ -1014,6 +1024,7 @@ const saveRidingRecord = async () => {
     avgSpeed: avgSpeed.value,
     maxSpeed: maxSpeed.value,
     totalAscent: totalAscent.value,
+    totalDescent: totalDescent.value,
     trackPoints: trackPoints.value
   };
 

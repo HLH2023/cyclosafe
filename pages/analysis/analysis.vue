@@ -40,7 +40,7 @@
             <text class="stat-label">累计爬升</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">0 m</text>
+            <text class="stat-value">{{ convertAltitude(recordData.totalDescent || 0).toFixed(0) }} {{ altitudeUnit }}</text>
             <text class="stat-label">累计下降</text>
           </view>
           <view class="stat-item wide">
@@ -307,8 +307,8 @@ const initCharts = () => {
     const seconds = elapsedSeconds % 60;
 
     speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
-    const speedKmh = point.speed * 3.6; // m/s 转 km/h
-    speedData.push(convertSpeed(speedKmh)); // 转换为用户设置的单位
+    // point.speed 已经是 km/h，直接转换为用户设置的单位
+    speedData.push(convertSpeed(point.speed || 0));
   }
 
   speedChartData.value = {

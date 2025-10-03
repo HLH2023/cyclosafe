@@ -71,6 +71,7 @@ class RidingRecordRepository {
         avg_speed: record.avgSpeed,
         max_speed: record.maxSpeed,
         total_ascent: record.totalAscent || 0,
+        total_descent: record.totalDescent || 0,
         created_at: now,
         updated_at: now
       };
@@ -125,7 +126,8 @@ class RidingRecordRepository {
         distance: record.distance,
         avgSpeed: record.avg_speed,
         maxSpeed: record.max_speed,
-        totalAscent: record.total_ascent,
+        totalAscent: record.total_ascent || 0,
+        totalDescent: record.total_descent || 0,
         trackPoints: trackPoints
       };
     } catch (error) {
@@ -186,7 +188,8 @@ class RidingRecordRepository {
         distance: record.distance,
         avgSpeed: record.avg_speed,
         maxSpeed: record.max_speed,
-        totalAscent: record.total_ascent
+        totalAscent: record.total_ascent || 0,
+        totalDescent: record.total_descent || 0
       }));
     } catch (error) {
       console.error('获取所有记录失败:', error);
@@ -214,6 +217,7 @@ class RidingRecordRepository {
       if (updates.avgSpeed !== undefined) record.avg_speed = updates.avgSpeed;
       if (updates.maxSpeed !== undefined) record.max_speed = updates.maxSpeed;
       if (updates.totalAscent !== undefined) record.total_ascent = updates.totalAscent;
+      if (updates.totalDescent !== undefined) record.total_descent = updates.totalDescent;
 
       record.updated_at = Date.now();
 
