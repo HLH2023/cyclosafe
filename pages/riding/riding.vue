@@ -27,7 +27,7 @@
             class="data-count"
           >{{ collectedDataCount }}</text>
         </view>
-        <m-icon name="battery_horiz_075" :size="24" color="#1C1C1E"></m-icon>
+        <m-icon name="battery_horiz_075" :size="24" :color="headerIconColor"></m-icon>
         <text class="time">{{ currentTime }}</text>
       </view>
     </view>
@@ -212,6 +212,11 @@ const formattedPace = computed(() => {
   const mins = Math.floor(paceMinutes);
   const secs = Math.floor((paceMinutes - mins) * 60);
   return `${mins}:${String(secs).padStart(2, '0')}`;
+});
+
+// 头部图标颜色（根据主题动态变化）
+const headerIconColor = computed(() => {
+  return themeStore.isDark ? '#F9FAFB' : '#1C1C1E';
 });
 
 // 计算两点距离（Haversine公式）
@@ -1069,7 +1074,7 @@ onUnmounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #F2F2F7;
+  background: var(--background-color);
   padding: 32rpx;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   overflow: hidden;
@@ -1088,7 +1093,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 16rpx 0;
   padding-top: calc(var(--status-bar-height) + 16rpx);
-  color: #1C1C1E;
+  color: var(--text-primary);
 
   .title-section {
     display: flex;
@@ -1109,6 +1114,7 @@ onUnmounted(() => {
     .time {
       font-size: 32rpx;
       font-weight: 600;
+      color: var(--text-primary);
     }
 
     .data-collection-toggle {
@@ -1149,9 +1155,9 @@ onUnmounted(() => {
   position: relative;
   margin-bottom: 32rpx;
   border-radius: 24rpx;
-  border: 4rpx solid #E5E5EA;
+  border: 4rpx solid var(--border-color);
   overflow: hidden;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
 
   // 超速时红色脉冲边框
@@ -1180,7 +1186,7 @@ onUnmounted(() => {
   margin-bottom: 48rpx;
   padding: 32rpx;
   border-radius: 48rpx;
-  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-xl);
   transition: all 0.3s ease;
 
   // 超速时卡片边框和阴影
@@ -1193,16 +1199,28 @@ onUnmounted(() => {
 }
 
 .glass-morphism {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--card-background);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border: 2rpx solid rgba(0, 0, 0, 0.05);
+  border: 2rpx solid var(--border-color);
+
+  // 浅色主题下使用半透明效果
+  .theme-light & {
+    background: rgba(255, 255, 255, 0.7);
+    border: 2rpx solid rgba(0, 0, 0, 0.05);
+  }
+
+  // 暗色主题下使用半透明效果
+  .theme-dark & {
+    background: rgba(31, 41, 55, 0.7);
+    border: 2rpx solid rgba(75, 85, 99, 0.3);
+  }
 }
 
 .speed-display {
   text-align: center;
   padding: 32rpx 0;
-  border-bottom: 2rpx solid rgba(0, 0, 0, 0.1);
+  border-bottom: 2rpx solid var(--border-color);
   margin-bottom: 32rpx;
   transition: all 0.3s ease;
 
@@ -1215,7 +1233,7 @@ onUnmounted(() => {
     font-size: 160rpx;
     font-weight: 700;
     line-height: 1;
-    color: #1C1C1E;
+    color: var(--text-primary);
     text-shadow: 0 0 10rpx rgba(0, 122, 255, 0.3);
     transition: all 0.3s ease;
 
@@ -1232,7 +1250,7 @@ onUnmounted(() => {
     display: block;
     font-size: 36rpx;
     font-weight: 700;
-    color: #3A3A3C;
+    color: var(--text-secondary);
     letter-spacing: 8rpx;
     margin-top: 16rpx;
   }
@@ -1251,7 +1269,7 @@ onUnmounted(() => {
       display: block;
       font-size: 96rpx;
       font-weight: 700;
-      color: #1C1C1E;
+      color: var(--text-primary);
       line-height: 1;
     }
 
@@ -1259,7 +1277,7 @@ onUnmounted(() => {
       display: block;
       font-size: 24rpx;
       font-weight: 600;
-      color: #3A3A3C;
+      color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 2rpx;
       margin-top: 16rpx;

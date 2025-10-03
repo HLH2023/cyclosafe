@@ -274,22 +274,49 @@ class FallDetector {
       this.gyroscopeData.z
     );
 
+    // 调试：定期输出传感器数据（每2秒）
+    if (!this._lastDebugTime || now - this._lastDebugTime > 2000) {
+      console.log('[FallDetector] 传感器数据:', {
+        加速度: totalAcc.toFixed(2) + ' m/s²',
+        角速度: totalGyro.toFixed(2) + ' °/s',
+        阈值加速度: this.thresholds.acceleration,
+        阈值角速度: this.thresholds.gyroscope,
+        速度数据: this.speedHistory.length >= 2 ? '有' : '无'
+      });
+      this._lastDebugTime = now;
+    }
+
     // 3. 计算速度变化（仅当有速度数据时）
     let speedChange = { speedDrop: 0, deceleration: 0 };
-    if (this.speedHistory.length >= 2) {
+    const hasSpeedData = this.speedHistory.length >= 2;
+    if (hasSpeedData) {
       speedChange = this.calculateSpeedChange(500); // 0.5秒窗口
     }
 
     // 4. 检查加速度变化（冲击特征）
     const hasImpact = this.detectImpact();
 
-    // 5. 检查是否有速度降低（所有危险点的必要条件）
-    const hasSpeedDrop = speedChange.speedDrop > this.thresholds.speedDrop;
+    // 5. 检查是否有速度降低（仅当有速度数据时）
+    const hasSpeedDrop = hasSpeedData && speedChange.speedDrop > this.thresholds.speedDrop;
 
     // 6. 摔倒检测（优先级高）
     const isHighAcceleration = totalAcc > this.thresholds.acceleration;
     const isHighRotation = totalGyro > this.thresholds.gyroscope;
-    const isFalling = isHighAcceleration && isHighRotation && hasImpact && hasSpeedDrop;
+
+    // 检测逻辑：
+    // - 如果有速度数据：需要满足加速度+角速度+冲击+速度降低（完整检测，准确度高）
+    // - 如果无速度数据：只需满足加速度+角速度+冲击（基础检测，可用于测试或GPS信号差时）
+    let isFalling = false;
+    if (hasSpeedData) {
+      // 有速度数据：完整检测
+      isFalling = isHighAcceleration && isHighRotation && hasImpact && hasSpeedDrop;
+    } else {
+      // 无速度数据：基础检测（用于测试或GPS未就绪）
+      isFalling = isHighAcceleration && isHighRotation && hasImpact;
+      if (isFalling) {
+        console.log('[FallDetector] ⚠️ 无速度数据，使用基础检测模式');
+      }
+    }
 
     if (isFalling) {
       this.onFallDetected(totalAcc, totalGyro, speedChange);
