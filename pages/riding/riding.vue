@@ -1,5 +1,5 @@
 <template>
-  <view class="riding-page" :class="themeClass">
+  <view class="riding-page" :class="[themeClass, { 'over-speed': isOverSpeed }]">
     <!-- 顶部标题栏 -->
     <view class="header">
       <view class="title-section">
@@ -35,7 +35,7 @@
     <!-- 主内容区 -->
     <view class="main-content">
       <!-- 地图区域 -->
-      <view class="map-section">
+      <view class="map-section" :class="{ 'over-speed-map': isOverSpeed }">
         <map
           id="riding-map"
           class="riding-map"
@@ -50,10 +50,10 @@
       </view>
 
       <!-- 数据卡片 -->
-      <view class="data-card glass-morphism">
+      <view class="data-card glass-morphism" :class="{ 'over-speed-card': isOverSpeed }">
         <!-- 速度显示 -->
-        <view class="speed-display">
-          <text class="speed-value">{{ currentSpeed.toFixed(1) }}</text>
+        <view class="speed-display" :class="{ 'over-speed-display': isOverSpeed }">
+          <text class="speed-value" :class="{ 'over-speed-value': isOverSpeed }">{{ currentSpeed.toFixed(1) }}</text>
           <text class="speed-unit">KM/H</text>
         </view>
 
@@ -176,6 +176,11 @@ const ridingStatusColor = computed(() => {
 const timer = ref(null);
 const nearbyDangerPoints = ref([]); // 附近的危险点
 
+// 超速检测
+const speedThreshold = ref(40); // 超速阈值，默认40 km/h
+const isOverSpeed = ref(false); // 当前是否超速
+let lastOverSpeedWarning = 0; // 上次超速警告时间
+
 // 数据采集器
 const dataCollector = ref(null);
 const isDataCollectionEnabled = ref(false); // 是否启用数据采集
@@ -277,6 +282,9 @@ const handleLocationUpdate = (location) => {
     maxSpeed.value = currentSpeed.value;
   }
 
+  // 超速检测
+  checkOverSpeed();
+
   // 更新海拔
   altitude.value = location.altitude || 0;
 
@@ -297,6 +305,41 @@ const handleLocationUpdate = (location) => {
 
   // 检查附近危险点
   checkNearbyDangerPoints();
+};
+
+// 超速检测
+const checkOverSpeed = () => {
+  const wasOverSpeed = isOverSpeed.value;
+  const currentlyOverSpeed = currentSpeed.value > speedThreshold.value;
+
+  // 更新超速状态
+  isOverSpeed.value = currentlyOverSpeed;
+
+  // 如果刚开始超速（从不超速变为超速）
+  if (currentlyOverSpeed && !wasOverSpeed) {
+    console.warn('⚠️ 超速警告！当前速度:', currentSpeed.value.toFixed(1), 'km/h，阈值:', speedThreshold.value, 'km/h');
+
+    // 防止频繁提醒（30秒间隔）
+    const now = Date.now();
+    if (now - lastOverSpeedWarning > 30000) {
+      // 震动警告
+      uni.vibrateLong();
+
+      // Toast提示
+      uni.showToast({
+        title: `⚠️ 超速警告！${currentSpeed.value.toFixed(1)} km/h`,
+        icon: 'none',
+        duration: 2000
+      });
+
+      lastOverSpeedWarning = now;
+    }
+  }
+
+  // 如果速度降回正常（从超速变为不超速）
+  if (!currentlyOverSpeed && wasOverSpeed) {
+    console.log('✅ 速度已恢复正常');
+  }
 };
 
 // 开始定位更新
@@ -988,6 +1031,10 @@ onLoad(() => {
 
   console.log('数据采集设置:', isDataCollectionEnabled.value);
 
+  // 读取超速阈值设置（默认40 km/h）
+  speedThreshold.value = settingsRepo.getSetting('speed_threshold', 40);
+  console.log('超速阈值设置:', speedThreshold.value, 'km/h');
+
   // 初始化ML检测器
   initMLDetector().catch(err => {
     console.error('ML检测器初始化失败:', err);
@@ -1008,6 +1055,13 @@ onUnmounted(() => {
   padding: 32rpx;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   overflow: hidden;
+  transition: background 0.5s ease;
+
+  // 超速时整个页面变红
+  &.over-speed {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    animation: pulse-background 2s ease-in-out infinite;
+  }
 }
 
 .header {
@@ -1080,6 +1134,16 @@ onUnmounted(() => {
   border: 4rpx solid #E5E5EA;
   overflow: hidden;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+
+  // 超速时红色脉冲边框
+  &.over-speed-map {
+    border-color: #ff0000;
+    box-shadow: 0 0 40rpx rgba(255, 0, 0, 0.8),
+                0 0 80rpx rgba(255, 0, 0, 0.6),
+                0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+    animation: pulse-border 1.5s ease-in-out infinite;
+  }
 
   .riding-map {
     position: absolute;
@@ -1099,6 +1163,15 @@ onUnmounted(() => {
   padding: 32rpx;
   border-radius: 48rpx;
   box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+
+  // 超速时卡片边框和阴影
+  &.over-speed-card {
+    border: 4rpx solid #ff0000;
+    box-shadow: 0 0 40rpx rgba(255, 0, 0, 0.8),
+                0 0 80rpx rgba(255, 0, 0, 0.6),
+                0 12rpx 48rpx rgba(0, 0, 0, 0.08);
+  }
 }
 
 .glass-morphism {
@@ -1113,6 +1186,12 @@ onUnmounted(() => {
   padding: 32rpx 0;
   border-bottom: 2rpx solid rgba(0, 0, 0, 0.1);
   margin-bottom: 32rpx;
+  transition: all 0.3s ease;
+
+  // 超速时的显示区域效果
+  &.over-speed-display {
+    border-bottom-color: rgba(255, 0, 0, 0.5);
+  }
 
   .speed-value {
     font-size: 160rpx;
@@ -1120,6 +1199,15 @@ onUnmounted(() => {
     line-height: 1;
     color: #1C1C1E;
     text-shadow: 0 0 10rpx rgba(0, 122, 255, 0.3);
+    transition: all 0.3s ease;
+
+    // 超速时速度数字变红并闪烁
+    &.over-speed-value {
+      color: #ff0000;
+      text-shadow: 0 0 20rpx rgba(255, 0, 0, 0.8),
+                   0 0 40rpx rgba(255, 0, 0, 0.6);
+      animation: blink-speed 1s ease-in-out infinite;
+    }
   }
 
   .speed-unit {
@@ -1208,6 +1296,40 @@ onUnmounted(() => {
     &:active {
       transform: scale(0.95);
     }
+  }
+}
+
+// 动画定义
+@keyframes pulse-background {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 40rpx rgba(255, 0, 0, 0.8),
+                0 0 80rpx rgba(255, 0, 0, 0.6),
+                0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 60rpx rgba(255, 0, 0, 1),
+                0 0 120rpx rgba(255, 0, 0, 0.8),
+                0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  }
+}
+
+@keyframes blink-speed {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
   }
 }
 </style>
