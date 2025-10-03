@@ -295,24 +295,50 @@ class FallDetector {
     }
 
     // 4. 检查加速度变化（冲击特征）
-    const hasImpact = this.detectImpact();
+    // 高灵敏度模式下跳过冲击检测（方便测试）
+    const hasImpact = this.config.sensitivity === 'high' ? true : this.detectImpact();
 
     // 5. 检查是否有速度降低（仅当有速度数据时）
-    const hasSpeedDrop = hasSpeedData && speedChange.speedDrop > this.thresholds.speedDrop;
+    // 高灵敏度模式下跳过速度降低检测（方便测试）
+    const hasSpeedDrop = this.config.sensitivity === 'high' ? true : (hasSpeedData && speedChange.speedDrop > this.thresholds.speedDrop);
 
     // 6. 摔倒检测（优先级高）
     const isHighAcceleration = totalAcc > this.thresholds.acceleration;
     const isHighRotation = totalGyro > this.thresholds.gyroscope;
 
+    // 调试：当加速度或角速度超过阈值时，输出详细检测条件
+    if (isHighAcceleration || isHighRotation) {
+      console.log('[FallDetector] 🔍 检测条件详情:', {
+        '灵敏度': this.config.sensitivity,
+        '✅加速度': isHighAcceleration,
+        '当前值': totalAcc.toFixed(2) + ' m/s²',
+        '阈值': this.thresholds.acceleration,
+        '✅角速度': isHighRotation,
+        '当前值_角': totalGyro.toFixed(2) + ' °/s',
+        '阈值_角': this.thresholds.gyroscope,
+        '✅冲击特征': hasImpact + (this.config.sensitivity === 'high' ? ' (已跳过)' : ''),
+        '✅速度降低': hasSpeedDrop + (this.config.sensitivity === 'high' ? ' (已跳过)' : ''),
+        '速度降低值': speedChange.speedDrop.toFixed(2) + ' km/h',
+        '速度降低阈值': this.thresholds.speedDrop
+      });
+    }
+
     // 检测逻辑：
-    // - 如果有速度数据：需要满足加速度+角速度+冲击+速度降低（完整检测，准确度高）
-    // - 如果无速度数据：只需满足加速度+角速度+冲击（基础检测，可用于测试或GPS信号差时）
+    // - 高灵敏度模式：只检测加速度+角速度（方便测试）
+    // - 中低灵敏度+有速度数据：加速度+角速度+冲击+速度降低（完整检测）
+    // - 中低灵敏度+无速度数据：加速度+角速度+冲击（基础检测）
     let isFalling = false;
-    if (hasSpeedData) {
+    if (this.config.sensitivity === 'high') {
+      // 高灵敏度：简化检测，只需加速度和角速度
+      isFalling = isHighAcceleration && isHighRotation;
+      if (isFalling) {
+        console.log('[FallDetector] ⚠️ 高灵敏度模式，使用简化检测');
+      }
+    } else if (hasSpeedData) {
       // 有速度数据：完整检测
       isFalling = isHighAcceleration && isHighRotation && hasImpact && hasSpeedDrop;
     } else {
-      // 无速度数据：基础检测（用于测试或GPS未就绪）
+      // 无速度数据：基础检测
       isFalling = isHighAcceleration && isHighRotation && hasImpact;
       if (isFalling) {
         console.log('[FallDetector] ⚠️ 无速度数据，使用基础检测模式');
