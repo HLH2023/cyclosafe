@@ -90,43 +90,43 @@ class FallDetector {
   updateThresholds() {
     const thresholds = {
       low: {
-        // 摔倒检测阈值
-        acceleration: 25,  // 25 m/s² (约2.5g)
-        gyroscope: 250,    // 250°/s
+        // 摔倒检测阈值（低灵敏度 - 只检测严重摔倒）
+        acceleration: 15,  // 15 m/s²
+        gyroscope: 100,    // 100°/s
         impactDuration: 300, // 冲击持续时间（ms）
         speedDrop: 5,      // 速度降低阈值（km/h）
 
         // 急刹车检测阈值
-        brakeAcceleration: 15,  // 急刹车加速度阈值
-        brakeGyroscope: 100,    // 急刹车角速度上限（低于此值才是刹车）
+        brakeAcceleration: 12,  // 急刹车加速度阈值
+        brakeGyroscope: 80,     // 急刹车角速度上限（低于此值才是刹车）
         brakeSpeedDrop: 10,     // 急刹车速度降低阈值（km/h）
         brakeDeceleration: -2.0, // 减速度阈值（m/s²）
         minSpeedForBrake: 10    // 最低速度阈值（km/h）
       },
       medium: {
-        // 摔倒检测阈值
-        acceleration: 18,  // 18 m/s² (约1.8g)
-        gyroscope: 200,    // 200°/s
+        // 摔倒检测阈值（中灵敏度 - 正常骑行中的摔倒）
+        acceleration: 10,  // 10 m/s²
+        gyroscope: 50,     // 50°/s
         impactDuration: 400,
         speedDrop: 5,
 
         // 急刹车检测阈值
-        brakeAcceleration: 12,
-        brakeGyroscope: 100,
+        brakeAcceleration: 8,
+        brakeGyroscope: 60,
         brakeSpeedDrop: 8,
         brakeDeceleration: -1.5,
         minSpeedForBrake: 10
       },
       high: {
-        // 摔倒检测阈值
-        acceleration: 15,  // 15 m/s² (约1.5g)
-        gyroscope: 150,    // 150°/s
+        // 摔倒检测阈值（高灵敏度 - 轻微摔倒/测试）
+        acceleration: 6,   // 6 m/s²（略低于测试值7）
+        gyroscope: 10,     // 10°/s（略低于测试值15）
         impactDuration: 500,
         speedDrop: 4,
 
         // 急刹车检测阈值
-        brakeAcceleration: 10,
-        brakeGyroscope: 100,
+        brakeAcceleration: 5,
+        brakeGyroscope: 40,
         brakeSpeedDrop: 6,
         brakeDeceleration: -1.2,
         minSpeedForBrake: 8
@@ -134,6 +134,7 @@ class FallDetector {
     };
 
     this.thresholds = thresholds[this.config.sensitivity] || thresholds.medium;
+    console.log('[FallDetector] 当前灵敏度:', this.config.sensitivity, '阈值:', this.thresholds);
   }
 
   /**
