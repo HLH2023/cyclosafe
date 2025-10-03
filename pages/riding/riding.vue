@@ -2,7 +2,14 @@
   <view class="riding-page" :class="themeClass">
     <!-- 顶部标题栏 -->
     <view class="header">
-      <text class="title">骑行中</text>
+      <view class="title-section">
+        <m-icon
+          :name="ridingStatusIcon"
+          :size="28"
+          :color="ridingStatusColor"
+        ></m-icon>
+        <text class="title" :style="{ color: ridingStatusColor }">{{ ridingStatusText }}</text>
+      </view>
       <view class="header-right">
         <!-- 数据采集开关 -->
         <view
@@ -135,6 +142,37 @@ const markers = ref([]);
 const polyline = ref([]);
 const trackPoints = ref([]);
 const startTime = ref(0);
+
+// 骑行状态显示
+const ridingStatusText = computed(() => {
+  if (!isRiding.value) {
+    return '准备骑行';
+  }
+  if (isPaused.value) {
+    return '已暂停';
+  }
+  return '骑行中';
+});
+
+const ridingStatusIcon = computed(() => {
+  if (!isRiding.value) {
+    return 'pedal_bike';
+  }
+  if (isPaused.value) {
+    return 'pause';
+  }
+  return 'directions_bike';
+});
+
+const ridingStatusColor = computed(() => {
+  if (!isRiding.value) {
+    return '#8E8E93'; // 灰色 - 未开始
+  }
+  if (isPaused.value) {
+    return '#FF9500'; // 橙色 - 已暂停
+  }
+  return '#34C759'; // 绿色 - 骑行中
+});
 const timer = ref(null);
 const nearbyDangerPoints = ref([]); // 附近的危险点
 
@@ -979,6 +1017,12 @@ onUnmounted(() => {
   padding: 16rpx 0;
   padding-top: calc(var(--status-bar-height) + 16rpx);
   color: #1C1C1E;
+
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+  }
 
   .title {
     font-size: 40rpx;

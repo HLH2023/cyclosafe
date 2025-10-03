@@ -469,9 +469,10 @@ class SensorService {
    * 启动传感器监听
    */
   start(options = {}) {
+    // 如果已在运行，先停止再重新启动（确保干净的状态）
     if (this.isRunning) {
-      console.warn('[SensorService] 传感器服务已在运行');
-      return;
+      console.warn('[SensorService] 传感器服务已在运行，先停止再重启');
+      this.stop();
     }
 
     console.log('[SensorService] 启动传感器服务...');
@@ -490,6 +491,10 @@ class SensorService {
         confirmText: '我知道了'
       });
     }
+
+    // 先确保传感器处于停止状态（防止状态不同步导致的启动失败）
+    uni.stopAccelerometer({ success: () => {}, fail: () => {} });
+    uni.stopGyroscope({ success: () => {}, fail: () => {} });
 
     // 创建摔倒检测器
     this.fallDetector = new FallDetector({
