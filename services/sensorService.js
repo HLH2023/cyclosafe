@@ -476,6 +476,21 @@ class SensorService {
 
     console.log('[SensorService] 启动传感器服务...');
 
+    // 检查是否在模拟器环境
+    const systemInfo = uni.getSystemInfoSync();
+    if (systemInfo.platform === 'devtools') {
+      console.warn('[SensorService] ⚠️ 检测到模拟器环境，传感器功能可能不可用');
+      console.warn('[SensorService] ⚠️ 请在真机上测试传感器功能');
+
+      // 在模拟器中显示提示
+      uni.showModal({
+        title: '传感器功能提示',
+        content: '检测到您正在模拟器中运行。传感器功能（摔倒检测、急刹车检测）需要在真机上才能正常使用。',
+        showCancel: false,
+        confirmText: '我知道了'
+      });
+    }
+
     // 创建摔倒检测器
     this.fallDetector = new FallDetector({
       sensitivity: options.sensitivity || 'medium',
@@ -496,7 +511,7 @@ class SensorService {
     uni.startAccelerometer({
       interval: 'game', // 20ms/次，适合实时检测
       success: () => {
-        console.log('[SensorService] 加速度计已启动');
+        console.log('[SensorService] ✅ 加速度计已启动');
 
         // 监听加速度变化
         uni.onAccelerometerChange((res) => {
@@ -505,11 +520,19 @@ class SensorService {
         });
       },
       fail: (err) => {
-        console.error('[SensorService] 加速度计启动失败:', err);
-        uni.showToast({
-          title: '加速度计启动失败',
-          icon: 'none'
-        });
+        console.error('[SensorService] ❌ 加速度计启动失败:', err);
+
+        // 判断是否为模拟器
+        if (systemInfo.platform === 'devtools') {
+          console.warn('[SensorService] 原因：模拟器不支持传感器，请在真机上测试');
+        } else {
+          console.error('[SensorService] 原因：', err.errMsg || '未知错误');
+          uni.showToast({
+            title: '加速度计启动失败',
+            icon: 'none',
+            duration: 3000
+          });
+        }
       }
     });
 
@@ -517,7 +540,7 @@ class SensorService {
     uni.startGyroscope({
       interval: 'game',
       success: () => {
-        console.log('[SensorService] 陀螺仪已启动');
+        console.log('[SensorService] ✅ 陀螺仪已启动');
 
         // 监听陀螺仪变化
         uni.onGyroscopeChange((res) => {
@@ -526,9 +549,14 @@ class SensorService {
         });
       },
       fail: (err) => {
-        console.error('[SensorService] 陀螺仪启动失败:', err);
+        console.error('[SensorService] ❌ 陀螺仪启动失败:', err);
+
         // 陀螺仪不是必需的，可以继续运行
-        console.warn('[SensorService] 将仅使用加速度计进行检测');
+        if (systemInfo.platform === 'devtools') {
+          console.warn('[SensorService] 原因：模拟器不支持传感器，请在真机上测试');
+        } else {
+          console.warn('[SensorService] 将仅使用加速度计进行检测');
+        }
       }
     });
 

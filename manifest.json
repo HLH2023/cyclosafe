@@ -25,13 +25,22 @@
         "permission" : {
             "scope.userLocation" : {
                 "desc" : "用于记录骑行轨迹和提供实时位置服务"
+            },
+            "scope.deviceMotion" : {
+                "desc" : "用于检测骑行中的摔倒和急刹车，保障骑行安全"
             }
         },
         "requiredPrivateInfos" : [
             "getLocation",
             "onLocationChange",
             "startLocationUpdate",
-            "chooseLocation"
+            "chooseLocation",
+            "startAccelerometer",
+            "onAccelerometerChange",
+            "startGyroscope",
+            "onGyroscopeChange",
+            "startCompass",
+            "onCompassChange"
         ],
         "lazyCodeLoading" : "requiredComponents"
     },
