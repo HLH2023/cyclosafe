@@ -3,7 +3,7 @@ import { getSettingsRepository } from '@/db/repositories/index.js';
 
 export const useMapSettingsStore = defineStore('mapSettings', {
   state: () => ({
-    // 地图类型：0=标准, 1=卫星, 2=夜间
+    // 地图类型：0=标准, 1=卫星
     mapType: 0,
     // 轨迹颜色方案：0=经典蓝, 1=活力橙, 2=醒目绿
     trackColor: 0,
@@ -17,13 +17,6 @@ export const useMapSettingsStore = defineStore('mapSettings', {
      */
     isSatelliteEnabled: (state) => {
       return state.mapType === 1;
-    },
-
-    /**
-     * 是否启用夜间地图
-     */
-    isNightModeEnabled: (state) => {
-      return state.mapType === 2;
     },
 
     /**
@@ -62,10 +55,10 @@ export const useMapSettingsStore = defineStore('mapSettings', {
 
     /**
      * 设置地图类型
-     * @param {number} type - 0=标准, 1=卫星, 2=夜间
+     * @param {number} type - 0=标准, 1=卫星
      */
     setMapType(type) {
-      if (![0, 1, 2].includes(type)) {
+      if (![0, 1].includes(type)) {
         console.error('无效的地图类型:', type);
         return;
       }

@@ -236,7 +236,7 @@ const initMap = () => {
       latitude: p.latitude,
       longitude: p.longitude
     })),
-    color: '#3B82F6',
+    color: mapSettingsStore.getTrackColor,
     width: 6,
     arrowLine: true
   }];

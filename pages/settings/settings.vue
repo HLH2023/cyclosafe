@@ -210,7 +210,7 @@ const altitudeUnits = ['米 (m)', '英尺 (ft)'];
 const altitudeUnitIndex = ref(0);
 
 // 地图设置
-const mapTypes = ['标准', '卫星', '夜间'];
+const mapTypes = ['标准', '卫星'];
 const mapTypeIndex = ref(0);
 const trackColorOptions = ['经典蓝', '活力橙', '醒目绿'];
 const trackColorIndex = ref(0);
