@@ -144,6 +144,7 @@ const speedChartOpts = computed(() => ({
   },
   yAxis: {
     title: `速度 (${speedUnit.value})`,
+    fontSize: 4, // 设置纵坐标字体大小
     format: (val) => val.toFixed(1)
   }
 }));
@@ -158,6 +159,7 @@ const altitudeChartOpts = computed(() => ({
   },
   yAxis: {
     title: `海拔 (${altitudeUnit.value})`,
+    fontSize: 4, // 设置纵坐标字体大小
     format: (val) => val.toFixed(0)
   }
 }));
