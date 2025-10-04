@@ -66,7 +66,7 @@
 
       <!-- 速度-时间曲线图 -->
       <view class="chart-card">
-        <text class="chart-title">速度-时间曲线</text>
+        <text class="chart-title">速度({{ speedUnit }})-时间({{ timeFormat }})</text>
         <view class="chart-wrapper">
           <line-chart
             v-if="speedChartData.categories.length > 0"
@@ -82,7 +82,7 @@
 
       <!-- 海拔-距离曲线图 -->
       <view class="chart-card">
-        <text class="chart-title">海拔-距离曲线</text>
+        <text class="chart-title">海拔({{ altitudeUnit }})-距离({{ distanceUnit }})</text>
         <view class="chart-wrapper">
           <line-chart
             v-if="altitudeChartData.categories.length > 0"
@@ -138,14 +138,17 @@ const speedChartData = ref({
   categories: [],
   series: []
 });
+
+// 动态时间格式（根据骑行时长判断）
+const timeFormat = computed(() => {
+  if (!recordData.value || !recordData.value.duration) return 'mm:ss';
+  const duration = recordData.value.duration;
+  return duration >= 3600 ? 'hh:mm:ss' : 'mm:ss';
+});
+
 const speedChartOpts = computed(() => ({
-  xAxis: {
-    title: '时间',
-    titleFontSize: 5 // 横坐标标题字体大小
-  },
+  xAxis: {},
   yAxis: {
-    title: `速度 (${speedUnit.value})`,
-    titleFontSize: 5, // 纵坐标标题字体大小
     format: (val) => val.toFixed(1)
   }
 }));
@@ -155,13 +158,8 @@ const altitudeChartData = ref({
   series: []
 });
 const altitudeChartOpts = computed(() => ({
-  xAxis: {
-    title: `距离 (${distanceUnit.value})`,
-    titleFontSize: 5 // 横坐标标题字体大小
-  },
+  xAxis: {},
   yAxis: {
-    title: `海拔 (${altitudeUnit.value})`,
-    titleFontSize: 5, // 纵坐标标题字体大小
     format: (val) => val.toFixed(0)
   }
 }));
@@ -302,6 +300,8 @@ const initCharts = () => {
   const speedCategories = [];
   const speedData = [];
   const startTime = points[0].timestamp;
+  const totalDuration = recordData.value.duration || 0;
+  const useHourFormat = totalDuration >= 3600; // 是否使用小时格式
 
   // 降采样：最多显示50个点
   const speedStep = Math.max(1, Math.floor(points.length / 50));
@@ -309,10 +309,22 @@ const initCharts = () => {
   for (let i = 0; i < points.length; i += speedStep) {
     const point = points[i];
     const elapsedSeconds = Math.max(0, Math.floor((point.timestamp - startTime) / 1000));
-    const minutes = Math.floor(elapsedSeconds / 60);
-    const seconds = elapsedSeconds % 60;
 
-    speedCategories.push(`${minutes}:${String(seconds).padStart(2, '0')}`);
+    let timeLabel;
+    if (useHourFormat) {
+      // 格式：hh:mm:ss
+      const hours = Math.floor(elapsedSeconds / 3600);
+      const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+      const seconds = elapsedSeconds % 60;
+      timeLabel = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    } else {
+      // 格式：mm:ss
+      const minutes = Math.floor(elapsedSeconds / 60);
+      const seconds = elapsedSeconds % 60;
+      timeLabel = `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    speedCategories.push(timeLabel);
     // point.speed 已经是 km/h，直接转换为用户设置的单位
     // 模拟器可能返回负数或无效值，强制转为正数
     const rawSpeed = parseFloat(point.speed) || 0;
