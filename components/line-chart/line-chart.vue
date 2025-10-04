@@ -120,7 +120,7 @@ const initChart = () => {
         extra: {
           line: {
             type: 'curve',
-            width: 2.5, // 2.5px 粗细，平衡清晰度和空间
+            width: 1.5, // 1.5px 粗细，更细的线条
             activeType: 'none', // 禁用激活状态
             linearType: 'none',
             onShadow: false
