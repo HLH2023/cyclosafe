@@ -82,7 +82,7 @@ const initChart = () => {
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
         padding: [2, 2, 2, 2], // 上右下左，最小边距
-        fontSize: 3, // 全局字体大小，影响坐标轴标签
+        fontSize: 6, // 全局字体大小，影响坐标轴标签
         enableScroll: false,
         legend: {
           show: false // 关闭图例，节省空间
@@ -91,6 +91,7 @@ const initChart = () => {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
+          fontSize: 6, // xAxis 需要独立设置 fontSize
           rotateLabel: false,
           itemCount: 4, // 只显示 4 个刻度
           boundaryGap: 'justify',
