@@ -133,6 +133,35 @@ const mapCenter = ref({
 const polyline = ref([]);
 const markers = ref([]);
 
+// 智能计算时间刻度
+const calculateTimeIntervalAndTicks = (totalSeconds) => {
+  if (totalSeconds >= 7200) { // >= 2小时
+    return { interval: 1800, format: 'hh:mm:ss', count: Math.ceil(totalSeconds / 1800) }; // 每30分钟
+  } else if (totalSeconds >= 3600) { // >= 1小时
+    return { interval: 900, format: 'hh:mm:ss', count: Math.ceil(totalSeconds / 900) }; // 每15分钟
+  } else if (totalSeconds >= 1800) { // >= 30分钟
+    return { interval: 600, format: 'mm:ss', count: Math.ceil(totalSeconds / 600) }; // 每10分钟
+  } else if (totalSeconds >= 600) { // >= 10分钟
+    return { interval: 300, format: 'mm:ss', count: Math.ceil(totalSeconds / 300) }; // 每5分钟
+  } else {
+    return { interval: 120, format: 'mm:ss', count: Math.ceil(totalSeconds / 120) }; // 每2分钟
+  }
+};
+
+// 格式化时间标签
+const formatTimeLabel = (seconds, format) => {
+  if (format === 'hh:mm:ss') {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  } else {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  }
+};
+
 // 图表数据
 const speedChartData = ref({
   categories: [],
@@ -143,7 +172,8 @@ const speedChartData = ref({
 const timeFormat = computed(() => {
   if (!recordData.value || !recordData.value.duration) return 'mm:ss';
   const duration = recordData.value.duration;
-  return duration >= 3600 ? 'hh:mm:ss' : 'mm:ss';
+  const { format } = calculateTimeIntervalAndTicks(duration);
+  return format;
 });
 
 const speedChartOpts = computed(() => ({
@@ -301,35 +331,39 @@ const initCharts = () => {
   const speedData = [];
   const startTime = points[0].timestamp;
   const totalDuration = recordData.value.duration || 0;
-  const useHourFormat = totalDuration >= 3600; // 是否使用小时格式
 
-  // 降采样：最多显示50个点
-  const speedStep = Math.max(1, Math.floor(points.length / 50));
+  // 智能计算刻度
+  const { interval, format } = calculateTimeIntervalAndTicks(totalDuration);
 
-  for (let i = 0; i < points.length; i += speedStep) {
-    const point = points[i];
-    const elapsedSeconds = Math.max(0, Math.floor((point.timestamp - startTime) / 1000));
+  // 生成刻度时间点
+  const ticks = [];
+  for (let t = 0; t <= totalDuration; t += interval) {
+    ticks.push(t);
+  }
+  // 确保包含最后一个时间点
+  if (ticks[ticks.length - 1] < totalDuration) {
+    ticks.push(totalDuration);
+  }
 
-    let timeLabel;
-    if (useHourFormat) {
-      // 格式：hh:mm:ss
-      const hours = Math.floor(elapsedSeconds / 3600);
-      const minutes = Math.floor((elapsedSeconds % 3600) / 60);
-      const seconds = elapsedSeconds % 60;
-      timeLabel = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    } else {
-      // 格式：mm:ss
-      const minutes = Math.floor(elapsedSeconds / 60);
-      const seconds = elapsedSeconds % 60;
-      timeLabel = `${minutes}:${String(seconds).padStart(2, '0')}`;
+  // 为每个刻度点插值速度数据
+  for (const tickSeconds of ticks) {
+    speedCategories.push(formatTimeLabel(tickSeconds, format));
+
+    // 查找最接近该时间点的轨迹点
+    let closestPoint = points[0];
+    let minDiff = Math.abs(points[0].timestamp - startTime - tickSeconds * 1000);
+
+    for (const point of points) {
+      const diff = Math.abs(point.timestamp - startTime - tickSeconds * 1000);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPoint = point;
+      }
     }
 
-    speedCategories.push(timeLabel);
-    // point.speed 已经是 km/h，直接转换为用户设置的单位
-    // 模拟器可能返回负数或无效值，强制转为正数
-    const rawSpeed = parseFloat(point.speed) || 0;
-    const speed = convertSpeed(Math.abs(rawSpeed)); // 取绝对值
-    speedData.push(Math.max(0, speed)); // 二次确保不为负数
+    const rawSpeed = parseFloat(closestPoint.speed) || 0;
+    const speed = convertSpeed(Math.abs(rawSpeed));
+    speedData.push(Math.max(0, speed));
   }
 
   console.log('速度图表数据:', {
@@ -352,32 +386,89 @@ const initCharts = () => {
   // 处理海拔-距离曲线数据
   const altitudeCategories = [];
   const altitudeData = [];
+
+  // 先计算每个轨迹点的累计距离
+  const pointsWithDistance = [];
   let accumulatedDistance = 0;
 
-  // 降采样：最多显示50个点
-  const altitudeStep = Math.max(1, Math.floor(points.length / 50));
-
-  for (let i = 0; i < points.length; i += altitudeStep) {
-    const point = points[i];
-
-    // 计算累计距离
+  for (let i = 0; i < points.length; i++) {
     if (i > 0) {
-      const prevPoint = points[i - altitudeStep] || points[i - 1];
       const distance = calculateDistance(
-        prevPoint.latitude,
-        prevPoint.longitude,
-        point.latitude,
-        point.longitude
+        points[i - 1].latitude,
+        points[i - 1].longitude,
+        points[i].latitude,
+        points[i].longitude
       );
-      accumulatedDistance += Math.max(0, distance); // 确保距离不为负数
+      accumulatedDistance += Math.max(0, distance);
+    }
+    pointsWithDistance.push({
+      ...points[i],
+      distanceKm: accumulatedDistance / 1000
+    });
+  }
+
+  const totalDistanceKm = accumulatedDistance / 1000;
+  const totalDistanceConverted = convertDistance(totalDistanceKm);
+
+  // 智能计算距离刻度间隔，确保生成5个刻度
+  // 将总距离除以4（5个刻度有4个间隔）
+  const rawInterval = totalDistanceConverted / 4;
+
+  // 将间隔向上取整到整洁的数值
+  let distanceInterval;
+  if (rawInterval <= 0.5) {
+    distanceInterval = 0.5;
+  } else if (rawInterval <= 1) {
+    distanceInterval = 1;
+  } else if (rawInterval <= 2) {
+    distanceInterval = 2;
+  } else if (rawInterval <= 5) {
+    distanceInterval = 5;
+  } else if (rawInterval <= 10) {
+    distanceInterval = 10;
+  } else if (rawInterval <= 20) {
+    distanceInterval = 20;
+  } else {
+    distanceInterval = Math.ceil(rawInterval / 10) * 10; // 向上取整到10的倍数
+  }
+
+  // 生成5个刻度距离点
+  const distanceTicks = [];
+  for (let i = 0; i < 5; i++) {
+    distanceTicks.push(i * distanceInterval);
+  }
+
+  console.log('距离刻度计算:', {
+    totalDistance: totalDistanceConverted.toFixed(2),
+    rawInterval: rawInterval.toFixed(2),
+    interval: distanceInterval,
+    ticks: distanceTicks
+  });
+
+  // 为每个刻度点插值海拔数据
+  for (const tickDistance of distanceTicks) {
+    // 将刻度距离转换回公里（因为可能是英里）
+    const tickDistanceKm = distanceUnit.value === 'mi' ? tickDistance * 1.60934 : tickDistance;
+
+    // 智能格式化距离显示：整数显示为整数，小数显示一位
+    const displayDistance = tickDistance % 1 === 0 ? tickDistance.toFixed(0) : tickDistance.toFixed(1);
+    altitudeCategories.push(displayDistance);
+
+    // 查找最接近该距离的轨迹点
+    let closestPoint = pointsWithDistance[0];
+    let minDiff = Math.abs(pointsWithDistance[0].distanceKm - tickDistanceKm);
+
+    for (const point of pointsWithDistance) {
+      const diff = Math.abs(point.distanceKm - tickDistanceKm);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPoint = point;
+      }
     }
 
-    const distanceKm = Math.max(0, accumulatedDistance / 1000);
-    altitudeCategories.push(convertDistance(distanceKm).toFixed(1)); // 转换为用户设置的单位
-    // 模拟器可能返回负数海拔，取绝对值或默认为0
-    const rawAltitude = parseFloat(point.altitude) || 0;
-    const altitude = convertAltitude(Math.max(0, rawAltitude)); // 确保不为负数
-    altitudeData.push(Math.max(0, altitude)); // 二次确保不为负数
+    const rawAltitude = parseFloat(closestPoint.altitude) || 0;
+    const altitude = convertAltitude(Math.max(0, rawAltitude));
+    altitudeData.push(Math.max(0, altitude));
   }
 
   console.log('海拔图表数据:', {
