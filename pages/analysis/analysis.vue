@@ -133,19 +133,62 @@ const mapCenter = ref({
 const polyline = ref([]);
 const markers = ref([]);
 
-// 智能计算时间刻度
+// 智能计算时间刻度（mm:ss格式5个刻度，hh:mm:ss格式3个刻度）
 const calculateTimeIntervalAndTicks = (totalSeconds) => {
-  if (totalSeconds >= 7200) { // >= 2小时
-    return { interval: 1800, format: 'hh:mm:ss', count: Math.ceil(totalSeconds / 1800) }; // 每30分钟
-  } else if (totalSeconds >= 3600) { // >= 1小时
-    return { interval: 900, format: 'hh:mm:ss', count: Math.ceil(totalSeconds / 900) }; // 每15分钟
-  } else if (totalSeconds >= 1800) { // >= 30分钟
-    return { interval: 600, format: 'mm:ss', count: Math.ceil(totalSeconds / 600) }; // 每10分钟
-  } else if (totalSeconds >= 600) { // >= 10分钟
-    return { interval: 300, format: 'mm:ss', count: Math.ceil(totalSeconds / 300) }; // 每5分钟
+  let tickCount;
+  let interval;
+  let format = 'mm:ss';
+
+  // 判断是否需要使用小时格式
+  if (totalSeconds >= 3600) {
+    // 使用小时格式，3个刻度
+    format = 'hh:mm:ss';
+    tickCount = 3;
+
+    // 计算原始间隔（总时长除以2，因为3个刻度有2个间隔）
+    const rawInterval = totalSeconds / 2;
+
+    // 根据原始间隔选择合适的整洁刻度
+    if (rawInterval <= 900) {
+      interval = 900; // 15分钟
+    } else if (rawInterval <= 1800) {
+      interval = 1800; // 30分钟
+    } else if (rawInterval <= 3600) {
+      interval = 3600; // 1小时
+    } else if (rawInterval <= 5400) {
+      interval = 5400; // 1.5小时
+    } else {
+      interval = Math.ceil(rawInterval / 3600) * 3600; // 向上取整到小时
+    }
   } else {
-    return { interval: 120, format: 'mm:ss', count: Math.ceil(totalSeconds / 120) }; // 每2分钟
+    // 使用分钟:秒格式，5个刻度
+    format = 'mm:ss';
+    tickCount = 5;
+
+    // 计算原始间隔（总时长除以4，因为5个刻度有4个间隔）
+    const rawInterval = totalSeconds / 4;
+
+    // 根据原始间隔选择合适的整洁刻度
+    if (rawInterval <= 10) {
+      interval = 10; // 10秒
+    } else if (rawInterval <= 15) {
+      interval = 15; // 15秒
+    } else if (rawInterval <= 30) {
+      interval = 30; // 30秒
+    } else if (rawInterval <= 60) {
+      interval = 60; // 1分钟
+    } else if (rawInterval <= 120) {
+      interval = 120; // 2分钟
+    } else if (rawInterval <= 300) {
+      interval = 300; // 5分钟
+    } else if (rawInterval <= 600) {
+      interval = 600; // 10分钟
+    } else {
+      interval = 900; // 15分钟
+    }
   }
+
+  return { interval, format, tickCount };
 };
 
 // 格式化时间标签
@@ -172,8 +215,7 @@ const speedChartData = ref({
 const timeFormat = computed(() => {
   if (!recordData.value || !recordData.value.duration) return 'mm:ss';
   const duration = recordData.value.duration;
-  const { format } = calculateTimeIntervalAndTicks(duration);
-  return format;
+  return duration >= 3600 ? 'hh:mm:ss' : 'mm:ss';
 });
 
 const speedChartOpts = computed(() => ({
@@ -333,17 +375,22 @@ const initCharts = () => {
   const totalDuration = recordData.value.duration || 0;
 
   // 智能计算刻度
-  const { interval, format } = calculateTimeIntervalAndTicks(totalDuration);
+  const { interval, format, tickCount } = calculateTimeIntervalAndTicks(totalDuration);
 
-  // 生成刻度时间点
+  // 根据计算出的刻度数量生成刻度时间点
   const ticks = [];
-  for (let t = 0; t <= totalDuration; t += interval) {
-    ticks.push(t);
+  for (let i = 0; i < tickCount; i++) {
+    ticks.push(i * interval);
   }
-  // 确保包含最后一个时间点
-  if (ticks[ticks.length - 1] < totalDuration) {
-    ticks.push(totalDuration);
-  }
+
+  console.log('时间刻度计算:', {
+    totalDuration: totalDuration,
+    rawInterval: (totalDuration / (tickCount - 1)).toFixed(2),
+    interval: interval,
+    format: format,
+    tickCount: tickCount,
+    ticks: ticks
+  });
 
   // 为每个刻度点插值速度数据
   for (const tickSeconds of ticks) {
