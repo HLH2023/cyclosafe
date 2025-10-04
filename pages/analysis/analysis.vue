@@ -570,6 +570,7 @@ onLoad((options) => {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 6rpx; // 从 12rpx 减小到 6rpx
+    padding: 6rpx 8rpx 0; // 上右下左：上6rpx，左右8rpx，下0
   }
 
   .chart-wrapper {
