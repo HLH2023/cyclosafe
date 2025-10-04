@@ -7,7 +7,7 @@ import { getSettingsRepository } from '@/db/repositories/SettingsRepository.js';
 import { vibrateShort } from './vibrationHelper.js';
 
 // 倒计时时长（毫秒）
-const COUNTDOWN_DURATION = 10000; // 10秒
+const COUNTDOWN_DURATION = 30000; // 30秒
 
 // 倒计时定时器
 let countdownTimer = null;
@@ -97,8 +97,9 @@ export function callEmergencyContact(contact) {
 /**
  * 显示紧急呼叫倒计时对话框
  * @param {Object} dangerInfo 危险信息 { type: 'fall'|'hard_brake', location: {...}, speed: 0 }
+ * @param {Object} options 选项 { onConfirm: 确认回调, onCancel: 取消回调 }
  */
-export function showEmergencyCountdown(dangerInfo = {}) {
+export function showEmergencyCountdown(dangerInfo = {}, options = {}) {
   // 清除之前的倒计时
   if (countdownTimer) {
     clearTimeout(countdownTimer);
@@ -127,9 +128,15 @@ export function showEmergencyCountdown(dangerInfo = {}) {
   // 危险类型描述
   const dangerTypeText = dangerInfo.type === 'fall' ? '摔倒' : '急刹车';
 
-  // 启动倒计时（10秒后自动拨打）
+  // 启动倒计时（30秒后自动拨打）
   countdownTimer = setTimeout(() => {
     console.log('倒计时结束，自动拨打紧急电话');
+
+    // 调用确认回调（记录危险点）
+    if (options.onConfirm && typeof options.onConfirm === 'function') {
+      options.onConfirm(dangerInfo);
+    }
+
     callEmergencyContact(contact);
     countdownTimer = null;
   }, COUNTDOWN_DURATION);
@@ -148,6 +155,12 @@ export function showEmergencyCountdown(dangerInfo = {}) {
           clearTimeout(countdownTimer);
           countdownTimer = null;
         }
+
+        // 调用确认回调（记录危险点）
+        if (options.onConfirm && typeof options.onConfirm === 'function') {
+          options.onConfirm(dangerInfo);
+        }
+
         callEmergencyContact(contact);
       } else if (res.cancel) {
         // 用户点击"我没事"，取消倒计时
@@ -155,6 +168,11 @@ export function showEmergencyCountdown(dangerInfo = {}) {
           clearTimeout(countdownTimer);
           countdownTimer = null;
           console.log('用户取消紧急呼叫');
+        }
+
+        // 调用取消回调
+        if (options.onCancel && typeof options.onCancel === 'function') {
+          options.onCancel(dangerInfo);
         }
       }
     },

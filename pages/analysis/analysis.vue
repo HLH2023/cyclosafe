@@ -133,64 +133,6 @@ const mapCenter = ref({
 const polyline = ref([]);
 const markers = ref([]);
 
-// 智能计算时间刻度（mm:ss格式5个刻度，hh:mm:ss格式3个刻度）
-const calculateTimeIntervalAndTicks = (totalSeconds) => {
-  let tickCount;
-  let interval;
-  let format = 'mm:ss';
-
-  // 判断是否需要使用小时格式
-  if (totalSeconds >= 3600) {
-    // 使用小时格式，3个刻度
-    format = 'hh:mm:ss';
-    tickCount = 3;
-
-    // 计算原始间隔（总时长除以2，因为3个刻度有2个间隔）
-    const rawInterval = totalSeconds / 2;
-
-    // 根据原始间隔选择合适的整洁刻度
-    if (rawInterval <= 900) {
-      interval = 900; // 15分钟
-    } else if (rawInterval <= 1800) {
-      interval = 1800; // 30分钟
-    } else if (rawInterval <= 3600) {
-      interval = 3600; // 1小时
-    } else if (rawInterval <= 5400) {
-      interval = 5400; // 1.5小时
-    } else {
-      interval = Math.ceil(rawInterval / 3600) * 3600; // 向上取整到小时
-    }
-  } else {
-    // 使用分钟:秒格式，5个刻度
-    format = 'mm:ss';
-    tickCount = 5;
-
-    // 计算原始间隔（总时长除以4，因为5个刻度有4个间隔）
-    const rawInterval = totalSeconds / 4;
-
-    // 根据原始间隔选择合适的整洁刻度
-    if (rawInterval <= 10) {
-      interval = 10; // 10秒
-    } else if (rawInterval <= 15) {
-      interval = 15; // 15秒
-    } else if (rawInterval <= 30) {
-      interval = 30; // 30秒
-    } else if (rawInterval <= 60) {
-      interval = 60; // 1分钟
-    } else if (rawInterval <= 120) {
-      interval = 120; // 2分钟
-    } else if (rawInterval <= 300) {
-      interval = 300; // 5分钟
-    } else if (rawInterval <= 600) {
-      interval = 600; // 10分钟
-    } else {
-      interval = 900; // 15分钟
-    }
-  }
-
-  return { interval, format, tickCount };
-};
-
 // 格式化时间标签
 const formatTimeLabel = (seconds, format) => {
   if (format === 'hh:mm:ss') {
@@ -373,42 +315,37 @@ const initCharts = () => {
   const speedData = [];
   const startTime = points[0].timestamp;
   const totalDuration = recordData.value.duration || 0;
+  const totalPoints = points.length;
 
-  // 智能计算刻度
-  const { interval, format, tickCount } = calculateTimeIntervalAndTicks(totalDuration);
+  // 确定刻度数量和时间格式
+  const format = totalDuration >= 3600 ? 'hh:mm:ss' : 'mm:ss';
+  const tickCount = totalDuration >= 3600 ? 3 : 5;
 
-  // 根据计算出的刻度数量生成刻度时间点
-  const ticks = [];
+  // 计算索引位置（均匀分布）
+  const indices = [];
   for (let i = 0; i < tickCount; i++) {
-    ticks.push(i * interval);
+    const index = Math.floor((totalPoints - 1) * i / (tickCount - 1));
+    indices.push(index);
   }
 
   console.log('时间刻度计算:', {
     totalDuration: totalDuration,
-    rawInterval: (totalDuration / (tickCount - 1)).toFixed(2),
-    interval: interval,
+    totalPoints: totalPoints,
     format: format,
     tickCount: tickCount,
-    ticks: ticks
+    indices: indices
   });
 
-  // 为每个刻度点插值速度数据
-  for (const tickSeconds of ticks) {
-    speedCategories.push(formatTimeLabel(tickSeconds, format));
+  // 使用索引位置的真实数据
+  for (const index of indices) {
+    const point = points[index];
 
-    // 查找最接近该时间点的轨迹点
-    let closestPoint = points[0];
-    let minDiff = Math.abs(points[0].timestamp - startTime - tickSeconds * 1000);
+    // 计算该点的实际时间（相对于起点的秒数）
+    const elapsedSeconds = Math.floor((point.timestamp - startTime) / 1000);
+    speedCategories.push(formatTimeLabel(elapsedSeconds, format));
 
-    for (const point of points) {
-      const diff = Math.abs(point.timestamp - startTime - tickSeconds * 1000);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestPoint = point;
-      }
-    }
-
-    const rawSpeed = parseFloat(closestPoint.speed) || 0;
+    // 使用该点的真实速度数据
+    const rawSpeed = parseFloat(point.speed) || 0;
     const speed = convertSpeed(Math.abs(rawSpeed));
     speedData.push(Math.max(0, speed));
   }
@@ -457,63 +394,35 @@ const initCharts = () => {
   const totalDistanceKm = accumulatedDistance / 1000;
   const totalDistanceConverted = convertDistance(totalDistanceKm);
 
-  // 智能计算距离刻度间隔，确保生成5个刻度
-  // 将总距离除以4（5个刻度有4个间隔）
-  const rawInterval = totalDistanceConverted / 4;
+  // 固定刻度数量为 5
+  const altitudeTickCount = 5;
 
-  // 将间隔向上取整到整洁的数值
-  let distanceInterval;
-  if (rawInterval <= 0.5) {
-    distanceInterval = 0.5;
-  } else if (rawInterval <= 1) {
-    distanceInterval = 1;
-  } else if (rawInterval <= 2) {
-    distanceInterval = 2;
-  } else if (rawInterval <= 5) {
-    distanceInterval = 5;
-  } else if (rawInterval <= 10) {
-    distanceInterval = 10;
-  } else if (rawInterval <= 20) {
-    distanceInterval = 20;
-  } else {
-    distanceInterval = Math.ceil(rawInterval / 10) * 10; // 向上取整到10的倍数
-  }
-
-  // 生成5个刻度距离点
-  const distanceTicks = [];
-  for (let i = 0; i < 5; i++) {
-    distanceTicks.push(i * distanceInterval);
+  // 计算索引位置（均匀分布）
+  const altitudeIndices = [];
+  for (let i = 0; i < altitudeTickCount; i++) {
+    const index = Math.floor((totalPoints - 1) * i / (altitudeTickCount - 1));
+    altitudeIndices.push(index);
   }
 
   console.log('距离刻度计算:', {
     totalDistance: totalDistanceConverted.toFixed(2),
-    rawInterval: rawInterval.toFixed(2),
-    interval: distanceInterval,
-    ticks: distanceTicks
+    totalPoints: totalPoints,
+    tickCount: altitudeTickCount,
+    indices: altitudeIndices
   });
 
-  // 为每个刻度点插值海拔数据
-  for (const tickDistance of distanceTicks) {
-    // 将刻度距离转换回公里（因为可能是英里）
-    const tickDistanceKm = distanceUnit.value === 'mi' ? tickDistance * 1.60934 : tickDistance;
+  // 使用索引位置的真实数据
+  for (const index of altitudeIndices) {
+    const point = pointsWithDistance[index];
 
+    // 使用该点的真实累计距离（已转换为当前单位）
+    const realDistance = convertDistance(point.distanceKm);
     // 智能格式化距离显示：整数显示为整数，小数显示一位
-    const displayDistance = tickDistance % 1 === 0 ? tickDistance.toFixed(0) : tickDistance.toFixed(1);
+    const displayDistance = realDistance % 1 === 0 ? realDistance.toFixed(0) : realDistance.toFixed(1);
     altitudeCategories.push(displayDistance);
 
-    // 查找最接近该距离的轨迹点
-    let closestPoint = pointsWithDistance[0];
-    let minDiff = Math.abs(pointsWithDistance[0].distanceKm - tickDistanceKm);
-
-    for (const point of pointsWithDistance) {
-      const diff = Math.abs(point.distanceKm - tickDistanceKm);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestPoint = point;
-      }
-    }
-
-    const rawAltitude = parseFloat(closestPoint.altitude) || 0;
+    // 使用该点的真实海拔数据
+    const rawAltitude = parseFloat(point.altitude) || 0;
     const altitude = convertAltitude(Math.max(0, rawAltitude));
     altitudeData.push(Math.max(0, altitude));
   }

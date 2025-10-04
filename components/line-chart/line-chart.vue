@@ -93,7 +93,6 @@ const initChart = () => {
           fontColor: themeColors.value.textSecondary,
           fontSize: 5, // xAxis 需要独立设置 fontSize
           rotateLabel: false,
-          itemCount: 4, // 只显示 4 个刻度
           boundaryGap: 'justify',
           axisLine: true,
           axisLineColor: themeColors.value.gridColor,

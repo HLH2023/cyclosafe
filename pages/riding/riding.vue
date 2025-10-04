@@ -656,14 +656,8 @@ const handleFallDetected = (data) => {
   console.log('  - 速度降低:', data.speedDrop, 'km/h');
   console.log('  - 减速度:', data.deceleration, 'm/s²');
 
-  // 记录危险点
-  recordDangerPoint('fall', '摔倒检测');
-
   // 震动警告
   vibrateLong();
-
-  // 显示警告弹窗
-  showFallAlert('传感器');
 
   // 触发紧急呼叫倒计时
   showEmergencyCountdown({
@@ -674,6 +668,15 @@ const handleFallDetected = (data) => {
     },
     speed: currentSpeed.value,
     timestamp: Date.now()
+  }, {
+    // 用户确认摔倒后才记录危险点
+    onConfirm: (dangerInfo) => {
+      recordDangerPoint('fall', '摔倒检测');
+      console.log('用户确认摔倒，已记录危险点');
+    },
+    onCancel: (dangerInfo) => {
+      console.log('用户取消摔倒警告，未记录危险点');
+    }
   });
 };
 
@@ -849,106 +852,6 @@ const updateDangerPointMarkers = () => {
   });
 
   console.log(`✅ 已添加 ${markers.value.length} 个危险点标记到地图`);
-};
-
-// 摔倒警告弹窗
-const showFallAlert = (detectionType = '传感器') => {
-  let countdown = 30; // 30秒倒计时
-  let countdownTimer = null;
-
-  // 创建倒计时模态框
-  const showModal = () => {
-    uni.showModal({
-      title: `⚠️ 摔倒检测 (${detectionType})`,
-      content: `检测到摔倒，是否需要帮助？\n${countdown}秒后自动发送位置信息`,
-      confirmText: '我没事',
-      cancelText: '需要帮助',
-      success: (res) => {
-        // 清除倒计时
-        if (countdownTimer) {
-          clearInterval(countdownTimer);
-        }
-
-        if (res.confirm) {
-          // 用户确认没事
-          uni.showToast({
-            title: '已取消求助',
-            icon: 'success'
-          });
-        } else if (res.cancel) {
-          // 用户需要帮助
-          sendHelpRequest();
-        }
-      }
-    });
-  };
-
-  // 显示初始弹窗
-  showModal();
-
-  // 启动倒计时
-  countdownTimer = setInterval(() => {
-    countdown--;
-
-    if (countdown <= 0) {
-      // 倒计时结束，自动发送求助
-      clearInterval(countdownTimer);
-      sendHelpRequest();
-    }
-  }, 1000);
-};
-
-// 发送求助信息
-const sendHelpRequest = () => {
-  // 获取当前位置
-  uni.getLocation({
-    type: 'gcj02',
-    success: (location) => {
-      const message = `紧急求助！
-时间：${new Date().toLocaleString()}
-位置：纬度 ${location.latitude.toFixed(6)}, 经度 ${location.longitude.toFixed(6)}
-骑行信息：
-- 距离：${distance.value.toFixed(2)} KM
-- 速度：${currentSpeed.value.toFixed(1)} KM/H
-- 时长：${formattedDuration.value}
-
-请尽快联系我！`;
-
-      // 复制到剪贴板
-      uni.setClipboardData({
-        data: message,
-        success: () => {
-          uni.showModal({
-            title: '求助信息已复制',
-            content: '位置信息已复制到剪贴板，请发送给紧急联系人',
-            confirmText: '打开微信',
-            success: (res) => {
-              if (res.confirm) {
-                // 尝试打开微信（小程序无法直接打开其他应用）
-                uni.showToast({
-                  title: '请手动打开微信发送',
-                  icon: 'none',
-                  duration: 3000
-                });
-              }
-            }
-          });
-        }
-      });
-
-      // 震动提示
-      vibrateLong();
-
-      console.log('求助信息已发送:', message);
-    },
-    fail: (err) => {
-      console.error('获取位置失败:', err);
-      uni.showToast({
-        title: '获取位置失败',
-        icon: 'none'
-      });
-    }
-  });
 };
 
 // 暂停骑行
