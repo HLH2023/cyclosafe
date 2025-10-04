@@ -545,7 +545,7 @@ onLoad((options) => {
 .chart-card {
   background: var(--card-background);
   border-radius: 16rpx;
-  padding: 20rpx; // 从 24rpx 减小到 20rpx，最大化图表空间
+  padding: 10rpx; // 缩小到 10rpx，减小内边距
   margin-bottom: 32rpx;
   box-shadow: var(--shadow-sm);
 
@@ -553,15 +553,15 @@ onLoad((options) => {
     font-size: 26rpx; // 从 28rpx 减小到 26rpx，节省空间
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 12rpx; // 从 16rpx 减小到 12rpx
+    margin-bottom: 6rpx; // 从 12rpx 减小到 6rpx
   }
 
   .chart-wrapper {
-    height: 650rpx; // 增加到 650rpx (约 325px)，最大化图表空间
+    height: 500rpx; // 从 650rpx 减小到 500rpx，缩小整体比例
   }
 
   .chart-placeholder {
-    height: 650rpx;
+    height: 500rpx;
     background: var(--background-secondary);
     border-radius: 12rpx;
     display: flex;
