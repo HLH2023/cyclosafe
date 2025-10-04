@@ -81,8 +81,8 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [2, 2, 2, 2], // 上右下左，最小边距
-        fontSize: 6, // 全局字体大小，影响坐标轴标签
+        padding: [8, 8, 2, 4], // 上右下左，加大上边距、右边距和左边距缩小图表
+        fontSize: 5, // 全局字体大小，影响坐标轴标签
         enableScroll: false,
         legend: {
           show: false // 关闭图例，节省空间
@@ -91,7 +91,7 @@ const initChart = () => {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 6, // xAxis 需要独立设置 fontSize
+          fontSize: 5, // xAxis 需要独立设置 fontSize
           rotateLabel: false,
           itemCount: 4, // 只显示 4 个刻度
           boundaryGap: 'justify',
@@ -128,14 +128,14 @@ const initChart = () => {
         }
       };
 
-      const drawingWidth = rect.width - 2 - 2; // 宽度 - 左padding - 右padding
-      const drawingHeight = rect.height - 2 - 2; // 高度 - 上padding - 下padding
+      const drawingWidth = rect.width - 4 - 8; // 宽度 - 左padding - 右padding
+      const drawingHeight = rect.height - 8 - 2; // 高度 - 上padding - 下padding
 
       console.log('图表配置:', {
         canvasId: props.canvasId,
         containerWidth: rect.width,
         containerHeight: rect.height,
-        padding: [2, 2, 2, 2],
+        padding: [8, 8, 2, 4],
         drawingWidth: drawingWidth,
         drawingHeight: drawingHeight,
         drawingRatio: `${((drawingWidth * drawingHeight) / (rect.width * rect.height) * 100).toFixed(1)}%`,
