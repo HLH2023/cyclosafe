@@ -561,7 +561,7 @@ onLoad((options) => {
 .chart-card {
   background: var(--card-background);
   border-radius: 16rpx;
-  padding: 10rpx; // 缩小到 10rpx，减小内边距
+  padding: 16rpx 10rpx 4rpx 16rpx; // 上右下左：上16rpx，右10rpx，下4rpx，左16rpx
   margin-bottom: 32rpx;
   box-shadow: var(--shadow-sm);
 
@@ -569,8 +569,7 @@ onLoad((options) => {
     font-size: 26rpx; // 从 28rpx 减小到 26rpx，节省空间
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 6rpx; // 从 12rpx 减小到 6rpx
-    padding: 6rpx 8rpx 0; // 上右下左：上6rpx，左右8rpx，下0
+    margin-bottom: 8rpx; // 标题与图表间距
   }
 
   .chart-wrapper {
