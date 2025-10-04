@@ -81,7 +81,7 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [8, 8, 2, 4], // 上右下左，加大上边距、右边距和左边距缩小图表
+        padding: [2, 8, 2, 4], // 上右下左，减小上边距（由卡片padding控制）
         fontSize: 5, // 全局字体大小，影响坐标轴标签
         enableScroll: false,
         legend: {
@@ -129,13 +129,13 @@ const initChart = () => {
       };
 
       const drawingWidth = rect.width - 4 - 8; // 宽度 - 左padding - 右padding
-      const drawingHeight = rect.height - 8 - 2; // 高度 - 上padding - 下padding
+      const drawingHeight = rect.height - 2 - 2; // 高度 - 上padding - 下padding
 
       console.log('图表配置:', {
         canvasId: props.canvasId,
         containerWidth: rect.width,
         containerHeight: rect.height,
-        padding: [8, 8, 2, 4],
+        padding: [2, 8, 2, 4],
         drawingWidth: drawingWidth,
         drawingHeight: drawingHeight,
         drawingRatio: `${((drawingWidth * drawingHeight) / (rect.width * rect.height) * 100).toFixed(1)}%`,
