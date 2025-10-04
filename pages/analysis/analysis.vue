@@ -140,11 +140,13 @@ const speedChartData = ref({
 });
 const speedChartOpts = computed(() => ({
   xAxis: {
-    title: '时间'
+    title: '时间',
+    titleFontSize: 3 // 横坐标标题字体大小
   },
   yAxis: {
     title: `速度 (${speedUnit.value})`,
-    fontSize: 4, // 设置纵坐标字体大小
+    titleFontSize: 3, // 纵坐标标题字体大小
+    fontSize: 3, // 纵坐标数值字体大小
     format: (val) => val.toFixed(1)
   }
 }));
@@ -155,11 +157,13 @@ const altitudeChartData = ref({
 });
 const altitudeChartOpts = computed(() => ({
   xAxis: {
-    title: `距离 (${distanceUnit.value})`
+    title: `距离 (${distanceUnit.value})`,
+    titleFontSize: 3 // 横坐标标题字体大小
   },
   yAxis: {
     title: `海拔 (${altitudeUnit.value})`,
-    fontSize: 4, // 设置纵坐标字体大小
+    titleFontSize: 3, // 纵坐标标题字体大小
+    fontSize: 3, // 纵坐标数值字体大小
     format: (val) => val.toFixed(0)
   }
 }));

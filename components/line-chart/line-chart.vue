@@ -90,7 +90,7 @@ const initChart = () => {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 4, // 设置为 4px
+          fontSize: 3, // 设置为 3px
           rotateLabel: false,
           itemCount: 4, // 只显示 4 个刻度
           boundaryGap: 'justify',
@@ -104,7 +104,7 @@ const initChart = () => {
           dashLength: 2, // 从 4 减小到 2，更细的虚线
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 4, // 设置为 4px
+          fontSize: 3, // 设置为 3px
           splitNumber: 4, // 只显示4条网格线
           format: (val) => {
             // 确保 Y 轴值不为负数
