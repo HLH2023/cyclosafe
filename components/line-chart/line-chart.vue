@@ -81,7 +81,7 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [25, 10, 25, 35], // 上右下左，优化比例（总占用约 17%）
+        padding: [15, 5, 18, 28], // 上右下左，最小化边距（总占用约 11%）
         enableScroll: false,
         legend: {
           show: false // 关闭图例，节省空间
@@ -119,7 +119,7 @@ const initChart = () => {
         extra: {
           line: {
             type: 'curve',
-            width: 2,
+            width: 3, // 从 2 增加到 3，曲线更清晰
             activeType: 'none', // 禁用激活状态
             linearType: 'none',
             onShadow: false
@@ -127,13 +127,19 @@ const initChart = () => {
         }
       };
 
+      const drawingWidth = rect.width - 28 - 5; // 宽度 - 左padding - 右padding
+      const drawingHeight = rect.height - 15 - 18; // 高度 - 上padding - 下padding
+
       console.log('图表配置:', {
         canvasId: props.canvasId,
-        width: rect.width,
-        height: rect.height,
+        containerWidth: rect.width,
+        containerHeight: rect.height,
+        padding: [15, 5, 18, 28],
+        drawingWidth: drawingWidth,
+        drawingHeight: drawingHeight,
+        drawingRatio: `${((drawingWidth * drawingHeight) / (rect.width * rect.height) * 100).toFixed(1)}%`,
         categoriesCount: props.chartData.categories.length,
-        seriesCount: props.chartData.series.length,
-        firstSeriesDataCount: props.chartData.series[0]?.data?.length
+        seriesCount: props.chartData.series.length
       });
 
       // 创建图表
