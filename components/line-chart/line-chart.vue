@@ -81,7 +81,7 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [15, 5, 18, 28], // 上右下左，最小化边距（总占用约 11%）
+        padding: [5, 2, 8, 5], // 上右下左，极致最小边距
         enableScroll: false,
         legend: {
           show: false // 关闭图例，节省空间
@@ -90,9 +90,9 @@ const initChart = () => {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 10, // 增加到 10px，更清晰
+          fontSize: 6, // 设置为 6px，极小字体
           rotateLabel: false,
-          itemCount: 4, // 减少到 4 个刻度，避免拥挤
+          itemCount: 4, // 只显示 4 个刻度
           boundaryGap: 'justify',
           axisLine: true,
           axisLineColor: themeColors.value.gridColor,
@@ -101,10 +101,11 @@ const initChart = () => {
         },
         yAxis: {
           gridType: 'dash',
-          dashLength: 4,
+          dashLength: 2, // 从 4 减小到 2，更细的虚线
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 10, // 增加到 10px，更清晰
+          fontSize: 6, // 设置为 6px，极小字体
+          splitNumber: 4, // 只显示4条网格线
           format: (val) => {
             // 确保 Y 轴值不为负数
             const safeVal = Math.max(0, val);
@@ -119,7 +120,7 @@ const initChart = () => {
         extra: {
           line: {
             type: 'curve',
-            width: 3, // 从 2 增加到 3，曲线更清晰
+            width: 2.5, // 2.5px 粗细，平衡清晰度和空间
             activeType: 'none', // 禁用激活状态
             linearType: 'none',
             onShadow: false
@@ -127,14 +128,14 @@ const initChart = () => {
         }
       };
 
-      const drawingWidth = rect.width - 28 - 5; // 宽度 - 左padding - 右padding
-      const drawingHeight = rect.height - 15 - 18; // 高度 - 上padding - 下padding
+      const drawingWidth = rect.width - 5 - 2; // 宽度 - 左padding - 右padding
+      const drawingHeight = rect.height - 5 - 8; // 高度 - 上padding - 下padding
 
       console.log('图表配置:', {
         canvasId: props.canvasId,
         containerWidth: rect.width,
         containerHeight: rect.height,
-        padding: [15, 5, 18, 28],
+        padding: [5, 2, 8, 5],
         drawingWidth: drawingWidth,
         drawingHeight: drawingHeight,
         drawingRatio: `${((drawingWidth * drawingHeight) / (rect.width * rect.height) * 100).toFixed(1)}%`,
