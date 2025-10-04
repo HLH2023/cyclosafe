@@ -569,7 +569,7 @@ onLoad((options) => {
     font-size: 26rpx; // 从 28rpx 减小到 26rpx，节省空间
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 8rpx; // 标题与图表间距
+    margin-bottom: 12rpx; // 标题与图表间距，增加防止遮挡
   }
 
   .chart-wrapper {
