@@ -550,18 +550,18 @@ onLoad((options) => {
   box-shadow: var(--shadow-sm);
 
   .chart-title {
-    font-size: 32rpx;
+    font-size: 28rpx; // 从 32rpx 减小到 28rpx，节省空间
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 24rpx;
+    margin-bottom: 20rpx; // 从 24rpx 减小到 20rpx
   }
 
   .chart-wrapper {
-    height: 480rpx; // 增加图表高度，给更多空间
+    height: 600rpx; // 增加到 600rpx (约 300px)，给图表更多空间
   }
 
   .chart-placeholder {
-    height: 480rpx;
+    height: 600rpx;
     background: var(--background-secondary);
     border-radius: 12rpx;
     display: flex;

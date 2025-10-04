@@ -81,7 +81,7 @@ const initChart = () => {
         animation: true,
         background: themeColors.value.background,
         color: ['#3B82F6', '#10B981', '#F59E0B'],
-        padding: [40, 15, 35, 45], // 上右下左，增加空间避免负数
+        padding: [25, 10, 25, 35], // 上右下左，优化比例（总占用约 17%）
         enableScroll: false,
         legend: {
           show: false // 关闭图例，节省空间
@@ -90,9 +90,9 @@ const initChart = () => {
           disableGrid: false,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 9, // 减小字体
+          fontSize: 10, // 增加到 10px，更清晰
           rotateLabel: false,
-          itemCount: 5, // 只显示5个刻度
+          itemCount: 4, // 减少到 4 个刻度，避免拥挤
           boundaryGap: 'justify',
           axisLine: true,
           axisLineColor: themeColors.value.gridColor,
@@ -104,7 +104,7 @@ const initChart = () => {
           dashLength: 4,
           gridColor: themeColors.value.gridColor,
           fontColor: themeColors.value.textSecondary,
-          fontSize: 9, // 减小字体
+          fontSize: 10, // 增加到 10px，更清晰
           format: (val) => {
             // 确保 Y 轴值不为负数
             const safeVal = Math.max(0, val);
