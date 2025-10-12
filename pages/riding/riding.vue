@@ -101,8 +101,6 @@ import { useMapSettingsStore } from '@/store/mapSettings';
 import { useUnits } from '@/composables/useUnits.js';
 import sensorService from '@/services/sensorService.js';
 import DataCollector from '@/utils/dataCollector.js';
-import { getMLDetector } from '@/utils/mlModel.js';
-import config from '@/utils/config.js';
 import mapConfig from '@/config/map.config.js';
 import { getRidingRecordRepository, getSettingsRepository, getDangerPointRepository } from '@/db/repositories/index.js';
 import { generateUUID } from '@/utils/uuid.js';
@@ -459,36 +457,11 @@ const initDataCollector = () => {
 
 // 初始化ML检测器
 const initMLDetector = async () => {
-  if (!mlDetector.value) {
-    mlDetector.value = getMLDetector();
-
-    // 尝试加载模型
-    try {
-      // 从本地或服务器加载模型
-      const modelPath = config.MODEL_AUTO_UPDATE.localModelPath;
-      const modelLoaded = await mlDetector.value.loadModel(modelPath);
-
-      if (modelLoaded) {
-        mlModelLoaded.value = true;
-        isMLDetectionEnabled.value = true;
-
-        const modelInfo = mlDetector.value.getModelInfo();
-        console.log('ML模型加载成功:', modelInfo);
-
-        // 初始化自动更新（如果配置启用）
-        mlDetector.value.initAutoUpdate(config);
-
-        uni.showToast({
-          title: 'ML模型已就绪',
-          icon: 'success'
-        });
-      }
-    } catch (error) {
-      console.error('ML模型加载失败:', error);
-      mlModelLoaded.value = false;
-      isMLDetectionEnabled.value = false;
-    }
-  }
+  // 暂时禁用ML模型检测，仅保留加速度检测
+  mlDetector.value = null;
+  mlModelLoaded.value = false;
+  isMLDetectionEnabled.value = false;
+  console.info('ML摔倒检测已暂时禁用，将仅使用加速度检测逻辑。');
 };
 
 // 执行ML检测
