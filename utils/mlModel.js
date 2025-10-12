@@ -104,25 +104,74 @@ class FeatureExtractor {
   }
 
   /**
-   * FFT（快速傅里叶变换）- 简化版
-   * 注意：这是一个简化的实现，仅用于提取主要频域特征
+   * FFT（快速傅里叶变换）
+   * 采用基于 Cooley–Tukey 的迭代实现，复杂度 O(N log N)
    */
   fft(signal) {
     const N = signal.length;
-    if (N <= 1) return signal;
+    if (N === 0) return [];
+    if (N === 1) return [Math.abs(signal[0])];
 
-    // 简化的DFT实现（用于小程序）
-    const result = [];
-    for (let k = 0; k < N / 2; k++) {
-      let real = 0;
-      let imag = 0;
-      for (let n = 0; n < N; n++) {
-        const angle = -2 * Math.PI * k * n / N;
-        real += signal[n] * Math.cos(angle);
-        imag += signal[n] * Math.sin(angle);
-      }
-      result.push(Math.sqrt(real * real + imag * imag));
+    // 将长度扩展到 2 的幂次方，避免频域泄漏时的性能开销
+    const targetSize = 1 << Math.ceil(Math.log2(N));
+    const real = new Array(targetSize).fill(0);
+    const imag = new Array(targetSize).fill(0);
+
+    for (let i = 0; i < N; i++) {
+      real[i] = signal[i];
     }
+
+    // 预计算旋转因子
+    const cosTable = new Array(targetSize / 2);
+    const sinTable = new Array(targetSize / 2);
+    for (let i = 0; i < targetSize / 2; i++) {
+      cosTable[i] = Math.cos((2 * Math.PI * i) / targetSize);
+      sinTable[i] = Math.sin((2 * Math.PI * i) / targetSize);
+    }
+
+    // 位反转排序
+    for (let i = 1, j = 0; i < targetSize; i++) {
+      let bit = targetSize >> 1;
+      for (; (j & bit) !== 0; bit >>= 1) {
+        j &= ~bit;
+      }
+      j |= bit;
+
+      if (i < j) {
+        const tmpReal = real[i];
+        const tmpImag = imag[i];
+        real[i] = real[j];
+        imag[i] = imag[j];
+        real[j] = tmpReal;
+        imag[j] = tmpImag;
+      }
+    }
+
+    // FFT 主循环
+    for (let size = 2; size <= targetSize; size <<= 1) {
+      const halfsize = size >> 1;
+      const tableStep = targetSize / size;
+
+      for (let i = 0; i < targetSize; i += size) {
+        for (let j = 0; j < halfsize; j++) {
+          const k = j * tableStep;
+          const tpre = real[i + j + halfsize] * cosTable[k] + imag[i + j + halfsize] * sinTable[k];
+          const tpim = -real[i + j + halfsize] * sinTable[k] + imag[i + j + halfsize] * cosTable[k];
+
+          real[i + j + halfsize] = real[i + j] - tpre;
+          imag[i + j + halfsize] = imag[i + j] - tpim;
+          real[i + j] += tpre;
+          imag[i + j] += tpim;
+        }
+      }
+    }
+
+    const result = [];
+    const upperBound = Math.floor(N / 2);
+    for (let i = 0; i < upperBound; i++) {
+      result.push(Math.sqrt(real[i] * real[i] + imag[i] * imag[i]));
+    }
+
     return result;
   }
 
