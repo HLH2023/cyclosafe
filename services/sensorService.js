@@ -45,6 +45,8 @@ class MovingAverageFilter {
   }
 }
 
+const GRAVITY = 9.81;
+
 /**
  * 摔倒检测器
  * 基于加速度计、陀螺仪和速度数据进行摔倒和急刹车检测
@@ -79,6 +81,11 @@ class FallDetector {
     this.isDetecting = false;
     this.lastDetectionTime = 0;
     this.detectionCooldown = 5000; // 5秒冷却时间，避免重复检测
+
+    // 自适应阈值所需的校准数据
+    this.calibrationSampleLimit = options.calibrationSamples || 60;
+    this.activeThresholds = {};
+    this._initCalibrationState();
 
     // 根据灵敏度设置阈值
     this.updateThresholds();
@@ -134,7 +141,7 @@ class FallDetector {
     };
 
     this.thresholds = thresholds[this.config.sensitivity] || thresholds.medium;
-    console.log('[FallDetector] 当前灵敏度:', this.config.sensitivity, '阈值:', this.thresholds);
+    this.applyCalibration({ announce: true });
   }
 
   /**
@@ -261,6 +268,8 @@ class FallDetector {
       return false;
     }
 
+    const thresholds = this.getThresholds();
+
     // 1. 计算总加速度
     const totalAcc = this.calculateMagnitude(
       this.accelerometerData.x,
@@ -275,13 +284,16 @@ class FallDetector {
       this.gyroscopeData.z
     );
 
+    // 收集静态样本以完成基线校准
+    this.collectCalibration(totalAcc, totalGyro);
+
     // 调试：定期输出传感器数据（每2秒）
     if (!this._lastDebugTime || now - this._lastDebugTime > 2000) {
       console.log('[FallDetector] 传感器数据:', {
         加速度: totalAcc.toFixed(2) + ' m/s²',
         角速度: totalGyro.toFixed(2) + ' °/s',
-        阈值加速度: this.thresholds.acceleration,
-        阈值角速度: this.thresholds.gyroscope,
+        阈值加速度: thresholds.acceleration,
+        阈值角速度: thresholds.gyroscope,
         速度数据: this.speedHistory.length >= 2 ? '有' : '无'
       });
       this._lastDebugTime = now;
@@ -300,11 +312,11 @@ class FallDetector {
 
     // 5. 检查是否有速度降低（仅当有速度数据时）
     // 高灵敏度模式下跳过速度降低检测（方便测试）
-    const hasSpeedDrop = this.config.sensitivity === 'high' ? true : (hasSpeedData && speedChange.speedDrop > this.thresholds.speedDrop);
+    const hasSpeedDrop = this.config.sensitivity === 'high' ? true : (hasSpeedData && speedChange.speedDrop > thresholds.speedDrop);
 
     // 6. 摔倒检测（优先级高）
-    const isHighAcceleration = totalAcc > this.thresholds.acceleration;
-    const isHighRotation = totalGyro > this.thresholds.gyroscope;
+    const isHighAcceleration = totalAcc > thresholds.acceleration;
+    const isHighRotation = totalGyro > thresholds.gyroscope;
 
     // 调试：当加速度或角速度超过阈值时，输出详细检测条件
     if (isHighAcceleration || isHighRotation) {
@@ -312,14 +324,15 @@ class FallDetector {
         '灵敏度': this.config.sensitivity,
         '✅加速度': isHighAcceleration,
         '当前值': totalAcc.toFixed(2) + ' m/s²',
-        '阈值': this.thresholds.acceleration,
+        '阈值': thresholds.acceleration,
         '✅角速度': isHighRotation,
         '当前值_角': totalGyro.toFixed(2) + ' °/s',
-        '阈值_角': this.thresholds.gyroscope,
+        '阈值_角': thresholds.gyroscope,
         '✅冲击特征': hasImpact + (this.config.sensitivity === 'high' ? ' (已跳过)' : ''),
         '✅速度降低': hasSpeedDrop + (this.config.sensitivity === 'high' ? ' (已跳过)' : ''),
         '速度降低值': speedChange.speedDrop.toFixed(2) + ' km/h',
-        '速度降低阈值': this.thresholds.speedDrop
+        '速度降低阈值': thresholds.speedDrop,
+        '校准完成': this.calibration.isReady
       });
     }
 
@@ -346,15 +359,15 @@ class FallDetector {
     }
 
     if (isFalling) {
-      this.onFallDetected(totalAcc, totalGyro, speedChange);
+      this.onFallDetected(totalAcc, totalGyro, speedChange, thresholds, hasSpeedData);
       return true;
     }
 
     // 7. 急刹车检测（当不是摔倒时）
-    const isHardBraking = this.detectHardBrake();
+    const isHardBraking = this.detectHardBrake(thresholds);
 
     if (isHardBraking) {
-      this.onHardBrakeDetected(totalAcc, totalGyro, speedChange);
+      this.onHardBrakeDetected(totalAcc, totalGyro, speedChange, thresholds);
       return true;
     }
 
@@ -388,7 +401,7 @@ class FallDetector {
    * 检测急刹车
    * 基于加速度变化、速度降低和低角速度
    */
-  detectHardBrake() {
+  detectHardBrake(thresholds) {
     if (this.speedHistory.length < 2) {
       return false;
     }
@@ -414,11 +427,11 @@ class FallDetector {
     const currentSpeed = this.speedHistory[this.speedHistory.length - 1].speed;
 
     // 5. 急刹车判断条件
-    const hasAcceleration = totalAcc > this.thresholds.brakeAcceleration;
-    const lowRotation = totalGyro < this.thresholds.brakeGyroscope; // 角速度低
-    const hasSpeedDrop = speedChange.speedDrop > this.thresholds.brakeSpeedDrop; // 速度降低明显
-    const hasDeceleration = speedChange.deceleration < this.thresholds.brakeDeceleration; // 负加速度
-    const isMoving = currentSpeed > this.thresholds.minSpeedForBrake; // 有一定速度
+    const hasAcceleration = totalAcc > thresholds.brakeAcceleration;
+    const lowRotation = totalGyro < thresholds.brakeGyroscope; // 角速度低
+    const hasSpeedDrop = speedChange.speedDrop > thresholds.brakeSpeedDrop; // 速度降低明显
+    const hasDeceleration = speedChange.deceleration < thresholds.brakeDeceleration; // 负加速度
+    const isMoving = currentSpeed > thresholds.minSpeedForBrake; // 有一定速度
 
     // 综合判断
     const isHardBrake = hasAcceleration && lowRotation && hasSpeedDrop && hasDeceleration && isMoving;
@@ -439,7 +452,7 @@ class FallDetector {
   /**
    * 摔倒检测回调
    */
-  onFallDetected(acceleration, gyroscope, speedChange) {
+  onFallDetected(acceleration, gyroscope, speedChange, thresholds, hasSpeedData) {
     this.lastDetectionTime = Date.now();
 
     console.warn('[FallDetector] 检测到摔倒！');
@@ -448,6 +461,9 @@ class FallDetector {
     console.log(`  速度降低: ${speedChange.speedDrop.toFixed(2)} km/h`);
     console.log(`  减速度: ${speedChange.deceleration.toFixed(2)} m/s²`);
     console.log(`  灵敏度: ${this.config.sensitivity}`);
+
+    const confidence = this.computeFallConfidence(acceleration, gyroscope, speedChange, thresholds, hasSpeedData);
+    console.log(`  综合置信度: ${(confidence * 100).toFixed(1)}%`);
 
     // 调用回调函数
     if (this.config.onFallDetected) {
@@ -458,7 +474,14 @@ class FallDetector {
         speedDrop: speedChange.speedDrop,
         deceleration: speedChange.deceleration,
         timestamp: Date.now(),
-        sensitivity: this.config.sensitivity
+        sensitivity: this.config.sensitivity,
+        confidence,
+        thresholds: { ...thresholds },
+        calibration: {
+          ready: this.calibration.isReady,
+          baselineAcc: this.calibration.baselineAcc,
+          baselineGyro: this.calibration.baselineGyro
+        }
       });
     }
   }
@@ -466,7 +489,7 @@ class FallDetector {
   /**
    * 急刹车检测回调
    */
-  onHardBrakeDetected(acceleration, gyroscope, speedChange) {
+  onHardBrakeDetected(acceleration, gyroscope, speedChange, thresholds) {
     this.lastDetectionTime = Date.now();
 
     console.warn('[FallDetector] 检测到急刹车！');
@@ -475,6 +498,9 @@ class FallDetector {
     console.log(`  速度降低: ${speedChange.speedDrop.toFixed(2)} km/h`);
     console.log(`  减速度: ${speedChange.deceleration.toFixed(2)} m/s²`);
     console.log(`  灵敏度: ${this.config.sensitivity}`);
+
+    const confidence = this.computeBrakeConfidence(acceleration, gyroscope, speedChange, thresholds);
+    console.log(`  急刹车综合置信度: ${(confidence * 100).toFixed(1)}%`);
 
     // 调用回调函数
     if (this.config.onHardBrakeDetected) {
@@ -485,7 +511,9 @@ class FallDetector {
         speedDrop: speedChange.speedDrop,
         deceleration: speedChange.deceleration,
         timestamp: Date.now(),
-        sensitivity: this.config.sensitivity
+        sensitivity: this.config.sensitivity,
+        confidence,
+        thresholds: { ...thresholds }
       });
     }
   }
@@ -501,7 +529,197 @@ class FallDetector {
     this.accelerometerData = { x: 0, y: 0, z: 0 };
     this.gyroscopeData = { x: 0, y: 0, z: 0 };
     this.lastDetectionTime = 0;
+    this._initCalibrationState();
+    this.applyCalibration({ announce: true });
     console.log('[FallDetector] 已重置');
+  }
+
+  /**
+   * 初始化校准状态
+   */
+  _initCalibrationState() {
+    this.calibration = {
+      isReady: false,
+      accSamples: [],
+      gyroSamples: [],
+      sampleLimit: this.calibrationSampleLimit,
+      baselineAcc: GRAVITY,
+      baselineGyro: 0,
+      accNoise: 0,
+      gyroNoise: 0
+    };
+    this.activeThresholds = this.thresholds ? { ...this.thresholds } : {};
+  }
+
+  /**
+   * 获取当前有效阈值（考虑校准调整）
+   */
+  getThresholds() {
+    if (!this.activeThresholds || Object.keys(this.activeThresholds).length === 0) {
+      return this.thresholds;
+    }
+    return this.activeThresholds;
+  }
+
+  /**
+   * 根据校准数据调整阈值
+   */
+  applyCalibration({ announce = false } = {}) {
+    if (!this.calibration || !this.calibration.isReady) {
+      this.activeThresholds = { ...this.thresholds };
+      if (announce) {
+        console.log('[FallDetector] 当前灵敏度:', this.config.sensitivity, '阈值:', this.activeThresholds);
+      }
+      return;
+    }
+
+    const { baselineAcc, accNoise, baselineGyro, gyroNoise } = this.calibration;
+    const gravityOffset = Math.abs(baselineAcc - GRAVITY);
+    const accPadding = Math.max(accNoise * 2, 0.3);
+    const gyroPadding = Math.max(gyroNoise * 3, 1);
+
+    this.activeThresholds = {
+      ...this.thresholds,
+      acceleration: this.thresholds.acceleration + gravityOffset + accPadding,
+      gyroscope: this.thresholds.gyroscope + gyroPadding,
+      brakeGyroscope: Math.max(5, this.thresholds.brakeGyroscope + gyroPadding / 2)
+    };
+
+    if (announce) {
+      console.log('[FallDetector] 当前灵敏度:', this.config.sensitivity, '阈值:', this.activeThresholds, '静态基线:', {
+        baselineAcc: baselineAcc.toFixed(2),
+        accNoise: accNoise.toFixed(3),
+        baselineGyro: baselineGyro.toFixed(2),
+        gyroNoise: gyroNoise.toFixed(3)
+      });
+    }
+  }
+
+  /**
+   * 收集静态传感器样本以完成基线校准
+   */
+  collectCalibration(totalAcc, totalGyro) {
+    if (this.calibration.isReady) {
+      return;
+    }
+
+    const currentSpeed = this.speedHistory.length > 0 ? this.speedHistory[this.speedHistory.length - 1].speed : 0;
+    if (currentSpeed > 2) {
+      if (this.calibration.accSamples.length >= Math.max(10, this.calibration.sampleLimit / 2)) {
+        this.finalizeCalibration();
+      } else {
+        this.calibration.isReady = true;
+        this.applyCalibration({ announce: true });
+      }
+      return;
+    }
+
+    this.calibration.accSamples.push(totalAcc);
+    this.calibration.gyroSamples.push(totalGyro);
+
+    if (this.calibration.accSamples.length >= this.calibration.sampleLimit) {
+      this.finalizeCalibration();
+    }
+  }
+
+  /**
+   * 完成校准计算
+   */
+  finalizeCalibration() {
+    const { accSamples, gyroSamples } = this.calibration;
+    if (accSamples.length === 0 || gyroSamples.length === 0) {
+      this.calibration.isReady = true;
+      this.applyCalibration({ announce: true });
+      return;
+    }
+
+    const baselineAcc = this.calculateMean(accSamples);
+    const baselineGyro = this.calculateMean(gyroSamples);
+    const accNoise = this.calculateStd(accSamples, baselineAcc);
+    const gyroNoise = this.calculateStd(gyroSamples, baselineGyro);
+
+    Object.assign(this.calibration, {
+      isReady: true,
+      baselineAcc: baselineAcc || GRAVITY,
+      baselineGyro: baselineGyro || 0,
+      accNoise: accNoise || 0,
+      gyroNoise: gyroNoise || 0,
+      accSamples: [],
+      gyroSamples: []
+    });
+
+    this.applyCalibration({ announce: true });
+  }
+
+  /**
+   * 计算平均值
+   */
+  calculateMean(arr) {
+    if (!arr || arr.length === 0) return 0;
+    const sum = arr.reduce((total, val) => total + val, 0);
+    return sum / arr.length;
+  }
+
+  /**
+   * 计算标准差
+   */
+  calculateStd(arr, mean) {
+    if (!arr || arr.length === 0) return 0;
+    const variance = arr.reduce((total, val) => total + Math.pow(val - mean, 2), 0) / arr.length;
+    return Math.sqrt(variance);
+  }
+
+  /**
+   * 计算摔倒检测置信度
+   */
+  computeFallConfidence(acceleration, gyroscope, speedChange, thresholds, hasSpeedData) {
+    const ratios = [
+      this.safeRatio(acceleration, thresholds.acceleration),
+      this.safeRatio(gyroscope, thresholds.gyroscope)
+    ];
+
+    if (hasSpeedData) {
+      ratios.push(this.safeRatio(speedChange.speedDrop, thresholds.speedDrop));
+    }
+
+    const normalized = ratios.map(val => Math.min(Math.max(val, 0), 2));
+    const avg = normalized.reduce((total, val) => total + val, 0) / normalized.length;
+    return this.clampConfidence(avg / 1.5);
+  }
+
+  /**
+   * 计算急刹车置信度
+   */
+  computeBrakeConfidence(acceleration, gyroscope, speedChange, thresholds) {
+    const accRatio = this.safeRatio(acceleration, thresholds.brakeAcceleration);
+    const speedRatio = this.safeRatio(speedChange.speedDrop, thresholds.brakeSpeedDrop);
+    const rotationMargin = thresholds.brakeGyroscope > 0 ? 1 - Math.min(gyroscope / thresholds.brakeGyroscope, 1) : 0.5;
+    const decelRatio = thresholds.brakeDeceleration !== 0
+      ? Math.min(Math.abs(speedChange.deceleration / thresholds.brakeDeceleration), 2)
+      : 1;
+
+    const score = (Math.min(accRatio, 2) + Math.min(speedRatio, 2) + rotationMargin + Math.min(decelRatio, 2)) / 4;
+    return this.clampConfidence(score / 1.5);
+  }
+
+  /**
+   * 归一化比例
+   */
+  safeRatio(value, threshold) {
+    if (!threshold) return 0;
+    if (threshold < 0) {
+      return value / Math.abs(threshold);
+    }
+    return value / threshold;
+  }
+
+  /**
+   * 限制置信度范围
+   */
+  clampConfidence(value) {
+    if (value < 0) return 0;
+    if (value > 1) return 1;
+    return value;
   }
 }
 
