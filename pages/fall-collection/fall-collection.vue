@@ -65,6 +65,9 @@ const dataCount = ref(0);
 const bufferSize = ref(BUFFER_SIZE);
 const progress = ref(0);
 const countdownTimer = ref(null);
+const accelerometerActive = ref(false);
+const gyroscopeActive = ref(false);
+const sensorsStarting = ref(false);
 
 const statusText = computed(() => {
   if (isCollecting.value) {
@@ -179,8 +182,104 @@ const stopCollection = async () => {
   await handleUploadDecision();
 };
 
-const startCollection = () => {
+const startSensors = async () => {
+  if (accelerometerActive.value) {
+    return true;
+  }
+
+  if (sensorsStarting.value) {
+    return new Promise((resolve) => {
+      const checkStatus = setInterval(() => {
+        if (!sensorsStarting.value) {
+          clearInterval(checkStatus);
+          resolve(accelerometerActive.value);
+        }
+      }, 100);
+    });
+  }
+
+  sensorsStarting.value = true;
+
+  const accelerometerPromise = new Promise((resolve) => {
+    uni.startAccelerometer({
+      interval: 'game',
+      success: () => {
+        console.log('[FallCollection] 加速度计已启动');
+        accelerometerActive.value = true;
+        resolve(true);
+      },
+      fail: (err) => {
+        console.error('[FallCollection] 加速度计启动失败:', err);
+        accelerometerActive.value = false;
+        uni.showToast({
+          title: '加速度计启动失败',
+          icon: 'none'
+        });
+        resolve(false);
+      }
+    });
+  });
+
+  const gyroscopePromise = new Promise((resolve) => {
+    uni.startGyroscope({
+      interval: 'game',
+      success: () => {
+        console.log('[FallCollection] 陀螺仪已启动');
+        gyroscopeActive.value = true;
+        resolve(true);
+      },
+      fail: (err) => {
+        console.warn('[FallCollection] 陀螺仪启动失败:', err);
+        gyroscopeActive.value = false;
+        resolve(false);
+      }
+    });
+  });
+
+  const [accelerometerReady, gyroscopeReady] = await Promise.all([
+    accelerometerPromise,
+    gyroscopePromise
+  ]);
+
+  sensorsStarting.value = false;
+
+  if (!accelerometerReady) {
+    if (gyroscopeReady) {
+      stopSensors();
+    }
+    return false;
+  }
+
+  return true;
+};
+
+const stopSensors = () => {
+  if (accelerometerActive.value) {
+    uni.stopAccelerometer({
+      complete: () => {
+        accelerometerActive.value = false;
+        console.log('[FallCollection] 加速度计已停止');
+      }
+    });
+  }
+
+  if (gyroscopeActive.value) {
+    uni.stopGyroscope({
+      complete: () => {
+        gyroscopeActive.value = false;
+        console.log('[FallCollection] 陀螺仪已停止');
+      }
+    });
+  }
+};
+
+const startCollection = async () => {
   if (!collector.value || isCollecting.value) return;
+
+  const sensorsReady = await startSensors();
+  if (!sensorsReady) {
+    return;
+  }
 
   collector.value.clearBuffer();
   dataCount.value = 0;
@@ -213,6 +312,8 @@ onLoad(() => {
       stopCollection();
     }
   });
+
+  startSensors();
 });
 
 onUnload(() => {
@@ -221,6 +322,7 @@ onUnload(() => {
     collector.value.stopCollection();
     collector.value.clearBuffer();
   }
+  stopSensors();
 });
 </script>
 
