@@ -518,8 +518,10 @@ const startDataCollection = () => {
 };
 
 // 停止数据采集并上传
-const stopDataCollectionAndUpload = async () => {
+const stopDataCollectionAndUpload = async (options = {}) => {
   if (!isDataCollectionEnabled.value || !dataCollector.value) return;
+
+  const { requireConfirm = false } = options;
 
   // 停止采集
   dataCollector.value.stopCollection();
@@ -528,6 +530,27 @@ const stopDataCollectionAndUpload = async () => {
 
   // 如果采集到了足够的数据（至少100个点），则上传
   if (bufferData.length >= 100) {
+    let shouldUpload = true;
+
+    if (requireConfirm) {
+      shouldUpload = await new Promise((resolve) => {
+        uni.showModal({
+          title: '上传骑行数据',
+          content: `检测到${bufferData.length}个数据点，是否上传用于模型训练？`,
+          cancelText: '暂不上传',
+          confirmText: '上传',
+          success: (res) => resolve(res.confirm),
+          fail: () => resolve(false)
+        });
+      });
+    }
+
+    if (!shouldUpload) {
+      console.log('用户取消上传骑行数据');
+      dataCollector.value.clearBuffer();
+      return;
+    }
+
     try {
       uni.showLoading({
         title: '上传数据中...'
@@ -555,9 +578,12 @@ const stopDataCollectionAndUpload = async () => {
         title: '数据上传失败',
         icon: 'none'
       });
+    } finally {
+      dataCollector.value.clearBuffer();
     }
   } else {
     console.log('数据点不足，跳过上传');
+    dataCollector.value.clearBuffer();
   }
 };
 
@@ -967,7 +993,7 @@ const finishRiding = async () => {
   cleanup();
 
   // 上传训练数据（如果启用）
-  await stopDataCollectionAndUpload();
+  await stopDataCollectionAndUpload({ requireConfirm: true });
 
   // 保存数据到本地存储
   await saveRidingRecord();

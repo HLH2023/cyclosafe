@@ -61,7 +61,7 @@ cp .env.example .env
 python main.py
 
 # 步骤5：在小程序中配置API地址
-# 修改 services/dataCollector.js 中的 API_BASE_URL
+# 打开 utils/config.js，按环境调整 API_BASE_URL（devConfig/prodConfig）
 
 # 步骤6：开始收集数据
 # 在小程序中使用"模拟摔倒"功能
