@@ -68,6 +68,8 @@ const countdownTimer = ref(null);
 const accelerometerActive = ref(false);
 const gyroscopeActive = ref(false);
 const sensorsStarting = ref(false);
+const pageActive = ref(false);
+let startSensorsRequestId = 0;
 
 const statusText = computed(() => {
   if (isCollecting.value) {
@@ -182,23 +184,36 @@ const stopCollection = async () => {
   await handleUploadDecision();
 };
 
+const waitForSensorStartCompletion = (initialRequestId) =>
+  new Promise((resolve) => {
+    const checkStatus = setInterval(() => {
+      const cancelled = !pageActive.value || initialRequestId !== startSensorsRequestId;
+      if (!sensorsStarting.value || cancelled) {
+        clearInterval(checkStatus);
+        if (cancelled) {
+          resolve(false);
+          return;
+        }
+        resolve(accelerometerActive.value);
+      }
+    }, 100);
+  });
+
 const startSensors = async () => {
+  if (!pageActive.value) {
+    return false;
+  }
+
   if (accelerometerActive.value) {
     return true;
   }
 
   if (sensorsStarting.value) {
-    return new Promise((resolve) => {
-      const checkStatus = setInterval(() => {
-        if (!sensorsStarting.value) {
-          clearInterval(checkStatus);
-          resolve(accelerometerActive.value);
-        }
-      }, 100);
-    });
+    return waitForSensorStartCompletion(startSensorsRequestId);
   }
 
   sensorsStarting.value = true;
+  const requestId = ++startSensorsRequestId;
 
   const accelerometerPromise = new Promise((resolve) => {
     uni.startAccelerometer({
@@ -243,8 +258,10 @@ const startSensors = async () => {
 
   sensorsStarting.value = false;
 
-  if (!accelerometerReady) {
-    if (gyroscopeReady) {
+  const cancelled = !pageActive.value || requestId !== startSensorsRequestId;
+
+  if (!accelerometerReady || cancelled) {
+    if (gyroscopeReady || accelerometerReady) {
       stopSensors();
     }
     return false;
@@ -300,6 +317,7 @@ const startCollection = async () => {
 };
 
 onLoad(() => {
+  pageActive.value = true;
   collector.value = new DataCollector({
     sampleRate: 50,
     bufferSize: BUFFER_SIZE,
@@ -317,6 +335,8 @@ onLoad(() => {
 });
 
 onUnload(() => {
+  pageActive.value = false;
+  startSensorsRequestId += 1;
   clearTimer();
   if (collector.value) {
     collector.value.stopCollection();
