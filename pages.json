@@ -55,6 +55,14 @@
       }
     },
     {
+      "path": "pages/fall-collection/fall-collection",
+      "style": {
+        "navigationStyle": "default",
+        "navigationBarTitleText": "摔倒数据采集",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
       "path": "pages/danger-points/danger-points",
       "style": {
         "navigationStyle": "custom",

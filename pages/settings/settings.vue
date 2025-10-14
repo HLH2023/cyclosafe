@@ -155,6 +155,13 @@
           <text class="section-title">数据管理</text>
         </view>
         <view class="card">
+          <view class="setting-item action border-bottom" hover-class="item-hover" @click="goToFallDataCollection">
+            <text class="label">上传摔倒数据</text>
+            <view class="action-link">
+              <text class="link-text">采集</text>
+              <m-icon name="chevron_right" :size="20" color="#3B82F6"></m-icon>
+            </view>
+          </view>
           <view class="setting-item action border-bottom" hover-class="item-hover" @click="clearCache">
             <text class="label">清理缓存</text>
             <m-icon name="chevron_right" :size="20" color="#6B7280"></m-icon>
@@ -410,6 +417,13 @@ const onFallSensitivityChange = (e) => {
   uni.showToast({
     title: '灵敏度已更新',
     icon: 'success'
+  });
+};
+
+// 跳转到摔倒数据采集页面
+const goToFallDataCollection = () => {
+  uni.navigateTo({
+    url: '/pages/fall-collection/fall-collection'
   });
 };
 
